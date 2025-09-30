@@ -14,7 +14,104 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      player_analysis: {
+        Row: {
+          created_at: string
+          defending_score: number | null
+          dribbling_score: number | null
+          id: string
+          overall_score: number | null
+          passing_score: number | null
+          physicality_score: number | null
+          player_id: string
+          shooting_score: number | null
+          speed_score: number | null
+          training_tips: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          defending_score?: number | null
+          dribbling_score?: number | null
+          id?: string
+          overall_score?: number | null
+          passing_score?: number | null
+          physicality_score?: number | null
+          player_id: string
+          shooting_score?: number | null
+          speed_score?: number | null
+          training_tips?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          defending_score?: number | null
+          dribbling_score?: number | null
+          id?: string
+          overall_score?: number | null
+          passing_score?: number | null
+          physicality_score?: number | null
+          player_id?: string
+          shooting_score?: number | null
+          speed_score?: number | null
+          training_tips?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_analysis_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "player_registrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_registrations: {
+        Row: {
+          academy: string
+          created_at: string
+          date_of_birth: string
+          email: string
+          full_name: string
+          height: number
+          id: string
+          nationality: string
+          position: string
+          updated_at: string
+          video_url: string | null
+          weight: number
+        }
+        Insert: {
+          academy: string
+          created_at?: string
+          date_of_birth: string
+          email: string
+          full_name: string
+          height: number
+          id?: string
+          nationality: string
+          position: string
+          updated_at?: string
+          video_url?: string | null
+          weight: number
+        }
+        Update: {
+          academy?: string
+          created_at?: string
+          date_of_birth?: string
+          email?: string
+          full_name?: string
+          height?: number
+          id?: string
+          nationality?: string
+          position?: string
+          updated_at?: string
+          video_url?: string | null
+          weight?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

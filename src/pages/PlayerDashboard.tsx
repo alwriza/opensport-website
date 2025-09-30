@@ -1,36 +1,78 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RadarSkillChart } from "@/components/radar-chart";
-import { mockPlayers, getPlayerSkillData, getTrainingTips } from "@/lib/mock-data";
-import { Upload, User, Calendar, Trophy, TrendingUp } from "lucide-react";
+import { Upload, User, Trophy, TrendingUp, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+
+interface PlayerData {
+  id: string;
+  full_name: string;
+  email: string;
+  date_of_birth: string;
+  nationality: string;
+  position: string;
+  academy: string;
+  height: number;
+  weight: number;
+  video_url: string | null;
+  created_at: string;
+}
 
 export default function PlayerDashboard() {
-  // For demo, we'll use the first player
-  const [selectedPlayer] = useState(mockPlayers[0]);
-  const skillData = getPlayerSkillData(selectedPlayer);
-  const trainingTips = getTrainingTips(selectedPlayer.scores);
-  
-  const overallScore = Math.round(
-    Object.values(selectedPlayer.scores).reduce((sum, score) => sum + score, 0) / 5
-  );
+  const [players, setPlayers] = useState<PlayerData[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const getScoreColor = (score: number) => {
-    if (score >= 90) return "text-green-600";
-    if (score >= 80) return "text-blue-600";
-    if (score >= 70) return "text-yellow-600";
-    return "text-orange-600";
+  useEffect(() => {
+    fetchPlayers();
+  }, []);
+
+  const fetchPlayers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('player_registrations')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setPlayers(data || []);
+    } catch (error) {
+      console.error('Error fetching players:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getScoreBadge = (score: number) => {
-    if (score >= 90) return "Excellent";
-    if (score >= 80) return "Good";
-    if (score >= 70) return "Average";
-    return "Needs Work";
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-card flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (players.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-card flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="pt-6 text-center space-y-4">
+            <User className="h-12 w-12 text-muted-foreground mx-auto" />
+            <h2 className="text-xl font-bold">No Players Yet</h2>
+            <p className="text-muted-foreground">Register your first player to see their dashboard.</p>
+            <Button asChild>
+              <Link to="/register">Register Now</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const selectedPlayer = players[0];
+  const age = new Date().getFullYear() - new Date(selectedPlayer.date_of_birth).getFullYear();
 
   return (
     <div className="min-h-screen bg-gradient-card">
@@ -50,25 +92,20 @@ export default function PlayerDashboard() {
                   <User className="h-8 w-8 text-primary" />
                 </div>
                 <div>
-                  <CardTitle className="text-2xl">{selectedPlayer.name}</CardTitle>
+                  <CardTitle className="text-2xl">{selectedPlayer.full_name}</CardTitle>
                   <CardDescription className="text-lg">
                     {selectedPlayer.position} • {selectedPlayer.academy}
                   </CardDescription>
                 </div>
               </div>
-              <div className="text-right">
-                <div className={`text-3xl font-bold ${getScoreColor(overallScore)}`}>
-                  {overallScore}
-                </div>
-                <Badge variant="secondary">{getScoreBadge(overallScore)}</Badge>
-              </div>
+              <Badge variant="secondary">Active Player</Badge>
             </div>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
                 <span className="text-muted-foreground">Age:</span>
-                <div className="font-medium">{selectedPlayer.age} years</div>
+                <div className="font-medium">{age} years</div>
               </div>
               <div>
                 <span className="text-muted-foreground">Height:</span>
@@ -79,78 +116,42 @@ export default function PlayerDashboard() {
                 <div className="font-medium">{selectedPlayer.weight} kg</div>
               </div>
               <div>
-                <span className="text-muted-foreground">Registered:</span>
-                <div className="font-medium">{new Date(selectedPlayer.registeredDate).toLocaleDateString()}</div>
+                <span className="text-muted-foreground">Nationality:</span>
+                <div className="font-medium">{selectedPlayer.nationality}</div>
               </div>
             </div>
+            {selectedPlayer.video_url && (
+              <div className="mt-4">
+                <span className="text-sm text-muted-foreground">Training Video:</span>
+                <div className="mt-2">
+                  <video controls className="w-full rounded-lg max-h-96">
+                    <source src={selectedPlayer.video_url} type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Skills Radar Chart */}
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Trophy className="h-5 w-5" />
-                Skills Analysis
-              </CardTitle>
-              <CardDescription>
-                Your AI-evaluated performance across key football skills
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <RadarSkillChart data={skillData} />
-            </CardContent>
-          </Card>
-
-          {/* Individual Scores */}
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Detailed Scores
-              </CardTitle>
-              <CardDescription>
-                Breakdown of your skills with progress indicators
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {Object.entries(selectedPlayer.scores).map(([skill, score]) => (
-                <div key={skill} className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="font-medium capitalize">
-                      {skill.replace(/([A-Z])/g, ' $1').trim()}
-                    </span>
-                    <span className={`font-bold ${getScoreColor(score)}`}>
-                      {score}/100
-                    </span>
-                  </div>
-                  <Progress value={score} className="h-2" />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Training Recommendations */}
-        <Card className="mt-8 shadow-card">
+        {/* Analysis Coming Soon */}
+        <Card className="shadow-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Personalized Training Tips
+              <Trophy className="h-5 w-5" />
+              AI Analysis
             </CardTitle>
             <CardDescription>
-              AI-generated recommendations to improve your weakest areas
+              Your detailed skill analysis will appear here once processed
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-3 gap-4">
-              {trainingTips.map((tip, index) => (
-                <div key={index} className="p-4 rounded-lg bg-muted">
-                  <div className="font-medium text-primary mb-2">Tip #{index + 1}</div>
-                  <p className="text-sm text-muted-foreground">{tip}</p>
-                </div>
-              ))}
+            <div className="text-center py-12">
+              <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+              <p className="text-lg font-medium mb-2">Analysis in Progress</p>
+              <p className="text-muted-foreground">
+                Our AI is analyzing your training video. This typically takes 24-48 hours.
+              </p>
             </div>
           </CardContent>
         </Card>

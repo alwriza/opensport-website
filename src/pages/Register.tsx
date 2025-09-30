@@ -7,18 +7,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, CheckCircle, User, Video } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Register() {
   const [formData, setFormData] = useState({
     name: "",
-    age: "",
+    dateOfBirth: "",
+    nationality: "",
     position: "",
     academy: "",
     height: "",
     weight: "",
-    email: "",
-    phone: "",
-    experience: ""
+    email: ""
   });
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,16 +50,63 @@ export default function Register() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+      let videoUrl = null;
 
-    setIsSubmitting(false);
-    setIsSuccess(true);
-    
-    toast({
-      title: "Registration successful!",
-      description: "Your profile has been created and video is being analyzed.",
-    });
+      // Upload video if provided
+      if (videoFile) {
+        const fileExt = videoFile.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('player-videos')
+          .upload(filePath, videoFile);
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('player-videos')
+          .getPublicUrl(filePath);
+
+        videoUrl = publicUrl;
+      }
+
+      // Insert player registration
+      const { error: insertError } = await supabase
+        .from('player_registrations')
+        .insert({
+          full_name: formData.name,
+          email: formData.email,
+          date_of_birth: formData.dateOfBirth,
+          nationality: formData.nationality,
+          position: formData.position,
+          academy: formData.academy,
+          height: parseFloat(formData.height),
+          weight: parseFloat(formData.weight),
+          video_url: videoUrl
+        });
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      setIsSuccess(true);
+      toast({
+        title: "Registration successful!",
+        description: "Your profile has been created and video is being analyzed.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Registration failed",
+        description: error.message || "An error occurred. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isSuccess) {
@@ -121,22 +168,6 @@ export default function Register() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="age">Age *</Label>
-                    <Input
-                      id="age"
-                      type="number"
-                      min="13"
-                      max="25"
-                      value={formData.age}
-                      onChange={(e) => handleInputChange("age", e.target.value)}
-                      placeholder="Your age"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
                     <Label htmlFor="email">Email Address *</Label>
                     <Input
                       id="email"
@@ -147,14 +178,27 @@ export default function Register() {
                       required
                     />
                   </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
+                    <Label htmlFor="dateOfBirth">Date of Birth *</Label>
                     <Input
-                      id="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange("phone", e.target.value)}
-                      placeholder="+1 (555) 123-4567"
+                      id="dateOfBirth"
+                      type="date"
+                      value={formData.dateOfBirth}
+                      onChange={(e) => handleInputChange("dateOfBirth", e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="nationality">Nationality *</Label>
+                    <Input
+                      id="nationality"
+                      value={formData.nationality}
+                      onChange={(e) => handleInputChange("nationality", e.target.value)}
+                      placeholder="Your nationality"
+                      required
                     />
                   </div>
                 </div>
@@ -223,16 +267,6 @@ export default function Register() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="experience">Football Experience</Label>
-                  <Textarea
-                    id="experience"
-                    value={formData.experience}
-                    onChange={(e) => handleInputChange("experience", e.target.value)}
-                    placeholder="Tell us about your football background, achievements, and goals..."
-                    rows={3}
-                  />
-                </div>
               </CardContent>
             </Card>
 
@@ -298,7 +332,7 @@ export default function Register() {
               type="submit"
               size="lg"
               className="w-full"
-              disabled={isSubmitting || !formData.name || !formData.age || !formData.position || !formData.academy || !formData.height || !formData.weight || !formData.email}
+              disabled={isSubmitting || !formData.name || !formData.dateOfBirth || !formData.nationality || !formData.position || !formData.academy || !formData.height || !formData.weight || !formData.email}
             >
               {isSubmitting ? "Creating Profile..." : "Create Profile & Analyze Video"}
             </Button>
