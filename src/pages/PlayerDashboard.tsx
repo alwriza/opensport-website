@@ -7,6 +7,7 @@ import { RadarSkillChart } from "@/components/radar-chart";
 import { Upload, User, Trophy, TrendingUp, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface PlayerData {
   id: string;
@@ -25,10 +26,19 @@ interface PlayerData {
 export default function PlayerDashboard() {
   const [players, setPlayers] = useState<PlayerData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState<any>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchPlayers();
   }, []);
+
+  useEffect(() => {
+    if (players.length > 0) {
+      fetchAnalysis(players[0].id);
+    }
+  }, [players]);
 
   const fetchPlayers = async () => {
     try {
@@ -43,6 +53,53 @@ export default function PlayerDashboard() {
       console.error('Error fetching players:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAnalysis = async (playerId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('player_analysis')
+        .select('*')
+        .eq('player_id', playerId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      setAnalysis(data);
+    } catch (error) {
+      console.error('Error fetching analysis:', error);
+    }
+  };
+
+  const analyzeVideo = async () => {
+    if (players.length === 0) return;
+    
+    setAnalyzing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-player-video', {
+        body: { playerId: players[0].id }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Analysis Complete",
+        description: "Your video has been analyzed successfully!",
+      });
+
+      // Refresh analysis
+      await fetchAnalysis(players[0].id);
+    } catch (error) {
+      console.error('Error analyzing video:', error);
+      toast({
+        title: "Analysis Failed",
+        description: error.message || "Failed to analyze video. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setAnalyzing(false);
     }
   };
 
@@ -134,7 +191,7 @@ export default function PlayerDashboard() {
           </CardContent>
         </Card>
 
-        {/* Analysis Coming Soon */}
+        {/* AI Analysis */}
         <Card className="shadow-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -142,17 +199,108 @@ export default function PlayerDashboard() {
               AI Analysis
             </CardTitle>
             <CardDescription>
-              Your detailed skill analysis will appear here once processed
+              {analysis ? 'Your detailed skill analysis' : 'Click analyze to get AI-powered insights'}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-12">
-              <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-              <p className="text-lg font-medium mb-2">Analysis in Progress</p>
-              <p className="text-muted-foreground">
-                Our AI is analyzing your training video. This typically takes 24-48 hours.
-              </p>
-            </div>
+            {!analysis ? (
+              <div className="text-center py-12 space-y-4">
+                <Trophy className="h-12 w-12 text-muted-foreground mx-auto" />
+                <p className="text-lg font-medium">Ready to Analyze</p>
+                <p className="text-muted-foreground mb-4">
+                  Get AI-powered insights on your skills and training recommendations
+                </p>
+                <Button 
+                  onClick={analyzeVideo} 
+                  disabled={analyzing || !selectedPlayer.video_url}
+                  className="gap-2"
+                >
+                  {analyzing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <TrendingUp className="h-4 w-4" />
+                      Analyze Video
+                    </>
+                  )}
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Speed</p>
+                    <div className="flex items-center gap-2">
+                      <Progress value={analysis.speed_score} className="flex-1" />
+                      <span className="text-sm font-medium">{analysis.speed_score}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Dribbling</p>
+                    <div className="flex items-center gap-2">
+                      <Progress value={analysis.dribbling_score} className="flex-1" />
+                      <span className="text-sm font-medium">{analysis.dribbling_score}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Passing</p>
+                    <div className="flex items-center gap-2">
+                      <Progress value={analysis.passing_score} className="flex-1" />
+                      <span className="text-sm font-medium">{analysis.passing_score}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Shooting</p>
+                    <div className="flex items-center gap-2">
+                      <Progress value={analysis.shooting_score} className="flex-1" />
+                      <span className="text-sm font-medium">{analysis.shooting_score}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Defending</p>
+                    <div className="flex items-center gap-2">
+                      <Progress value={analysis.defending_score} className="flex-1" />
+                      <span className="text-sm font-medium">{analysis.defending_score}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Physicality</p>
+                    <div className="flex items-center gap-2">
+                      <Progress value={analysis.physicality_score} className="flex-1" />
+                      <span className="text-sm font-medium">{analysis.physicality_score}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t">
+                  <h3 className="text-lg font-semibold mb-3">Training Recommendations</h3>
+                  <ul className="space-y-2">
+                    {analysis.training_tips?.map((tip: string, index: number) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <TrendingUp className="h-4 w-4 text-primary mt-1 flex-shrink-0" />
+                        <span className="text-sm">{tip}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="flex justify-center pt-4">
+                  <Button onClick={analyzeVideo} variant="outline" disabled={analyzing}>
+                    {analyzing ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Re-analyzing...
+                      </>
+                    ) : (
+                      'Re-analyze Video'
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
