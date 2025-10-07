@@ -7,6 +7,7 @@ import { Navbar } from "@/components/ui/navbar";
 import Home from "./pages/Home";
 import PlayerDashboard from "./pages/PlayerDashboard";
 import CoachDashboard from "./pages/CoachDashboard";
+import Training from "./pages/Training";
 import About from "./pages/About";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/" element={<Home />} />
             <Route path="/player-dashboard" element={<PlayerDashboard />} />
             <Route path="/coach-dashboard" element={<CoachDashboard />} />
+            <Route path="/training" element={<Training />} />
             <Route path="/about" element={<About />} />
             <Route path="/register" element={<Register />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

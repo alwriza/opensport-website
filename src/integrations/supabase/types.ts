@@ -14,6 +14,91 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_recommendations: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          player_id: string
+          priority: string
+          recommendation_type: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          player_id: string
+          priority: string
+          recommendation_type: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          player_id?: string
+          priority?: string
+          recommendation_type?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_recommendations_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "player_registrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exercise_results: {
+        Row: {
+          control_score: number | null
+          created_at: string
+          exercise_id: string
+          feedback: Json | null
+          id: string
+          overall_score: number | null
+          speed_score: number | null
+          technique_score: number | null
+        }
+        Insert: {
+          control_score?: number | null
+          created_at?: string
+          exercise_id: string
+          feedback?: Json | null
+          id?: string
+          overall_score?: number | null
+          speed_score?: number | null
+          technique_score?: number | null
+        }
+        Update: {
+          control_score?: number | null
+          created_at?: string
+          exercise_id?: string
+          feedback?: Json | null
+          id?: string
+          overall_score?: number | null
+          speed_score?: number | null
+          technique_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_results_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "training_exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_analysis: {
         Row: {
           created_at: string
@@ -111,6 +196,91 @@ export type Database = {
           weight?: number
         }
         Relationships: []
+      }
+      training_exercises: {
+        Row: {
+          created_at: string
+          difficulty: string
+          exercise_type: string
+          id: string
+          player_id: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          difficulty: string
+          exercise_type: string
+          id?: string
+          player_id: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          difficulty?: string
+          exercise_type?: string
+          id?: string
+          player_id?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_exercises_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "player_registrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_reports: {
+        Row: {
+          areas_for_improvement: Json | null
+          average_score: number | null
+          created_at: string
+          exercises_completed: number | null
+          id: string
+          player_id: string
+          progress_summary: string | null
+          strengths: Json | null
+          week_end: string
+          week_start: string
+        }
+        Insert: {
+          areas_for_improvement?: Json | null
+          average_score?: number | null
+          created_at?: string
+          exercises_completed?: number | null
+          id?: string
+          player_id: string
+          progress_summary?: string | null
+          strengths?: Json | null
+          week_end: string
+          week_start: string
+        }
+        Update: {
+          areas_for_improvement?: Json | null
+          average_score?: number | null
+          created_at?: string
+          exercises_completed?: number | null
+          id?: string
+          player_id?: string
+          progress_summary?: string | null
+          strengths?: Json | null
+          week_end?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_reports_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "player_registrations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
