@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Play, TrendingUp, Target, Brain, Loader2, Filter } from "lucide-react";
+import { Play, TrendingUp, Target, Brain, Loader2, Filter, Lock, CheckCircle, Circle } from "lucide-react";
 
 interface Exercise {
   id: string;
@@ -48,6 +48,16 @@ const Training = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [filterDifficulty, setFilterDifficulty] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
+  
+  // Preloaded interactive exercises
+  const interactiveExercises = [
+    { id: 1, title: "Ball Control Basics", category: "Dribbling", completed: true, locked: false, xp: 100 },
+    { id: 2, title: "First Touch Mastery", category: "Control", completed: true, locked: false, xp: 150 },
+    { id: 3, title: "Passing Accuracy", category: "Passing", completed: false, locked: false, xp: 200 },
+    { id: 4, title: "Speed Dribbling", category: "Dribbling", completed: false, locked: false, xp: 250 },
+    { id: 5, title: "Shooting Precision", category: "Shooting", completed: false, locked: true, xp: 300 },
+    { id: 6, title: "Defensive Positioning", category: "Defending", completed: false, locked: true, xp: 350 },
+  ];
 
   useEffect(() => {
     fetchExercises();
@@ -149,12 +159,91 @@ const Training = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="exercises" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="interactive" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="interactive">Practice Skills</TabsTrigger>
           <TabsTrigger value="exercises">Exercise Library</TabsTrigger>
           <TabsTrigger value="feedback">AI Feedback</TabsTrigger>
           <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="interactive" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Learning Path</CardTitle>
+              <CardDescription>Complete exercises to unlock new skills and improve your game</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Progress</span>
+                  <span className="text-sm text-muted-foreground">2/6 completed</span>
+                </div>
+                <Progress value={33} className="h-2" />
+              </div>
+              
+              <div className="space-y-4">
+                {interactiveExercises.map((exercise, index) => (
+                  <Card 
+                    key={exercise.id} 
+                    className={`overflow-hidden transition-all hover:shadow-md ${
+                      exercise.locked ? 'opacity-60' : 'cursor-pointer'
+                    }`}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-4">
+                        <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${
+                          exercise.completed 
+                            ? 'bg-green-500/20' 
+                            : exercise.locked 
+                            ? 'bg-muted' 
+                            : 'bg-primary/20'
+                        }`}>
+                          {exercise.completed ? (
+                            <CheckCircle className="h-6 w-6 text-green-600" />
+                          ) : exercise.locked ? (
+                            <Lock className="h-6 w-6 text-muted-foreground" />
+                          ) : (
+                            <Circle className="h-6 w-6 text-primary" />
+                          )}
+                        </div>
+                        
+                        <div className="flex-grow">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-semibold">{exercise.title}</h3>
+                            <Badge variant="outline" className="text-xs">
+                              {exercise.category}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {exercise.locked 
+                              ? 'Complete previous exercises to unlock' 
+                              : exercise.completed 
+                              ? 'Completed! Review anytime' 
+                              : 'Ready to practice'}
+                          </p>
+                        </div>
+                        
+                        <div className="flex-shrink-0 text-right">
+                          <div className="text-sm font-medium text-primary mb-1">
+                            +{exercise.xp} XP
+                          </div>
+                          <Button 
+                            size="sm" 
+                            disabled={exercise.locked}
+                            variant={exercise.completed ? "outline" : "default"}
+                          >
+                            {exercise.completed ? 'Review' : 'Start'}
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="exercises" className="space-y-4">
           <Card>
