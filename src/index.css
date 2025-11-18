@@ -2,66 +2,78 @@
 @tailwind components;
 @tailwind utilities;
 
-/* AI Scout Design System - Football scouting platform
+/* AI Scout Design System - Premium Sports-Tech Platform
 All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 215 25% 12%;
+    --background: 0 0% 99%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 12%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 12%;
+    --popover-foreground: 222 47% 11%;
 
-    /* Football green primary theme */
-    --primary: 142 69% 25%;
-    --primary-foreground: 0 0% 98%;
-    --primary-glow: 142 69% 35%;
+    /* Premium electric green primary */
+    --primary: 142 76% 36%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 142 76% 46%;
+    --primary-dark: 142 76% 26%;
 
-    /* Professional blue secondary */
-    --secondary: 217 91% 12%;
-    --secondary-foreground: 0 0% 98%;
+    /* Deep navy secondary */
+    --secondary: 220 26% 14%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-light: 220 26% 24%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 220 13% 95%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 142 69% 25%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 199 89% 48%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 142 69% 25%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 142 76% 36%;
 
-    /* Custom football theme colors */
-    --football-green: 142 69% 25%;
-    --football-green-light: 142 69% 35%;
-    --football-blue: 217 91% 12%;
-    --football-blue-light: 217 91% 22%;
+    /* Premium theme colors */
+    --electric-green: 142 76% 36%;
+    --electric-green-glow: 142 76% 46%;
+    --deep-navy: 220 26% 14%;
+    --cyber-blue: 199 89% 48%;
+    --gold: 43 100% 50%;
     --success: 142 76% 36%;
     --warning: 38 92% 50%;
     --info: 199 89% 48%;
+    --xp-purple: 270 70% 60%;
 
-    /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(142 69% 25%), hsl(217 91% 12%));
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 40% 98%));
-    --gradient-skill: linear-gradient(90deg, hsl(142 69% 25%), hsl(142 69% 35%));
+    /* Premium Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(142 76% 36%) 0%, hsl(199 89% 48%) 50%, hsl(220 26% 14%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(220 13% 98%) 100%);
+    --gradient-skill: linear-gradient(90deg, hsl(142 76% 36%), hsl(142 76% 46%));
+    --gradient-premium: linear-gradient(135deg, hsl(142 76% 36%), hsl(199 89% 48%));
+    --gradient-xp: linear-gradient(90deg, hsl(270 70% 60%), hsl(199 89% 48%));
+    --gradient-locked: linear-gradient(135deg, hsl(220 9% 46%), hsl(220 13% 91%));
+    --gradient-glass: linear-gradient(135deg, hsla(0 0% 100% / 0.1), hsla(0 0% 100% / 0.05));
 
-    /* Shadows */
-    --shadow-card: 0 4px 20px -4px hsl(142 69% 25% / 0.1);
-    --shadow-hero: 0 20px 60px -20px hsl(142 69% 25% / 0.3);
+    /* Premium Shadows */
+    --shadow-card: 0 2px 8px -2px hsl(220 26% 14% / 0.08), 0 4px 16px -4px hsl(220 26% 14% / 0.06);
+    --shadow-card-hover: 0 8px 24px -8px hsl(142 76% 36% / 0.15), 0 12px 32px -8px hsl(220 26% 14% / 0.08);
+    --shadow-hero: 0 20px 60px -20px hsl(142 76% 36% / 0.4);
+    --shadow-glow: 0 0 20px hsl(142 76% 46% / 0.3);
+    --shadow-premium: 0 10px 40px -10px hsl(142 76% 36% / 0.2);
 
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --transition-premium: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -81,33 +93,34 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 220 26% 8%;
+    --foreground: 0 0% 98%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 220 26% 10%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 26% 10%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 142 76% 46%;
+    --primary-foreground: 220 26% 8%;
+    --primary-glow: 142 76% 56%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 220 26% 18%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 220 26% 16%;
+    --muted-foreground: 220 9% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 199 89% 58%;
+    --accent-foreground: 220 26% 8%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 50.6%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 220 26% 18%;
+    --input: 220 26% 18%;
+    --ring: 142 76% 46%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -125,6 +138,24 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-premium;
+  }
+  
+  .glass-card {
+    @apply backdrop-blur-lg bg-white/80 dark:bg-card/80 border border-white/20;
+  }
+  
+  .hover-lift {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover;
+  }
+  
+  .glow {
+    @apply shadow-glow;
   }
 }

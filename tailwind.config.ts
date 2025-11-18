@@ -23,6 +23,7 @@ export default {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
           glow: "hsl(var(--primary-glow))",
+          dark: "hsl(var(--primary-dark))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -58,25 +59,38 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        // Custom football theme colors
-        football: {
-          green: "hsl(var(--football-green))",
-          "green-light": "hsl(var(--football-green-light))",
-          blue: "hsl(var(--football-blue))",
-          "blue-light": "hsl(var(--football-blue-light))",
+        // Premium sports-tech colors
+        electric: {
+          green: "hsl(var(--electric-green))",
+          "green-glow": "hsl(var(--electric-green-glow))",
         },
+        navy: {
+          DEFAULT: "hsl(var(--deep-navy))",
+        },
+        cyber: {
+          blue: "hsl(var(--cyber-blue))",
+        },
+        gold: "hsl(var(--gold))",
         success: "hsl(var(--success))",
         warning: "hsl(var(--warning))",
         info: "hsl(var(--info))",
+        xp: "hsl(var(--xp-purple))",
       },
       backgroundImage: {
         "gradient-hero": "var(--gradient-hero)",
         "gradient-card": "var(--gradient-card)",
         "gradient-skill": "var(--gradient-skill)",
+        "gradient-premium": "var(--gradient-premium)",
+        "gradient-xp": "var(--gradient-xp)",
+        "gradient-locked": "var(--gradient-locked)",
+        "gradient-glass": "var(--gradient-glass)",
       },
       boxShadow: {
         card: "var(--shadow-card)",
+        "card-hover": "var(--shadow-card-hover)",
         hero: "var(--shadow-hero)",
+        glow: "var(--shadow-glow)",
+        premium: "var(--shadow-premium)",
       },
       transitionTimingFunction: {
         smooth: "var(--transition-smooth)",
