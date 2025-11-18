@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Play, TrendingUp, Target, Brain, Loader2, Filter, Lock, CheckCircle, Circle } from "lucide-react";
+import { Play, TrendingUp, Target, Brain, Loader2, Filter, Lock, CheckCircle, Circle, Trophy, Flame, Star, Zap } from "lucide-react";
 
 interface Exercise {
   id: string;
@@ -49,15 +49,27 @@ const Training = () => {
   const [filterDifficulty, setFilterDifficulty] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
   
-  // Preloaded interactive exercises
+  // Progression state
+  const [userXP] = useState(450);
+  const [userLevel] = useState(3);
+  const [streak] = useState(7);
+  
+  // Preloaded interactive exercises with skill tree structure
   const interactiveExercises = [
-    { id: 1, title: "Ball Control Basics", category: "Dribbling", completed: true, locked: false, xp: 100 },
-    { id: 2, title: "First Touch Mastery", category: "Control", completed: true, locked: false, xp: 150 },
-    { id: 3, title: "Passing Accuracy", category: "Passing", completed: false, locked: false, xp: 200 },
-    { id: 4, title: "Speed Dribbling", category: "Dribbling", completed: false, locked: false, xp: 250 },
-    { id: 5, title: "Shooting Precision", category: "Shooting", completed: false, locked: true, xp: 300 },
-    { id: 6, title: "Defensive Positioning", category: "Defending", completed: false, locked: true, xp: 350 },
+    { id: 1, title: "Ball Control Basics", category: "Dribbling", completed: true, locked: false, xp: 100, tier: 1 },
+    { id: 2, title: "First Touch Mastery", category: "Control", completed: true, locked: false, xp: 150, tier: 1 },
+    { id: 3, title: "Passing Accuracy", category: "Passing", completed: false, locked: false, xp: 200, tier: 2 },
+    { id: 4, title: "Speed Dribbling", category: "Dribbling", completed: false, locked: false, xp: 250, tier: 2 },
+    { id: 5, title: "Shooting Precision", category: "Shooting", completed: false, locked: true, xp: 300, tier: 3 },
+    { id: 6, title: "Defensive Positioning", category: "Defending", completed: false, locked: true, xp: 350, tier: 3 },
+    { id: 7, title: "Advanced Tactics", category: "Tactical", completed: false, locked: true, xp: 400, tier: 4 },
+    { id: 8, title: "Match Simulation", category: "Game", completed: false, locked: true, xp: 500, tier: 4 },
   ];
+
+  const completedCount = interactiveExercises.filter(e => e.completed).length;
+  const progressPercentage = (completedCount / interactiveExercises.length) * 100;
+  const xpToNextLevel = 500;
+  const xpProgress = (userXP / xpToNextLevel) * 100;
 
   useEffect(() => {
     fetchExercises();
@@ -143,28 +155,108 @@ const Training = () => {
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'beginner': return 'bg-green-500';
-      case 'intermediate': return 'bg-yellow-500';
-      case 'advanced': return 'bg-red-500';
-      default: return 'bg-gray-500';
+      case 'beginner': return 'bg-success';
+      case 'intermediate': return 'bg-warning';
+      case 'advanced': return 'bg-destructive';
+      default: return 'bg-muted';
+    }
+  };
+
+  const getTierColor = (tier: number) => {
+    switch (tier) {
+      case 1: return 'from-success to-success/70';
+      case 2: return 'from-info to-cyber-blue';
+      case 3: return 'from-warning to-gold';
+      case 4: return 'from-xp to-primary';
+      default: return 'from-muted to-muted-foreground';
     }
   };
 
   return (
     <div className="container mx-auto py-8 px-4">
+      {/* Header with Stats */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">Training Library</h1>
-        <p className="text-muted-foreground">
-          Browse AI-analyzed training exercises and get personalized recommendations
-        </p>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-4xl font-bold text-gradient mb-2">Training Center</h1>
+            <p className="text-muted-foreground">
+              Master your skills with AI-powered training programs
+            </p>
+          </div>
+          
+          {/* User Stats */}
+          <div className="flex gap-4">
+            <Card className="glass-card">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-gradient-xp flex items-center justify-center">
+                  <Star className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Level</p>
+                  <p className="text-2xl font-bold">{userLevel}</p>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="glass-card">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-gradient-premium flex items-center justify-center">
+                  <Flame className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Streak</p>
+                  <p className="text-2xl font-bold">{streak} days</p>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="glass-card">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-gradient-skill flex items-center justify-center">
+                  <Zap className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">XP</p>
+                  <p className="text-2xl font-bold">{userXP}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* XP Progress Bar */}
+        <Card className="bg-gradient-card border-2 border-primary/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-semibold">Level {userLevel} Progress</span>
+              <span className="text-sm text-muted-foreground">{userXP}/{xpToNextLevel} XP</span>
+            </div>
+            <Progress value={xpProgress} className="h-3 bg-muted" />
+            <p className="text-xs text-muted-foreground mt-2">
+              {xpToNextLevel - userXP} XP until Level {userLevel + 1}
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs defaultValue="interactive" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="interactive">Practice Skills</TabsTrigger>
-          <TabsTrigger value="exercises">Exercise Library</TabsTrigger>
-          <TabsTrigger value="feedback">AI Feedback</TabsTrigger>
-          <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 h-14 p-1 bg-muted/50 rounded-xl">
+          <TabsTrigger value="interactive" className="rounded-lg data-[state=active]:bg-gradient-premium data-[state=active]:text-white">
+            <Trophy className="h-4 w-4 mr-2" />
+            Skill Tree
+          </TabsTrigger>
+          <TabsTrigger value="exercises" className="rounded-lg data-[state=active]:bg-gradient-premium data-[state=active]:text-white">
+            <Target className="h-4 w-4 mr-2" />
+            Exercise Library
+          </TabsTrigger>
+          <TabsTrigger value="feedback" className="rounded-lg data-[state=active]:bg-gradient-premium data-[state=active]:text-white">
+            <TrendingUp className="h-4 w-4 mr-2" />
+            AI Feedback
+          </TabsTrigger>
+          <TabsTrigger value="recommendations" className="rounded-lg data-[state=active]:bg-gradient-premium data-[state=active]:text-white">
+            <Brain className="h-4 w-4 mr-2" />
+            Recommendations
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="interactive" className="space-y-6">
