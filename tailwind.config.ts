@@ -59,7 +59,7 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        // Premium sports-tech colors
+        // Premium sports-tech colors matching previous design
         electric: {
           green: "hsl(var(--electric-green))",
           "green-glow": "hsl(var(--electric-green-glow))",
@@ -84,6 +84,7 @@ export default {
         "gradient-xp": "var(--gradient-xp)",
         "gradient-locked": "var(--gradient-locked)",
         "gradient-glass": "var(--gradient-glass)",
+        "gradient-mesh": "var(--gradient-mesh)",
       },
       boxShadow: {
         card: "var(--shadow-card)",

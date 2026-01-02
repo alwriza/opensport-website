@@ -14,7 +14,7 @@ export function Navbar() {
     { path: "/player-dashboard", label: "Player Dashboard" },
     { path: "/coach-dashboard", label: "Coach Dashboard" },
     { path: "/training", label: "Training" },
-    { path: "/about", label: "About Project" },
+    // { path: "/about", label: "About Project" },
   ];
 
   return (

@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { mockPlayers, Player } from "@/lib/mock-data";
-import { Search, Filter, Users, TrendingUp, Trophy, User } from "lucide-react";
+import { Search, Filter, Users, TrendingUp, Trophy, User, MapPin, Calendar } from "lucide-react";
 
 export default function CoachDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -41,10 +41,17 @@ export default function CoachDashboard() {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 90) return "text-green-600 bg-green-50";
-    if (score >= 80) return "text-blue-600 bg-blue-50";
-    if (score >= 70) return "text-yellow-600 bg-yellow-50";
-    return "text-orange-600 bg-orange-50";
+    if (score >= 90) return "bg-primary text-primary-foreground";
+    if (score >= 80) return "bg-success text-white";
+    if (score >= 70) return "bg-warning text-black";
+    return "bg-muted text-muted-foreground";
+  };
+
+  const getScoreGrade = (score: number) => {
+    if (score >= 90) return "Elite";
+    if (score >= 80) return "Excellent";
+    if (score >= 70) return "Good";
+    return "Developing";
   };
 
   const getTopSkill = (player: Player) => {
@@ -53,76 +60,93 @@ export default function CoachDashboard() {
     return { skill: topSkill[0], score: topSkill[1] };
   };
 
+  const formatSkillName = (skill: string) => {
+    return skill
+      .replace(/([A-Z])/g, ' $1')
+      .trim()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-card">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Coach Dashboard</h1>
-          <p className="text-muted-foreground">Discover and evaluate talented young players</p>
+          <h1 className="text-4xl font-bold text-foreground mb-2 hero-title">COACH DASHBOARD</h1>
+          <p className="text-muted-foreground text-lg">Discover and evaluate talented young players</p>
         </div>
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="shadow-card">
+          <Card className="shadow-card border-2 border-primary/20 hover:border-primary/40 transition-colors">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Players</p>
-                  <p className="text-2xl font-bold text-primary">{mockPlayers.length}</p>
+                  <p className="text-sm text-muted-foreground uppercase tracking-wide mb-1">Total Players</p>
+                  <p className="text-3xl font-bold text-primary">{mockPlayers.length}</p>
                 </div>
-                <Users className="h-8 w-8 text-primary/60" />
+                <div className="p-3 bg-primary/10 rounded-xl">
+                  <Users className="h-6 w-6 text-primary" />
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-card">
+          <Card className="shadow-card border-2 border-primary/20 hover:border-primary/40 transition-colors">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Avg Age</p>
-                  <p className="text-2xl font-bold text-primary">
+                  <p className="text-sm text-muted-foreground uppercase tracking-wide mb-1">Avg Age</p>
+                  <p className="text-3xl font-bold text-primary">
                     {Math.round(mockPlayers.reduce((sum, p) => sum + p.age, 0) / mockPlayers.length)}
                   </p>
                 </div>
-                <TrendingUp className="h-8 w-8 text-primary/60" />
+                <div className="p-3 bg-primary/10 rounded-xl">
+                  <TrendingUp className="h-6 w-6 text-primary" />
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-card">
+          <Card className="shadow-card border-2 border-primary/20 hover:border-primary/40 transition-colors">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Top Rated</p>
-                  <p className="text-2xl font-bold text-primary">
+                  <p className="text-sm text-muted-foreground uppercase tracking-wide mb-1">Top Rated</p>
+                  <p className="text-3xl font-bold text-primary">
                     {Math.max(...mockPlayers.map(getOverallScore))}
                   </p>
                 </div>
-                <Trophy className="h-8 w-8 text-primary/60" />
+                <div className="p-3 bg-primary/10 rounded-xl">
+                  <Trophy className="h-6 w-6 text-primary" />
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-card">
+          <Card className="shadow-card border-2 border-primary/20 hover:border-primary/40 transition-colors">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Academies</p>
-                  <p className="text-2xl font-bold text-primary">
+                  <p className="text-sm text-muted-foreground uppercase tracking-wide mb-1">Academies</p>
+                  <p className="text-3xl font-bold text-primary">
                     {new Set(mockPlayers.map(p => p.academy)).size}
                   </p>
                 </div>
-                <Filter className="h-8 w-8 text-primary/60" />
+                <div className="p-3 bg-primary/10 rounded-xl">
+                  <Filter className="h-6 w-6 text-primary" />
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Filters */}
-        <Card className="mb-8 shadow-card">
+        <Card className="mb-8 shadow-card border-2 border-primary/20">
           <CardHeader>
-            <CardTitle>Filter & Search Players</CardTitle>
+            <CardTitle className="text-2xl">Filter & Search Players</CardTitle>
             <CardDescription>Find the perfect players for your team</CardDescription>
           </CardHeader>
           <CardContent>
@@ -170,51 +194,105 @@ export default function CoachDashboard() {
             const topSkill = getTopSkill(player);
             
             return (
-              <Card key={player.id} className="shadow-card hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10">
-                        <User className="h-6 w-6 text-primary" />
+              <Card 
+                key={player.id} 
+                className="shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 border-2 border-primary/10 hover:border-primary/30 bg-card/50 backdrop-blur-sm overflow-hidden"
+              >
+                {/* Header with Score Badge */}
+                <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 border-b border-primary/10">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center ring-2 ring-primary/30">
+                        <User className="h-7 w-7 text-primary" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg">{player.name}</CardTitle>
-                        <CardDescription>{player.position} • Age {player.age}</CardDescription>
+                        <h3 className="text-xl font-bold text-foreground mb-1">{player.name}</h3>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Badge variant="outline" className="border-primary/50 text-primary font-medium">
+                            {player.position}
+                          </Badge>
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {player.age} yrs
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-sm font-medium ${getScoreColor(overallScore)}`}>
-                      {overallScore}
+                    <div className="flex flex-col items-end gap-1">
+                      <div className={`px-4 py-2 rounded-lg font-bold text-xl ${getScoreColor(overallScore)}`}>
+                        {overallScore}
+                      </div>
+                      <span className="text-xs text-muted-foreground font-medium">
+                        {getScoreGrade(overallScore)}
+                      </span>
                     </div>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Academy</p>
-                    <p className="font-medium">{player.academy}</p>
+                </div>
+
+                <CardContent className="p-6 space-y-5">
+                  {/* Academy */}
+                  <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                    <MapPin className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide mb-0.5">Academy</p>
+                      <p className="font-semibold text-foreground">{player.academy}</p>
+                    </div>
                   </div>
                   
+                  {/* Top Skill */}
                   <div>
-                    <p className="text-sm text-muted-foreground mb-2">Top Skill</p>
-                    <div className="flex items-center justify-between">
-                      <span className="capitalize font-medium">
-                        {topSkill.skill.replace(/([A-Z])/g, ' $1').trim()}
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Best Attribute</p>
+                    <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg border border-primary/20">
+                      <span className="font-bold text-foreground">
+                        {formatSkillName(topSkill.skill)}
                       </span>
-                      <Badge variant="secondary">{topSkill.score}/100</Badge>
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-primary rounded-full transition-all" 
+                            style={{ width: `${topSkill.score}%` }}
+                          />
+                        </div>
+                        <span className="font-bold text-primary min-w-[3rem] text-right">
+                          {topSkill.score}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="text-center p-2 bg-muted rounded">
-                      <div className="font-medium">{player.height}cm</div>
-                      <div className="text-muted-foreground">Height</div>
-                    </div>
-                    <div className="text-center p-2 bg-muted rounded">
-                      <div className="font-medium">{player.weight}kg</div>
-                      <div className="text-muted-foreground">Weight</div>
+                  {/* Physical Stats */}
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Physical</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-muted/50 rounded-lg p-3 text-center border border-border">
+                        <div className="text-2xl font-bold text-foreground mb-1">{player.height}</div>
+                        <div className="text-xs text-muted-foreground uppercase tracking-wide">cm</div>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-3 text-center border border-border">
+                        <div className="text-2xl font-bold text-foreground mb-1">{player.weight}</div>
+                        <div className="text-xs text-muted-foreground uppercase tracking-wide">kg</div>
+                      </div>
                     </div>
                   </div>
 
-                  <Button className="w-full" variant="outline">
+                  {/* All Skills Overview */}
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Skills Overview</p>
+                    <div className="space-y-2">
+                      {Object.entries(player.scores).map(([skill, score]) => (
+                        <div key={skill} className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">{formatSkillName(skill)}</span>
+                          <span className="font-semibold text-foreground">{score}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Action Button */}
+                  <Button 
+                    className="w-full bg-primary hover:bg-primary-dark text-primary-foreground font-semibold"
+                    size="lg"
+                  >
                     View Full Profile
                   </Button>
                 </CardContent>
@@ -224,10 +302,12 @@ export default function CoachDashboard() {
         </div>
 
         {filteredAndSortedPlayers.length === 0 && (
-          <Card className="shadow-card">
-            <CardContent className="py-12 text-center">
-              <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No players found</h3>
+          <Card className="shadow-card border-2 border-primary/20">
+            <CardContent className="py-16 text-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Search className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold mb-2 text-foreground">No players found</h3>
               <p className="text-muted-foreground">Try adjusting your search or filter criteria</p>
             </CardContent>
           </Card>
