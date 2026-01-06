@@ -13,7 +13,7 @@ serve(async (req) => {
 
   try {
     const { playerId } = await req.json();
-    
+
     if (!playerId) {
       throw new Error('Player ID is required');
     }
@@ -21,7 +21,7 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')!;
-    
+
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Get player data
@@ -78,15 +78,14 @@ Latest Performance Analysis:
 
 ${exercises && exercises.length > 0 ? `
 Recent Training History: ${exercises.length} exercises completed
-Average Performance: ${
-  exercises.reduce((sum: number, ex: any) => {
-    const results = ex.exercise_results || [];
-    const avgScore = results.length > 0 
-      ? results.reduce((s: number, r: any) => s + (r.overall_score || 0), 0) / results.length 
-      : 0;
-    return sum + avgScore;
-  }, 0) / exercises.length
-}/100
+Average Performance: ${exercises.reduce((sum: number, ex: any) => {
+      const results = ex.exercise_results || [];
+      const avgScore = results.length > 0
+        ? results.reduce((s: number, r: any) => s + (r.overall_score || 0), 0) / results.length
+        : 0;
+      return sum + avgScore;
+    }, 0) / exercises.length
+        }/100
 ` : 'No training history yet'}
 
 Based on this data, provide 5-7 personalized recommendations across these categories:
@@ -137,7 +136,7 @@ Return ONLY valid JSON in this exact format:
 
     const aiData = await aiResponse.json();
     const recommendationsText = aiData.choices[0].message.content;
-    
+
     // Extract JSON from response
     let recommendationsJson;
     try {
@@ -178,12 +177,12 @@ Return ONLY valid JSON in this exact format:
     console.log('Recommendations generated successfully');
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         recommendations: savedRecommendations,
         message: 'Recommendations generated successfully'
       }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
@@ -192,10 +191,10 @@ Return ONLY valid JSON in this exact format:
   } catch (error) {
     console.error('Error in generate-recommendations function:', error);
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: error instanceof Error ? error.message : 'An error occurred'
       }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
       }
