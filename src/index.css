@@ -2,176 +2,77 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Import Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Exo+2:wght@300;400;600;700;800&display=swap');
-
 @layer base {
   :root {
-    /* Black background with green accents theme */
-    --background: 0 0% 0%; /* Pure black */
-    --foreground: 0 0% 100%; /* White text */
+    /* Minimalist Slate/Zinc Theme */
+    --background: 0 0% 100%; /* White */
+    --foreground: 240 10% 3.9%; /* Zen Black */
 
-    --card: 0 0% 5%; /* Very dark gray for cards */
-    --card-foreground: 0 0% 100%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
 
-    --popover: 0 0% 5%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
 
-    /* Green primary color (matching previous design) */
-    --primary: 142 76% 36%; /* #22c55e - Green 500 */
-    --primary-foreground: 0 0% 0%; /* Black text on green */
-    --primary-glow: 142 76% 36%; /* Same as primary for glow */
-    --primary-dark: 142 70% 30%; /* Darker green for hover */
+    --primary: 240 5.9% 10%; /* Very dark slate */
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 240 4.8% 95.9%; /* Light Gray */
+    --secondary-foreground: 240 5.9% 10%;
 
-    --muted: 0 0% 20%; /* Gray for muted elements */
-    --muted-foreground: 0 0% 60%; /* Light gray text */
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
 
-    --accent: 142 76% 36%; /* Green accent */
-    --accent-foreground: 0 0% 0%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
 
-    --destructive: 0 84% 60%; /* Red for errors */
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 142 76% 36% / 0.2; /* Green border with transparency */
-    --input: 142 76% 36% / 0.3;
-    --ring: 142 76% 36%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 10% 3.9%;
 
-    --radius: 1rem;
-
-    /* Sidebar colors */
-    --sidebar-background: 0 0% 5%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 142 76% 36%;
-    --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 0 0% 10%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 142 76% 36% / 0.2;
-    --sidebar-ring: 142 76% 36%;
-
-    /* Premium sports-tech colors */
-    --electric-green: 142 76% 36%; /* #22c55e */
-    --electric-green-glow: 142 76% 50%;
-    --deep-navy: 220 40% 10%;
-    --cyber-blue: 188 94% 42%; /* #14b8a6 - Teal */
-    --gold: 43 96% 56%;
-    --success: 142 76% 36%; /* Green */
-    --warning: 43 96% 56%; /* Yellow/Gold */
-    --info: 188 94% 42%; /* Cyan/Teal */
-    --xp-purple: 271 91% 65%;
-
-    /* Gradient backgrounds */
-    --gradient-hero: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.7), rgb(0, 0, 0));
-    --gradient-card: radial-gradient(at 0% 0%, rgba(34, 197, 94, 0.2) 0px, transparent 50%),
-                      radial-gradient(at 100% 0%, rgba(20, 184, 166, 0.2) 0px, transparent 50%),
-                      radial-gradient(at 100% 100%, rgba(34, 197, 94, 0.2) 0px, transparent 50%),
-                      radial-gradient(at 0% 100%, rgba(20, 184, 166, 0.2) 0px, transparent 50%),
-                      rgb(0, 0, 0);
-    --gradient-skill: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(20, 184, 166, 0.1));
-    --gradient-premium: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(20, 184, 166, 0.2));
-    --gradient-xp: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(192, 132, 252, 0.1));
-    --gradient-locked: linear-gradient(135deg, rgba(100, 100, 100, 0.1), rgba(60, 60, 60, 0.1));
-    --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
-    --gradient-mesh: radial-gradient(at 0% 0%, rgba(34, 197, 94, 0.2) 0px, transparent 50%),
-                      radial-gradient(at 100% 0%, rgba(20, 184, 166, 0.2) 0px, transparent 50%),
-                      radial-gradient(at 100% 100%, rgba(34, 197, 94, 0.2) 0px, transparent 50%),
-                      radial-gradient(at 0% 100%, rgba(20, 184, 166, 0.2) 0px, transparent 50%),
-                      rgb(0, 0, 0);
-
-    /* Shadows */
-    --shadow-card: 0 4px 6px -1px rgba(34, 197, 94, 0.1), 0 2px 4px -1px rgba(34, 197, 94, 0.06);
-    --shadow-card-hover: 0 20px 40px rgba(34, 197, 94, 0.2);
-    --shadow-hero: 0 10px 40px rgba(34, 197, 94, 0.3);
-    --shadow-glow: 0 0 20px rgba(34, 197, 94, 0.4), 0 0 40px rgba(34, 197, 94, 0.2);
-    --shadow-premium: 0 25px 50px -12px rgba(34, 197, 94, 0.25);
-
-    /* Transitions */
-    --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --radius: 0.5rem;
   }
 
   .dark {
-    /* Already using dark theme by default, but keeping this for compatibility */
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
+    --background: 240 10% 3.9%; /* Dark Slate */
+    --foreground: 0 0% 98%;
+
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 0 0% 98%; /* White */
+    --primary-foreground: 240 5.9% 10%;
+
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
   }
 }
 
 @layer base {
   * {
     @apply border-border;
-    font-family: 'Exo 2', sans-serif;
   }
-  
   body {
     @apply bg-background text-foreground;
-  }
-  
-  .hero-title {
-    font-family: 'Bebas Neue', sans-serif;
-    letter-spacing: 0.05em;
-  }
-}
-
-@layer components {
-  .gradient-text {
-    background: linear-gradient(135deg, #22c55e 0%, #10b981 50%, #14b8a6 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  
-  .grid-pattern {
-    background-image: 
-      linear-gradient(rgba(34, 197, 94, 0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(34, 197, 94, 0.05) 1px, transparent 1px);
-    background-size: 50px 50px;
-  }
-}
-
-@layer utilities {
-  /* Animation Keyframes */
-  @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  @keyframes float {
-    0%, 100% { 
-      transform: translateY(0px); 
-    }
-    50% { 
-      transform: translateY(-20px); 
-    }
-  }
-  
-  @keyframes glow {
-    0%, 100% { 
-      box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); 
-    }
-    50% { 
-      box-shadow: 0 0 40px rgba(34, 197, 94, 0.6); 
-    }
-  }
-  
-  /* Animation Classes */
-  .phrase-animation {
-    animation: slideUp 0.6s ease-out forwards;
-  }
-  
-  .animate-float {
-    animation: float 3s ease-in-out infinite;
-  }
-  
-  .animate-glow {
-    animation: glow 2s ease-in-out infinite;
+    font-family: 'Inter', system-ui, sans-serif;
   }
 }
