@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Trophy } from "lucide-react";
 import { useState } from "react";
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
 
 export function Navbar() {
   const location = useLocation();
@@ -10,10 +11,10 @@ export function Navbar() {
   const isActive = (path: string) => location.pathname === path;
 
   const navItems = [
-    { path: "/", label: "Home" },
-    { path: "/player-dashboard", label: "Player Dashboard" },
-    { path: "/coach-dashboard", label: "Coach Dashboard" },
-    { path: "/training", label: "Training" },
+    { path: "/", label: "Home", protected: false },
+    { path: "/player-dashboard", label: "Player Dashboard", protected: true },
+    { path: "/coach-dashboard", label: "Coach Dashboard", protected: true },
+    { path: "/training", label: "Training", protected: true },
   ];
 
   return (
@@ -29,20 +30,51 @@ export function Navbar() {
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-8">
           {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`text-sm font-medium transition-colors hover:text-primary ${isActive(item.path)
-                  ? "text-primary"
-                  : "text-muted-foreground"
-                }`}
-            >
-              {item.label}
-            </Link>
+            <div key={item.path}>
+              {item.protected ? (
+                <>
+                  <SignedOut>
+                    <SignInButton mode="modal" forceRedirectUrl={item.path}>
+                      <span className="text-sm font-medium transition-colors hover:text-primary text-muted-foreground cursor-pointer">
+                        {item.label}
+                      </span>
+                    </SignInButton>
+                  </SignedOut>
+                  <SignedIn>
+                    <Link
+                      to={item.path}
+                      className={`text-sm font-medium transition-colors hover:text-primary ${isActive(item.path)
+                        ? "text-primary"
+                        : "text-muted-foreground"
+                        }`}
+                    >
+                      {item.label}
+                    </Link>
+                  </SignedIn>
+                </>
+              ) : (
+                <Link
+                  to={item.path}
+                  className={`text-sm font-medium transition-colors hover:text-primary ${isActive(item.path)
+                    ? "text-primary"
+                    : "text-muted-foreground"
+                    }`}
+                >
+                  {item.label}
+                </Link>
+              )}
+            </div>
           ))}
-          <Button variant="default" size="sm" asChild className="rounded-full px-6">
-            <Link to="/register">Get Started</Link>
-          </Button>
+          <SignedOut>
+            <SignInButton mode="modal" forceRedirectUrl="/player-dashboard">
+              <Button variant="default" size="sm" className="rounded-full px-6">
+                Get Started
+              </Button>
+            </SignInButton>
+          </SignedOut>
+          <SignedIn>
+            <UserButton afterSignOutUrl="/" />
+          </SignedIn>
         </div>
 
         {/* Mobile Navigation Toggle */}
@@ -65,23 +97,58 @@ export function Navbar() {
         <div className="md:hidden border-t bg-background animate-in slide-in-from-top-2">
           <div className="container px-6 py-6 space-y-4">
             {navItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`block text-base font-medium transition-colors hover:text-primary ${isActive(item.path)
-                    ? "text-primary"
-                    : "text-muted-foreground"
-                  }`}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                {item.label}
-              </Link>
+              <div key={item.path}>
+                {item.protected ? (
+                  <>
+                    <SignedOut>
+                      <SignInButton mode="modal" forceRedirectUrl={item.path}>
+                        <span
+                          className="block text-base font-medium transition-colors hover:text-primary text-muted-foreground cursor-pointer"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          {item.label}
+                        </span>
+                      </SignInButton>
+                    </SignedOut>
+                    <SignedIn>
+                      <Link
+                        to={item.path}
+                        className={`block text-base font-medium transition-colors hover:text-primary ${isActive(item.path)
+                          ? "text-primary"
+                          : "text-muted-foreground"
+                          }`}
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        {item.label}
+                      </Link>
+                    </SignedIn>
+                  </>
+                ) : (
+                  <Link
+                    to={item.path}
+                    className={`block text-base font-medium transition-colors hover:text-primary ${isActive(item.path)
+                      ? "text-primary"
+                      : "text-muted-foreground"
+                      }`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                )}
+              </div>
             ))}
-            <Button variant="default" size="lg" asChild className="w-full mt-4">
-              <Link to="/register" onClick={() => setIsMenuOpen(false)}>
-                Get Started
-              </Link>
-            </Button>
+            <SignedOut>
+              <SignInButton mode="modal" forceRedirectUrl="/player-dashboard">
+                <Button variant="default" size="lg" className="w-full mt-4" onClick={() => setIsMenuOpen(false)}>
+                  Get Started
+                </Button>
+              </SignInButton>
+            </SignedOut>
+            <SignedIn>
+              <div className="mt-4 flex justify-center">
+                <UserButton afterSignOutUrl="/" />
+              </div>
+            </SignedIn>
           </div>
         </div>
       )}

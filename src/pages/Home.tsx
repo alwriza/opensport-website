@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trophy, Users, Target, Zap, Shield, Heart, Globe, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { SignInButton } from "@clerk/clerk-react";
 
 export default function Home() {
   const [isVisible, setIsVisible] = useState(false);
@@ -53,12 +54,16 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in opacity-0" style={{ animationDelay: '0.7s' }}>
-            <Button size="lg" className="rounded-full px-8 h-12 text-base" asChild>
-              <Link to="/register">Start Your Journey <ArrowRight className="ml-2 h-4 w-4" /></Link>
-            </Button>
-            <Button variant="outline" size="lg" className="rounded-full px-8 h-12 text-base" asChild>
-              <Link to="/coach-dashboard">For Coaches</Link>
-            </Button>
+            <SignInButton mode="modal" forceRedirectUrl="/player-dashboard">
+              <Button size="lg" className="rounded-full px-8 h-12 text-base">
+                Start Your Journey <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </SignInButton>
+            <SignInButton mode="modal" forceRedirectUrl="/coach-dashboard">
+              <Button variant="outline" size="lg" className="rounded-full px-8 h-12 text-base">
+                For Coaches
+              </Button>
+            </SignInButton>
           </div>
         </div>
 
@@ -125,9 +130,11 @@ export default function Home() {
           <p className="text-primary-foreground/80 text-xl mb-12 max-w-2xl mx-auto">
             Join the platform that is revolutionizing how football talent is discovered.
           </p>
-          <Button size="lg" variant="secondary" className="rounded-full px-10 h-14 text-lg font-medium" asChild>
-            <Link to="/register">Get Started Now</Link>
-          </Button>
+          <SignInButton mode="modal" forceRedirectUrl="/player-dashboard">
+            <Button size="lg" variant="secondary" className="rounded-full px-10 h-14 text-lg font-medium">
+              Get Started Now
+            </Button>
+          </SignInButton>
         </div>
       </section>
     </div>

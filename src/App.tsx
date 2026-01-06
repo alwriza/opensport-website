@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
 import { Navbar } from "@/components/ui/navbar";
 import Home from "./pages/Home";
 import PlayerDashboard from "./pages/PlayerDashboard";
@@ -11,6 +12,8 @@ import Training from "./pages/Training";
 import About from "./pages/About";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
+import SignInPage from "./pages/SignIn";
+import SignUpPage from "./pages/SignUp";
 
 const queryClient = new QueryClient();
 
@@ -24,9 +27,52 @@ const App = () => (
           <Navbar />
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/player-dashboard" element={<PlayerDashboard />} />
-            <Route path="/coach-dashboard" element={<CoachDashboard />} />
-            <Route path="/training" element={<Training />} />
+
+            {/* Public Auth Routes */}
+            <Route path="/sign-in/*" element={<SignInPage />} />
+            <Route path="/sign-up/*" element={<SignUpPage />} />
+
+            {/* Protected Routes */}
+            <Route
+              path="/player-dashboard"
+              element={
+                <>
+                  <SignedIn>
+                    <PlayerDashboard />
+                  </SignedIn>
+                  <SignedOut>
+                    <RedirectToSignIn />
+                  </SignedOut>
+                </>
+              }
+            />
+            <Route
+              path="/coach-dashboard"
+              element={
+                <>
+                  <SignedIn>
+                    <CoachDashboard />
+                  </SignedIn>
+                  <SignedOut>
+                    <RedirectToSignIn />
+                  </SignedOut>
+                </>
+              }
+            />
+            <Route
+              path="/training"
+              element={
+                <>
+                  <SignedIn>
+                    <Training />
+                  </SignedIn>
+                  <SignedOut>
+                    <RedirectToSignIn />
+                  </SignedOut>
+                </>
+              }
+            />
+
             {/* <Route path="/about" element={<About />} /> */}
             <Route path="/register" element={<Register />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

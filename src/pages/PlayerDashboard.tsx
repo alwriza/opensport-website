@@ -1,326 +1,299 @@
 import { useState, useEffect } from "react";
+import { useUser } from "@clerk/clerk-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { RadarSkillChart } from "@/components/radar-chart";
-import { Upload, User, Trophy, TrendingUp, Loader2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Upload, User, Trophy, TrendingUp, Loader2, Video, CheckCircle, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 
-interface PlayerData {
+interface VideoRecord {
   id: string;
-  full_name: string;
-  email: string;
-  date_of_birth: string;
-  nationality: string;
-  position: string;
-  academy: string;
-  height: number;
-  weight: number;
-  video_url: string | null;
+  filename: string;
+  status: string;
   created_at: string;
 }
 
 export default function PlayerDashboard() {
-  const [players, setPlayers] = useState<PlayerData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [analyzing, setAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState<any>(null);
+  const { user, isLoaded } = useUser();
   const { toast } = useToast();
 
+  const [dbUser, setDbUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [videos, setVideos] = useState<VideoRecord[]>([]);
+
+  // Sync Clerk User to Supabase
   useEffect(() => {
-    fetchPlayers();
-  }, []);
+    const syncUser = async () => {
+      if (!isLoaded || !user) return;
 
+      try {
+        // 1. Check if user exists in Supabase
+        const { data: existingUser, error: fetchError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('clerk_id', user.id)
+          .single();
+
+        if (fetchError && fetchError.code !== 'PGRST116') {
+          console.error("Error fetching user:", fetchError);
+        }
+
+        let userId = existingUser?.id;
+
+        // 2. If not, create user
+        if (!existingUser) {
+          const { data: newUser, error: insertError } = await supabase
+            .from('users')
+            .insert({
+              clerk_id: user.id,
+              email: user.primaryEmailAddress?.emailAddress,
+              name: user.fullName,
+              role: 'player'
+            })
+            .select()
+            .single();
+
+          if (insertError) throw insertError;
+          userId = newUser.id;
+        }
+
+        setDbUser({ ...existingUser, id: userId });
+
+        // 3. Fetch user's videos
+        if (userId) {
+          fetchVideos(userId);
+        }
+
+      } catch (error: any) {
+        console.error("Sync error:", error);
+        toast({
+          title: "Sync Error",
+          description: "Could not sync user data.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    syncUser();
+  }, [isLoaded, user]);
+
+  const fetchVideos = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('videos')
+      .select('*')
+      .eq('user_id', userId)
+      .order('uploaded_at', { ascending: false });
+
+    if (!error && data) {
+      setVideos(data);
+    }
+  };
+
+  // Poll for updates if any video is processing
   useEffect(() => {
-    if (players.length > 0) {
-      fetchAnalysis(players[0].id);
+    if (!dbUser || videos.length === 0) return;
+
+    const hasProcessing = videos.some(v => v.status === 'processing');
+    if (!hasProcessing) return;
+
+    const interval = setInterval(() => {
+      fetchVideos(dbUser.id);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [videos, dbUser]);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !dbUser) return;
+
+    // Validate
+    if (file.size > 100 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Max 100MB", variant: "destructive" });
+      return;
     }
-  }, [players]);
 
-  const fetchPlayers = async () => {
+    setUploading(true);
     try {
-      const { data, error } = await supabase
-        .from('player_registrations')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+      const filePath = `${dbUser.id}/${fileName}`;
 
-      if (error) throw error;
-      setPlayers(data || []);
-    } catch (error) {
-      console.error('Error fetching players:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      // 1. Upload to Storage
+      const { error: uploadError } = await supabase.storage
+        .from('videos')
+        .upload(filePath, file);
 
-  const fetchAnalysis = async (playerId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('player_analysis')
-        .select('*')
-        .eq('player_id', playerId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      if (uploadError) throw uploadError;
 
-      if (error) throw error;
-      setAnalysis(data);
-    } catch (error) {
-      console.error('Error fetching analysis:', error);
-    }
-  };
+      // 2. Create DB Record
+      const { data: newVideo, error: dbError } = await supabase
+        .from('videos')
+        .insert({
+          user_id: dbUser.id,
+          storage_path: filePath,
+          filename: file.name,
+          file_size_mb: file.size / (1024 * 1024),
+          status: 'processing'
+        })
+        .select()
+        .single();
 
-  const analyzeVideo = async () => {
-    if (players.length === 0) return;
-    
-    setAnalyzing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('analyze-player-video', {
-        body: { playerId: players[0].id }
+      if (dbError) throw dbError;
+
+      // 3. Trigger Analysis
+      const { error: fnError } = await supabase.functions.invoke('process-video', {
+        body: { video_id: newVideo.id }
       });
 
-      if (error) throw error;
+      if (fnError) {
+        console.error("Analysis trigger failed:", fnError);
+        toast({
+          title: "Analysis Queued (Delayed)",
+          description: "Video uploaded, but auto-analysis failed to start. It may process later."
+        });
+      } else {
+        toast({
+          title: "Upload Successful",
+          description: "Your video is now being analyzed.",
+        });
+      }
 
+      fetchVideos(dbUser.id);
+
+    } catch (error: any) {
+      console.error("Upload error:", error);
       toast({
-        title: "Analysis Complete",
-        description: "Your video has been analyzed successfully!",
-      });
-
-      // Refresh analysis
-      await fetchAnalysis(players[0].id);
-    } catch (error) {
-      console.error('Error analyzing video:', error);
-      toast({
-        title: "Analysis Failed",
-        description: error.message || "Failed to analyze video. Please try again.",
-        variant: "destructive",
+        title: "Upload Failed",
+        description: error.message,
+        variant: "destructive"
       });
     } finally {
-      setAnalyzing(false);
+      setUploading(false);
     }
   };
 
-  if (loading) {
+  if (!isLoaded || loading) {
     return (
-      <div className="min-h-screen bg-gradient-card flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  if (players.length === 0) {
-    return (
-      <div className="min-h-screen bg-gradient-card flex items-center justify-center">
-        <Card className="max-w-md">
-          <CardContent className="pt-6 text-center space-y-4">
-            <User className="h-12 w-12 text-muted-foreground mx-auto" />
-            <h2 className="text-xl font-bold">No Players Yet</h2>
-            <p className="text-muted-foreground">Register your first player to see their dashboard.</p>
-            <Button asChild>
-              <Link to="/register">Register Now</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const selectedPlayer = players[0];
-  const age = new Date().getFullYear() - new Date(selectedPlayer.date_of_birth).getFullYear();
-
   return (
-    <div className="min-h-screen bg-gradient-card">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Player Dashboard</h1>
-          <p className="text-muted-foreground">Track your progress and get personalized training recommendations</p>
-        </div>
+    <div className="min-h-screen bg-gradient-card p-8">
+      <div className="container mx-auto max-w-6xl">
+        <header className="mb-10">
+          <h1 className="text-3xl font-bold mb-2">Welcome, {user?.firstName}</h1>
+          <p className="text-muted-foreground">Your performance hub</p>
+        </header>
 
-        {/* Player Profile Card */}
-        <Card className="mb-8 shadow-card">
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-primary/10">
-                  <User className="h-8 w-8 text-primary" />
-                </div>
-                <div>
-                  <CardTitle className="text-2xl">{selectedPlayer.full_name}</CardTitle>
-                  <CardDescription className="text-lg">
-                    {selectedPlayer.position} • {selectedPlayer.academy}
-                  </CardDescription>
-                </div>
-              </div>
-              <Badge variant="secondary">Active Player</Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <span className="text-muted-foreground">Age:</span>
-                <div className="font-medium">{age} years</div>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Height:</span>
-                <div className="font-medium">{selectedPlayer.height} cm</div>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Weight:</span>
-                <div className="font-medium">{selectedPlayer.weight} kg</div>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Nationality:</span>
-                <div className="font-medium">{selectedPlayer.nationality}</div>
-              </div>
-            </div>
-            {selectedPlayer.video_url && (
-              <div className="mt-4">
-                <span className="text-sm text-muted-foreground">Training Video:</span>
-                <div className="mt-2">
-                  <video controls className="w-full rounded-lg max-h-96">
-                    <source src={selectedPlayer.video_url} type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <div className="grid md:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="md:col-span-2 space-y-8">
+            {/* Upload Card */}
+            <Card className="border-2 border-dashed border-primary/20 bg-background/50">
+              <CardContent className="pt-6 flex flex-col items-center justify-center min-h-[200px] text-center">
+                {uploading ? (
+                  <div className="space-y-4">
+                    <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
+                    <p>Uploading video...</p>
+                  </div>
+                ) : (
+                  <>
+                    <Upload className="h-12 w-12 text-primary mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">Upload Request</h3>
+                    <p className="text-muted-foreground mb-6 max-w-sm">
+                      Upload your training or match video for AI analysis. Supported formats: .mp4, .mov
+                    </p>
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept="video/*"
+                        onChange={handleFileUpload}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        disabled={uploading}
+                      />
+                      <Button size="lg">Select Video File</Button>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
 
-        {/* AI Analysis */}
-        <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Trophy className="h-5 w-5" />
-              AI Analysis
-            </CardTitle>
-            <CardDescription>
-              {analysis ? 'Your detailed skill analysis' : 'Click analyze to get AI-powered insights'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {!analysis ? (
-              <div className="text-center py-12 space-y-4">
-                <Trophy className="h-12 w-12 text-muted-foreground mx-auto" />
-                <p className="text-lg font-medium">Ready to Analyze</p>
-                <p className="text-muted-foreground mb-4">
-                  Get AI-powered insights on your skills and training recommendations
-                </p>
-                <Button 
-                  onClick={analyzeVideo} 
-                  disabled={analyzing || !selectedPlayer.video_url}
-                  className="gap-2"
-                >
-                  {analyzing ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Analyzing...
-                    </>
-                  ) : (
-                    <>
-                      <TrendingUp className="h-4 w-4" />
-                      Analyze Video
-                    </>
-                  )}
-                </Button>
-              </div>
+            {/* Recent Analysis */}
+            <h2 className="text-xl font-bold">Recent Analysis</h2>
+            {videos.length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center text-muted-foreground">
+                  No videos uploaded yet. Upload your first video to get started!
+                </CardContent>
+              </Card>
             ) : (
-              <div className="space-y-6">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Speed</p>
-                    <div className="flex items-center gap-2">
-                      <Progress value={analysis.speed_score} className="flex-1" />
-                      <span className="text-sm font-medium">{analysis.speed_score}</span>
+              <div className="space-y-4">
+                {videos.map((video) => (
+                  <Card key={video.id} className="overflow-hidden">
+                    <div className="flex items-center p-4 gap-4">
+                      <div className="h-16 w-24 bg-muted rounded flex items-center justify-center flex-shrink-0">
+                        <Video className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold">{video.filename}</h4>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                          <span>{new Date(video.created_at).toLocaleDateString()}</span>
+                          <span>•</span>
+                          <Badge variant={video.status === 'completed' ? 'default' : 'secondary'}>
+                            {video.status}
+                          </Badge>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm">View</Button>
                     </div>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Dribbling</p>
-                    <div className="flex items-center gap-2">
-                      <Progress value={analysis.dribbling_score} className="flex-1" />
-                      <span className="text-sm font-medium">{analysis.dribbling_score}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Passing</p>
-                    <div className="flex items-center gap-2">
-                      <Progress value={analysis.passing_score} className="flex-1" />
-                      <span className="text-sm font-medium">{analysis.passing_score}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Shooting</p>
-                    <div className="flex items-center gap-2">
-                      <Progress value={analysis.shooting_score} className="flex-1" />
-                      <span className="text-sm font-medium">{analysis.shooting_score}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Defending</p>
-                    <div className="flex items-center gap-2">
-                      <Progress value={analysis.defending_score} className="flex-1" />
-                      <span className="text-sm font-medium">{analysis.defending_score}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Physicality</p>
-                    <div className="flex items-center gap-2">
-                      <Progress value={analysis.physicality_score} className="flex-1" />
-                      <span className="text-sm font-medium">{analysis.physicality_score}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t">
-                  <h3 className="text-lg font-semibold mb-3">Training Recommendations</h3>
-                  <ul className="space-y-2">
-                    {analysis.training_tips?.map((tip: string, index: number) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <TrendingUp className="h-4 w-4 text-primary mt-1 flex-shrink-0" />
-                        <span className="text-sm">{tip}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="flex justify-center pt-4">
-                  <Button onClick={analyzeVideo} variant="outline" disabled={analyzing}>
-                    {analyzing ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Re-analyzing...
-                      </>
-                    ) : (
-                      'Re-analyze Video'
-                    )}
-                  </Button>
-                </div>
+                  </Card>
+                ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Upload New Video */}
-        <Card className="mt-8 shadow-card border-dashed border-2">
-          <CardContent className="pt-6">
-            <div className="text-center space-y-4">
-              <Upload className="h-12 w-12 text-muted-foreground mx-auto" />
-              <div>
-                <h3 className="text-lg font-medium mb-2">Upload New Training Video</h3>
-                <p className="text-muted-foreground mb-4">
-                  Get fresh AI analysis by uploading a new training or match clip
-                </p>
-                <Button asChild>
-                  <Link to="/register">Upload Video</Link>
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          {/* Sidebar */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Profile Stats</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Videos Analyzed</span>
+                  <span className="font-bold">{videos.length}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Avg Score</span>
+                  <span className="font-bold">-</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-primary/5 border-primary/10">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-primary mt-0.5" />
+                  <div>
+                    <p className="font-medium text-primary">Pro Tip</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      For best results, ensure your whole body is visible in the frame during the kick.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
