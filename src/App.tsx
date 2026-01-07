@@ -14,6 +14,8 @@ import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 import SignInPage from "./pages/SignIn";
 import SignUpPage from "./pages/SignUp";
+import JoinTeam from "./pages/JoinTeam";
+
 
 const queryClient = new QueryClient();
 
@@ -65,6 +67,19 @@ const App = () => (
                 <>
                   <SignedIn>
                     <Training />
+                  </SignedIn>
+                  <SignedOut>
+                    <RedirectToSignIn />
+                  </SignedOut>
+                </>
+              }
+            />
+            <Route
+              path="/join-team"
+              element={
+                <>
+                  <SignedIn>
+                    <JoinTeam />
                   </SignedIn>
                   <SignedOut>
                     <RedirectToSignIn />

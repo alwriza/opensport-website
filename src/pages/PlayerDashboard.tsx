@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/clerk-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Upload, Trophy, Loader2, Video, AlertCircle, Plus, X } from "lucide-react";
+import { Upload, Trophy, Loader2, Video, AlertCircle, Plus, X, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useNavigate } from "react-router-dom";
 
 interface VideoRecord {
   id: string;
@@ -32,6 +33,7 @@ interface Analysis {
 export default function PlayerDashboard() {
   const { user, isLoaded } = useUser();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const [dbUser, setDbUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -625,9 +627,13 @@ export default function PlayerDashboard() {
                   <label className="text-sm font-medium">Age</label>
                   <input
                     type="number"
+                    min="0"
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     value={dbUser.age || ''}
-                    onChange={(e) => setDbUser({ ...dbUser, age: parseInt(e.target.value) || null })}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      setDbUser({ ...dbUser, age: isNaN(val) ? null : Math.max(0, val) });
+                    }}
                     onBlur={() => updateProfile('age', dbUser.age)}
                     placeholder="Age"
                   />
@@ -668,9 +674,14 @@ export default function PlayerDashboard() {
                     <label className="text-sm font-medium">Height (cm)</label>
                     <input
                       type="number"
+                      min="0"
+                      step="0.1"
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                       value={dbUser.height || ''}
-                      onChange={(e) => setDbUser({ ...dbUser, height: parseFloat(e.target.value) || null })}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        setDbUser({ ...dbUser, height: isNaN(val) ? null : Math.max(0, val) });
+                      }}
                       onBlur={() => updateProfile('height', dbUser.height)}
                       placeholder="180"
                     />
@@ -679,15 +690,30 @@ export default function PlayerDashboard() {
                     <label className="text-sm font-medium">Weight (kg)</label>
                     <input
                       type="number"
+                      min="0"
+                      step="0.1"
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                       value={dbUser.weight || ''}
-                      onChange={(e) => setDbUser({ ...dbUser, weight: parseFloat(e.target.value) || null })}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        setDbUser({ ...dbUser, weight: isNaN(val) ? null : Math.max(0, val) });
+                      }}
                       onBlur={() => updateProfile('weight', dbUser.weight)}
                       placeholder="75"
                     />
                   </div>
                 </div>
               </CardContent>
+              <CardFooter>
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  onClick={() => navigate('/join-team')}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Join a Team
+                </Button>
+              </CardFooter>
             </Card>
 
             <Card>

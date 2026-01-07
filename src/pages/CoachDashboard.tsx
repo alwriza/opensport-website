@@ -12,9 +12,12 @@ import {
   Award,
   Plus,
   Search,
-  Filter
+  Filter,
+  UserPlus,
 } from "lucide-react";
 import { CreateTeamModal } from "@/components/ui/CreateTeamModal";
+import { InvitePlayersModal } from "@/components/ui/InvitePlayersModal";
+
 
 
 export default function CoachDashboard() {
@@ -26,6 +29,7 @@ export default function CoachDashboard() {
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [roster, setRoster] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
   useEffect(() => {
     if (!isLoaded || !user) return;
@@ -34,21 +38,26 @@ export default function CoachDashboard() {
 
   const fetchCoachData = async () => {
     try {
+      // 0. Get coach DB user ID first
+      const dbUserId = await getDbUserId();
+      setCoachDbId(dbUserId); // ✅ ДОБАВЛЕНО: Сохраняем coach ID
+
       // 1. Get coach's teams
       const { data: coachTeams, error: teamsError } = await supabase
         .from('team_coaches')
         .select(`
-          team_id,
-          role,
-          teams (
-            id,
-            name,
-            age_group,
-            season,
-            clubs (name)
-          )
-        `)
-        .eq('coach_id', (await getDbUserId()));
+        team_id,
+        role,
+        teams (
+          id,
+          name,
+          age_group,
+          season,
+          invite_code,
+          clubs (name)
+        )
+      `)
+        .eq('coach_id', dbUserId); // ✅ ИЗМЕНЕНО: Используем dbUserId вместо await
 
       if (teamsError) throw teamsError;
 
@@ -246,6 +255,10 @@ export default function CoachDashboard() {
             <div className="flex items-center justify-between">
               <CardTitle>Team Roster</CardTitle>
               <div className="flex gap-2">
+                <Button onClick={() => setShowInviteModal(true)}>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Invite Players
+                </Button>
                 <Button variant="outline" size="sm">
                   <Search className="h-4 w-4 mr-2" />
                   Search
@@ -318,15 +331,40 @@ export default function CoachDashboard() {
               <div className="text-center py-12 text-muted-foreground">
                 <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No players in this team yet</p>
-                <Button className="mt-4">
-                  <Plus className="h-4 w-4 mr-2" />
+                <Button onClick={() => setShowInviteModal(true)}>
+                  <UserPlus className="h-4 w-4 mr-2" />
                   Invite Players
                 </Button>
               </div>
             )}
           </CardContent>
         </Card>
+
       </div>
+      {
+        showCreateModal && coachDbId && (
+          <CreateTeamModal
+            open={showCreateModal}
+            onClose={() => setShowCreateModal(false)}
+            coachId={coachDbId}
+            onSuccess={() => {
+              fetchCoachData(); // Refresh teams
+            }}
+          />
+        )
+      }
+      {
+        showInviteModal && selectedTeam && (
+          <InvitePlayersModal
+            open={showInviteModal}
+            onClose={() => setShowInviteModal(false)}
+            team={selectedTeam}
+            onSuccess={() => {
+              fetchRoster(selectedTeam.id); // Refresh roster
+            }}
+          />
+        )
+      }
     </div>
 
   );
