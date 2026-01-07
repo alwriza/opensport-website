@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Upload, Trophy, Loader2, Video, AlertCircle, Plus, X, Users } from "lucide-react";
+import { Upload, Trophy, Loader2, Video, AlertCircle, Plus, X, Users, Check, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -34,6 +34,10 @@ export default function PlayerDashboard() {
   const { user, isLoaded } = useUser();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const [pendingInvitations, setPendingInvitations] = useState<any[]>([]);
+  const [loadingInvitations, setLoadingInvitations] = useState(false);
+  const [processingInvite, setProcessingInvite] = useState(false);
 
   const [dbUser, setDbUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -201,6 +205,22 @@ export default function PlayerDashboard() {
 
     return () => clearInterval(interval);
   }, [videos, dbUser]);
+
+  useEffect(() => {
+    if (!dbUser?.id) return;
+
+    console.log("Setting up invitations polling...");
+    const interval = setInterval(() => {
+      console.log("Polling for invitations...");
+      fetchPendingInvitations(dbUser.id);
+    }, 30000); // Проверять каждые 30 секунд
+
+    return () => {
+      console.log("Cleaning up invitations polling");
+      clearInterval(interval);
+    };
+  }, [dbUser]);
+
 
   const updateProfile = async (field: string, value: any) => {
     if (!dbUser?.id) return;
@@ -461,6 +481,110 @@ export default function PlayerDashboard() {
       </div>
     );
   }
+  const fetchPendingInvitations = async (userId: string) => {
+    setLoadingInvitations(true);
+    try {
+      const { data, error } = await supabase
+        .from('team_rosters')
+        .select(`
+        id,
+        status,
+        team_id,
+        teams (
+          id,
+          name,
+          age_group,
+          clubs (name)
+        )
+      `)
+        .eq('player_id', userId)
+        .eq('status', 'pending');
+
+      if (error) throw error;
+
+      const invitations = data?.map(item => ({
+        roster_id: item.id,
+        team_id: item.teams.id,
+        team_name: item.teams.name,
+        age_group: item.teams.age_group,
+        club_name: item.teams.clubs?.name,
+        status: item.status
+      })) || [];
+
+      console.log('Pending invitations:', invitations);
+      setPendingInvitations(invitations);
+
+    } catch (error: any) {
+      console.error('Error fetching invitations:', error);
+    } finally {
+      setLoadingInvitations(false);
+    }
+  };
+
+
+  const handleAcceptInvitation = async (rosterId: string) => {
+    setProcessingInvite(true);
+    try {
+      const { error } = await supabase
+        .from('team_rosters')
+        .update({ status: 'active' })
+        .eq('id', rosterId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Invitation Accepted! 🎉",
+        description: "You have joined the team",
+      });
+
+      // Refresh invitations
+      if (dbUser?.id) {
+        await fetchPendingInvitations(dbUser.id);
+      }
+
+    } catch (error: any) {
+      console.error('Error accepting invitation:', error);
+      toast({
+        title: "Error",
+        description: "Could not accept invitation",
+        variant: "destructive"
+      });
+    } finally {
+      setProcessingInvite(false);
+    }
+  };
+
+  const handleDeclineInvitation = async (rosterId: string) => {
+    setProcessingInvite(true);
+    try {
+      const { error } = await supabase
+        .from('team_rosters')
+        .update({ status: 'declined' })
+        .eq('id', rosterId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Invitation Declined",
+        description: "The invitation has been declined",
+      });
+
+      // Refresh invitations
+      if (dbUser?.id) {
+        await fetchPendingInvitations(dbUser.id);
+      }
+
+    } catch (error: any) {
+      console.error('Error declining invitation:', error);
+      toast({
+        title: "Error",
+        description: "Could not decline invitation",
+        variant: "destructive"
+      });
+    } finally {
+      setProcessingInvite(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-card p-8">
@@ -748,9 +872,80 @@ export default function PlayerDashboard() {
                 </div>
               </CardContent>
             </Card>
+            {/* Team Invitations Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  Team Invitations
+                  {pendingInvitations.length > 0 && (
+                    <Badge variant="destructive">{pendingInvitations.length}</Badge>
+                  )}
+                </CardTitle>
+                <CardDescription>Join requests from coaches</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {loadingInvitations ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : pendingInvitations.length > 0 ? (
+                  pendingInvitations.map((invite) => (
+                    <div key={invite.id} className="border rounded-lg p-3 space-y-2">
+                      <div>
+                        <p className="font-medium text-sm">{invite.team_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {invite.club_name} • {invite.age_group}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => handleAcceptInvitation(invite.roster_id)}
+                          disabled={processingInvite}
+                        >
+                          {processingInvite ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <>
+                              <Check className="h-4 w-4 mr-1" />
+                              Accept
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => handleDeclineInvitation(invite.roster_id)}
+                          disabled={processingInvite}
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          Decline
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No pending invitations</p>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      onClick={() => navigate('/join-team')}
+                      className="mt-2"
+                    >
+                      Join a team manually
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
+
 
       {/* Upload Modal */}
       <Dialog open={uploadModalOpen} onOpenChange={setUploadModalOpen}>
