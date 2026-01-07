@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/clerk-react";
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Upload, Trophy, Loader2, Video, AlertCircle } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Upload, Trophy, Loader2, Video, AlertCircle, Plus, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,15 +17,34 @@ interface VideoRecord {
   uploaded_at: string;
 }
 
+interface Analysis {
+  id: string;
+  video_id: string;
+  stability: number;
+  power: number;
+  technique: number;
+  balance: number;
+  overall: number;
+  feedback: string;
+  tags: string[];
+}
+
 export default function PlayerDashboard() {
   const { user, isLoaded } = useUser();
-  const navigate = useNavigate();
   const { toast } = useToast();
 
   const [dbUser, setDbUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [videos, setVideos] = useState<VideoRecord[]>([]);
+  const [latestAnalysis, setLatestAnalysis] = useState<Analysis | null>(null);
+  const [latestVideoUrl, setLatestVideoUrl] = useState<string>("");
+
+  // Modal states
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [resultsModalOpen, setResultsModalOpen] = useState(false);
+  const [selectedAnalysis, setSelectedAnalysis] = useState<Analysis | null>(null);
+  const [selectedVideoUrl, setSelectedVideoUrl] = useState<string>("");
 
   // Sync Clerk User to Supabase
   useEffect(() => {
@@ -37,12 +57,11 @@ export default function PlayerDashboard() {
       console.log("Syncing user:", user.id);
 
       try {
-        // 1. Check if user exists in Supabase
         const { data: existingUser, error: fetchError } = await supabase
           .from('users')
           .select('*')
           .eq('clerk_id', user.id)
-          .maybeSingle(); // ✅ FIXED: Returns null if not found, no error
+          .maybeSingle();
 
         if (fetchError) {
           console.error("Supabase fetch error:", fetchError);
@@ -53,7 +72,6 @@ export default function PlayerDashboard() {
 
         let userId: string;
 
-        // 2. If not found, create user
         if (!existingUser) {
           console.log("Creating new user in Supabase...");
           const { data: newUser, error: insertError } = await supabase
@@ -80,7 +98,6 @@ export default function PlayerDashboard() {
           setDbUser(existingUser);
         }
 
-        // 3. Fetch user's videos
         console.log("Fetching videos for user:", userId);
         await fetchVideos(userId);
 
@@ -114,8 +131,53 @@ export default function PlayerDashboard() {
 
       console.log("Fetched videos:", data);
       setVideos(data || []);
+
+      // Fetch latest completed analysis
+      if (data && data.length > 0) {
+        const completedVideos = data.filter(v => v.status === 'completed');
+        if (completedVideos.length > 0) {
+          await fetchLatestAnalysis(completedVideos[0].id);
+        }
+      }
     } catch (error) {
       console.error("Exception fetching videos:", error);
+    }
+  };
+
+  const fetchLatestAnalysis = async (videoId: string) => {
+    try {
+      // Fetch analysis
+      const { data: analysisData, error: analysisError } = await supabase
+        .from('analyses')
+        .select('*')
+        .eq('video_id', videoId)
+        .single();
+
+      if (analysisError) {
+        console.error("Error fetching analysis:", analysisError);
+        return;
+      }
+
+      setLatestAnalysis(analysisData);
+
+      // Fetch video URL
+      const { data: videoData, error: videoError } = await supabase
+        .from('videos')
+        .select('storage_path')
+        .eq('id', videoId)
+        .single();
+
+      if (videoError) return;
+
+      const { data: urlData, error: urlError } = await supabase.storage
+        .from('videos')
+        .createSignedUrl(videoData.storage_path, 3600);
+
+      if (!urlError && urlData) {
+        setLatestVideoUrl(urlData.signedUrl);
+      }
+    } catch (error) {
+      console.error("Error fetching latest analysis:", error);
     }
   };
 
@@ -129,7 +191,7 @@ export default function PlayerDashboard() {
     console.log("Polling for video status updates...");
     const interval = setInterval(() => {
       fetchVideos(dbUser.id);
-    }, 5000); // Poll every 5 seconds
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [videos, dbUser]);
@@ -162,7 +224,6 @@ export default function PlayerDashboard() {
     const file = event.target.files?.[0];
     if (!file || !dbUser?.id) return;
 
-    // Validate file
     if (file.size > 100 * 1024 * 1024) {
       toast({
         title: "File too large",
@@ -190,7 +251,6 @@ export default function PlayerDashboard() {
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
       const filePath = `${dbUser.id}/${fileName}`;
 
-      // 1. Upload to Storage
       console.log("Uploading to storage:", filePath);
       const { error: uploadError } = await supabase.storage
         .from('videos')
@@ -203,7 +263,6 @@ export default function PlayerDashboard() {
 
       console.log("✓ Upload successful");
 
-      // 2. Create DB Record
       const { data: newVideo, error: dbError } = await supabase
         .from('videos')
         .insert({
@@ -223,27 +282,87 @@ export default function PlayerDashboard() {
 
       console.log("✓ Video record created:", newVideo.id);
 
-      // 3. Trigger Analysis (Edge Function)
-      console.log("Triggering analysis...");
-      const { error: fnError } = await supabase.functions.invoke('process-video', {
-        body: { video_id: newVideo.id }
-      });
+      // Call ML Worker directly
+      try {
+        console.log('🚀 Creating signed URL for ML Worker...');
 
-      if (fnError) {
-        console.error("Edge function error:", fnError);
-        toast({
-          title: "Analysis Queued",
-          description: "Video uploaded. Analysis will start shortly.",
+        const { data: urlData, error: signError } = await supabase.storage
+          .from('videos')
+          .createSignedUrl(filePath, 3600);
+
+        if (signError) {
+          console.error("Signed URL error:", signError);
+          throw new Error('Could not create signed URL');
+        }
+
+        console.log('📞 Calling ML Worker...');
+
+        const mlWorkerUrl = 'https://opensport-ml-worker.onrender.com';
+        const mlResponse = await fetch(`${mlWorkerUrl}/analyze`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            video_url: urlData.signedUrl,
+            video_id: newVideo.id
+          })
         });
-      } else {
+
+        if (!mlResponse.ok) {
+          const errorText = await mlResponse.text();
+          console.error('ML Worker error:', errorText);
+          throw new Error(`ML analysis failed: ${mlResponse.status}`);
+        }
+
+        const result = await mlResponse.json();
+        console.log('✅ ML analysis complete:', result);
+
+        const { error: analysisError } = await supabase
+          .from('analyses')
+          .insert({
+            user_id: dbUser.id,
+            video_id: newVideo.id,
+            stability: result.scores.stability,
+            power: result.scores.power,
+            technique: result.scores.technique,
+            balance: result.scores.balance,
+            overall: result.scores.overall,
+            feedback: result.feedback,
+            tags: result.tags || [],
+            processing_time_ms: result.processing_time_ms || 0
+          });
+
+        if (analysisError) {
+          console.error('Failed to save analysis:', analysisError);
+          throw analysisError;
+        }
+
+        await supabase
+          .from('videos')
+          .update({ status: 'completed' })
+          .eq('id', newVideo.id);
+
         toast({
-          title: "Upload Successful",
-          description: "Your video is being analyzed. This may take 30-60 seconds.",
+          title: "Analysis Complete! 🎉",
+          description: "Your kick has been analyzed successfully.",
+        });
+
+      } catch (mlError: any) {
+        console.error('❌ ML processing failed:', mlError);
+
+        await supabase
+          .from('videos')
+          .update({ status: 'failed' })
+          .eq('id', newVideo.id);
+
+        toast({
+          title: "Analysis Failed",
+          description: mlError.message || "Could not analyze video.",
+          variant: "destructive"
         });
       }
 
-      // 4. Refresh video list
       await fetchVideos(dbUser.id);
+      setUploadModalOpen(false);
 
     } catch (error: any) {
       console.error("❌ Upload failed:", error);
@@ -254,12 +373,55 @@ export default function PlayerDashboard() {
       });
     } finally {
       setUploading(false);
-      // Reset file input
       event.target.value = '';
     }
   };
 
-  // Loading state
+  const openResultsModal = async (videoId: string) => {
+    try {
+      // Fetch analysis
+      const { data: analysisData, error: analysisError } = await supabase
+        .from('analyses')
+        .select('*')
+        .eq('video_id', videoId)
+        .single();
+
+      if (analysisError) throw analysisError;
+      setSelectedAnalysis(analysisData);
+
+      // Fetch video URL
+      const { data: videoData, error: videoError } = await supabase
+        .from('videos')
+        .select('storage_path')
+        .eq('id', videoId)
+        .single();
+
+      if (videoError) throw videoError;
+
+      const { data: urlData, error: urlError } = await supabase.storage
+        .from('videos')
+        .createSignedUrl(videoData.storage_path, 3600);
+
+      if (urlError) throw urlError;
+      setSelectedVideoUrl(urlData.signedUrl);
+
+      setResultsModalOpen(true);
+    } catch (error: any) {
+      console.error('Error loading results:', error);
+      toast({
+        title: "Error",
+        description: "Could not load analysis results.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return "text-green-600";
+    if (score >= 60) return "text-yellow-600";
+    return "text-red-600";
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-card">
@@ -271,7 +433,6 @@ export default function PlayerDashboard() {
     );
   }
 
-  // Error state
   if (!dbUser) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-card p-4">
@@ -302,46 +463,109 @@ export default function PlayerDashboard() {
         <div className="grid md:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="md:col-span-2 space-y-8">
-            {/* Upload Card */}
-            <Card className="border-2 border-dashed border-primary/20 bg-background/50">
-              <CardContent className="pt-6 flex flex-col items-center justify-center min-h-[200px] text-center">
-                {uploading ? (
-                  <div className="space-y-4">
-                    <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
-                    <p className="text-lg font-medium">Uploading video...</p>
-                    <p className="text-sm text-muted-foreground">This may take a few moments</p>
+            {/* Latest Analysis Card */}
+            {latestAnalysis && latestVideoUrl ? (
+              <Card className="border-2 border-primary/30">
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <CardTitle>Latest Analysis</CardTitle>
+                    <Button onClick={() => setUploadModalOpen(true)} size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      New Analysis
+                    </Button>
                   </div>
-                ) : (
-                  <>
-                    <Upload className="h-12 w-12 text-primary mb-4" />
-                    <h3 className="text-xl font-semibold mb-2">Upload Kick Video</h3>
-                    <p className="text-muted-foreground mb-6 max-w-sm">
-                      Upload your training or match video for AI analysis. Supported formats: MP4, MOV, AVI, MKV (max 100MB)
-                    </p>
-                    <div className="relative">
-                      <input
-                        type="file"
-                        accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska"
-                        onChange={handleFileUpload}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        disabled={uploading}
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {/* Video */}
+                    <div>
+                      <video
+                        controls
+                        className="w-full rounded-lg"
+                        src={latestVideoUrl}
                       />
-                      <Button size="lg">Select Video File</Button>
                     </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+
+                    {/* Stats */}
+                    <div className="space-y-4">
+                      {/* Overall Score */}
+                      <div className="text-center p-4 bg-primary/5 rounded-lg">
+                        <p className="text-sm text-muted-foreground mb-2">Overall Score</p>
+                        <div className={`text-5xl font-bold ${getScoreColor(latestAnalysis.overall)}`}>
+                          {latestAnalysis.overall.toFixed(1)}
+                        </div>
+                      </div>
+
+                      {/* Individual Scores */}
+                      <div className="space-y-3">
+                        <div>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span>Stability</span>
+                            <span className={`font-bold ${getScoreColor(latestAnalysis.stability)}`}>
+                              {latestAnalysis.stability.toFixed(1)}
+                            </span>
+                          </div>
+                          <Progress value={latestAnalysis.stability} className="h-2" />
+                        </div>
+
+                        <div>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span>Power</span>
+                            <span className={`font-bold ${getScoreColor(latestAnalysis.power)}`}>
+                              {latestAnalysis.power.toFixed(1)}
+                            </span>
+                          </div>
+                          <Progress value={latestAnalysis.power} className="h-2" />
+                        </div>
+
+                        <div>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span>Technique</span>
+                            <span className={`font-bold ${getScoreColor(latestAnalysis.technique)}`}>
+                              {latestAnalysis.technique.toFixed(1)}
+                            </span>
+                          </div>
+                          <Progress value={latestAnalysis.technique} className="h-2" />
+                        </div>
+
+                        <div>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span>Balance</span>
+                            <span className={`font-bold ${getScoreColor(latestAnalysis.balance)}`}>
+                              {latestAnalysis.balance.toFixed(1)}
+                            </span>
+                          </div>
+                          <Progress value={latestAnalysis.balance} className="h-2" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="border-2 border-dashed border-primary/20">
+                <CardContent className="pt-6 flex flex-col items-center justify-center min-h-[300px] text-center">
+                  <Upload className="h-16 w-16 text-primary mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">No Analyses Yet</h3>
+                  <p className="text-muted-foreground mb-6 max-w-sm">
+                    Upload your first kick video to get AI-powered analysis
+                  </p>
+                  <Button onClick={() => setUploadModalOpen(true)} size="lg">
+                    <Plus className="h-5 w-5 mr-2" />
+                    Upload First Video
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Recent Analysis */}
             <div>
-              <h2 className="text-xl font-bold mb-4">Recent Analysis</h2>
+              <h2 className="text-xl font-bold mb-4">All Analyses</h2>
               {videos.length === 0 ? (
                 <Card>
                   <CardContent className="p-8 text-center text-muted-foreground">
                     <Video className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
                     <p>No videos uploaded yet.</p>
-                    <p className="text-sm mt-2">Upload your first video to get AI-powered analysis!</p>
                   </CardContent>
                 </Card>
               ) : (
@@ -367,6 +591,7 @@ export default function PlayerDashboard() {
                           variant="outline"
                           size="sm"
                           disabled={video.status !== 'completed'}
+                          onClick={() => openResultsModal(video.id)}
                         >
                           {video.status === 'completed' ? 'View Results' : 'Processing...'}
                         </Button>
@@ -380,7 +605,6 @@ export default function PlayerDashboard() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Profile Card */}
             <Card>
               <CardHeader>
                 <CardTitle>My Profile</CardTitle>
@@ -391,7 +615,7 @@ export default function PlayerDashboard() {
                   <label className="text-sm font-medium">Age</label>
                   <input
                     type="number"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     value={dbUser.age || ''}
                     onChange={(e) => setDbUser({ ...dbUser, age: parseInt(e.target.value) || null })}
                     onBlur={() => updateProfile('age', dbUser.age)}
@@ -415,13 +639,6 @@ export default function PlayerDashboard() {
                       <SelectItem value="Midfielder">Midfielder</SelectItem>
                       <SelectItem value="Defender">Defender</SelectItem>
                       <SelectItem value="Goalkeeper">Goalkeeper</SelectItem>
-                      <SelectItem value="Striker">Striker</SelectItem>
-                      <SelectItem value="Winger">Winger</SelectItem>
-                      <SelectItem value="Attacking Midfielder">Attacking Midfielder</SelectItem>
-                      <SelectItem value="Central Midfielder">Central Midfielder</SelectItem>
-                      <SelectItem value="Defensive Midfielder">Defensive Midfielder</SelectItem>
-                      <SelectItem value="Full-back">Full-back</SelectItem>
-                      <SelectItem value="Center-back">Center-back</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -429,7 +646,7 @@ export default function PlayerDashboard() {
                   <label className="text-sm font-medium">Club</label>
                   <input
                     type="text"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     value={dbUser.club || ''}
                     onChange={(e) => setDbUser({ ...dbUser, club: e.target.value })}
                     onBlur={() => updateProfile('club', dbUser.club)}
@@ -441,7 +658,7 @@ export default function PlayerDashboard() {
                     <label className="text-sm font-medium">Height (cm)</label>
                     <input
                       type="number"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                       value={dbUser.height || ''}
                       onChange={(e) => setDbUser({ ...dbUser, height: parseFloat(e.target.value) || null })}
                       onBlur={() => updateProfile('height', dbUser.height)}
@@ -452,7 +669,7 @@ export default function PlayerDashboard() {
                     <label className="text-sm font-medium">Weight (kg)</label>
                     <input
                       type="number"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                       value={dbUser.weight || ''}
                       onChange={(e) => setDbUser({ ...dbUser, weight: parseFloat(e.target.value) || null })}
                       onBlur={() => updateProfile('weight', dbUser.weight)}
@@ -463,7 +680,6 @@ export default function PlayerDashboard() {
               </CardContent>
             </Card>
 
-            {/* Stats Card */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -483,7 +699,6 @@ export default function PlayerDashboard() {
               </CardContent>
             </Card>
 
-            {/* Pro Tip Card */}
             <Card className="bg-primary/5 border-primary/10">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
@@ -500,6 +715,140 @@ export default function PlayerDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Upload Modal */}
+      <Dialog open={uploadModalOpen} onOpenChange={setUploadModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Upload New Video</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {uploading ? (
+              <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Uploading and analyzing...</p>
+              </div>
+            ) : (
+              <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+                <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-sm text-muted-foreground mb-4">
+                  Supported formats: MP4, MOV, AVI, MKV (max 100MB)
+                </p>
+                <input
+                  type="file"
+                  accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="video-upload-modal"
+                  disabled={uploading}
+                />
+                <Button asChild>
+                  <label htmlFor="video-upload-modal" className="cursor-pointer">
+                    Choose Video File
+                  </label>
+                </Button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Results Modal */}
+      <Dialog open={resultsModalOpen} onOpenChange={setResultsModalOpen}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Analysis Results</DialogTitle>
+          </DialogHeader>
+          {selectedAnalysis && (
+            <div className="space-y-6">
+              {/* Video and Overall Score */}
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  {selectedVideoUrl && (
+                    <video
+                      controls
+                      className="w-full rounded-lg"
+                      src={selectedVideoUrl}
+                    />
+                  )}
+                </div>
+                <div className="flex flex-col justify-center">
+                  <div className="text-center p-6 bg-primary/5 rounded-lg">
+                    <p className="text-sm text-muted-foreground mb-2">Overall Score</p>
+                    <div className={`text-6xl font-bold ${getScoreColor(selectedAnalysis.overall)}`}>
+                      {selectedAnalysis.overall.toFixed(1)}
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-2">out of 100</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Detailed Metrics */}
+              <div className="space-y-3">
+                <h3 className="font-semibold">Detailed Metrics</h3>
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>Stability</span>
+                    <span className={`font-bold ${getScoreColor(selectedAnalysis.stability)}`}>
+                      {selectedAnalysis.stability.toFixed(1)}
+                    </span>
+                  </div>
+                  <Progress value={selectedAnalysis.stability} className="h-2" />
+                </div>
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>Power</span>
+                    <span className={`font-bold ${getScoreColor(selectedAnalysis.power)}`}>
+                      {selectedAnalysis.power.toFixed(1)}
+                    </span>
+                  </div>
+                  <Progress value={selectedAnalysis.power} className="h-2" />
+                </div>
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>Technique</span>
+                    <span className={`font-bold ${getScoreColor(selectedAnalysis.technique)}`}>
+                      {selectedAnalysis.technique.toFixed(1)}
+                    </span>
+                  </div>
+                  <Progress value={selectedAnalysis.technique} className="h-2" />
+                </div>
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>Balance</span>
+                    <span className={`font-bold ${getScoreColor(selectedAnalysis.balance)}`}>
+                      {selectedAnalysis.balance.toFixed(1)}
+                    </span>
+                  </div>
+                  <Progress value={selectedAnalysis.balance} className="h-2" />
+                </div>
+              </div>
+
+              {/* Feedback */}
+              <div>
+                <h3 className="font-semibold mb-2">AI Feedback</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {selectedAnalysis.feedback}
+                </p>
+              </div>
+
+              {/* Tags */}
+              {selectedAnalysis.tags && selectedAnalysis.tags.length > 0 && (
+                <div>
+                  <h3 className="font-semibold mb-2">Tags</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedAnalysis.tags.map((tag, index) => (
+                      <Badge key={index} variant="secondary">
+                        {tag.replace(/_/g, ' ')}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
