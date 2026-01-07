@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Upload, Trophy, Loader2, Video, AlertCircle, Plus, X, Users, Check, RefreshCw } from "lucide-react";
+import { Upload, Trophy, Loader2, Video, AlertCircle, Plus, X, Users, Check, XCircle, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -52,175 +52,8 @@ export default function PlayerDashboard() {
   const [selectedAnalysis, setSelectedAnalysis] = useState<Analysis | null>(null);
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string>("");
 
-  // Sync Clerk User to Supabase
-  useEffect(() => {
-    const syncUser = async () => {
-      if (!isLoaded || !user) {
-        console.log("Waiting for Clerk to load...");
-        return;
-      }
-
-      console.log("Syncing user:", user.id);
-
-      try {
-        const { data: existingUser, error: fetchError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('clerk_id', user.id)
-          .maybeSingle();
-
-        if (fetchError) {
-          console.error("Supabase fetch error:", fetchError);
-          throw new Error(`DB Fetch Error: ${fetchError.message}`);
-        }
-
-        console.log("Existing user:", existingUser);
-
-        let userId: string;
-
-        if (!existingUser) {
-          console.log("Creating new user in Supabase...");
-          const { data: newUser, error: insertError } = await supabase
-            .from('users')
-            .insert({
-              clerk_id: user.id,
-              email: user.primaryEmailAddress?.emailAddress || '',
-              name: user.fullName || user.firstName || 'Player',
-              role: 'player'
-            })
-            .select()
-            .single();
-
-          if (insertError) {
-            console.error("Supabase insert error:", insertError);
-            throw new Error(`DB Insert Error: ${insertError.message}`);
-          }
-
-          console.log("New user created:", newUser);
-          userId = newUser.id;
-          setDbUser(newUser);
-        } else {
-          userId = existingUser.id;
-          setDbUser(existingUser);
-        }
-
-        console.log("Fetching videos for user:", userId);
-        await fetchVideos(userId);
-
-      } catch (error: any) {
-        console.error("❌ Sync error:", error);
-        toast({
-          title: "Database Error",
-          description: error.message || "Could not connect to database. Please refresh the page.",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    syncUser();
-  }, [isLoaded, user]);
-
-  const fetchVideos = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('videos')
-        .select('id, filename, status, uploaded_at')
-        .eq('user_id', userId)
-        .order('uploaded_at', { ascending: false });
-
-      if (error) {
-        console.error("Error fetching videos:", error);
-        return;
-      }
-
-      console.log("Fetched videos:", data);
-      setVideos(data || []);
-
-      // Fetch latest completed analysis if it's new
-      if (data && data.length > 0) {
-        const completedVideos = data.filter(v => v.status === 'completed');
-        if (completedVideos.length > 0) {
-          const latestCompletedId = completedVideos[0].id;
-          // Only fetch analysis and new signed URL if the video ID has changed
-          if (latestCompletedId !== latestAnalysis?.video_id) {
-            await fetchLatestAnalysis(latestCompletedId);
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Exception fetching videos:", error);
-    }
-  };
-
-  const fetchLatestAnalysis = async (videoId: string) => {
-    try {
-      // Fetch analysis
-      const { data: analysisData, error: analysisError } = await supabase
-        .from('analyses')
-        .select('*')
-        .eq('video_id', videoId)
-        .single();
-
-      if (analysisError) {
-        console.error("Error fetching analysis:", analysisError);
-        return;
-      }
-
-      setLatestAnalysis(analysisData);
-
-      // Fetch video URL
-      const { data: videoData, error: videoError } = await supabase
-        .from('videos')
-        .select('storage_path')
-        .eq('id', videoId)
-        .single();
-
-      if (videoError) return;
-
-      const { data: urlData, error: urlError } = await supabase.storage
-        .from('videos')
-        .createSignedUrl(videoData.storage_path, 3600);
-
-      if (!urlError && urlData) {
-        setLatestVideoUrl(urlData.signedUrl);
-      }
-    } catch (error) {
-      console.error("Error fetching latest analysis:", error);
-    }
-  };
-
-  // Poll for updates if any video is processing
-  useEffect(() => {
-    if (!dbUser?.id || videos.length === 0) return;
-
-    const hasProcessing = videos.some(v => v.status === 'processing');
-    if (!hasProcessing) return;
-
-    console.log("Polling for video status updates...");
-    const interval = setInterval(() => {
-      fetchVideos(dbUser.id);
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [videos, dbUser]);
-
-  useEffect(() => {
-    if (!dbUser?.id) return;
-
-    console.log("Setting up invitations polling...");
-    const interval = setInterval(() => {
-      console.log("Polling for invitations...");
-      fetchPendingInvitations(dbUser.id);
-    }, 30000); // Проверять каждые 30 секунд
-
-    return () => {
-      console.log("Cleaning up invitations polling");
-      clearInterval(interval);
-    };
-  }, [dbUser]);
-
+  const [myTeams, setMyTeams] = useState<any[]>([]);
+  const [loadingTeams, setLoadingTeams] = useState(false);
 
   const updateProfile = async (field: string, value: any) => {
     if (!dbUser?.id) return;
@@ -452,35 +285,77 @@ export default function PlayerDashboard() {
     return "text-red-600";
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-card">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-          <p className="text-muted-foreground">Loading your dashboard...</p>
-        </div>
-      </div>
-    );
-  }
 
-  if (!dbUser) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-card p-4">
-        <Card className="max-w-md">
-          <CardContent className="pt-6 text-center space-y-4">
-            <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
-            <h2 className="text-xl font-bold">Connection Error</h2>
-            <p className="text-muted-foreground">
-              Could not load your profile. Please check your internet connection and try again.
-            </p>
-            <Button onClick={() => window.location.reload()}>
-              Reload Page
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+
+  const fetchVideos = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('videos')
+        .select('id, filename, status, uploaded_at')
+        .eq('user_id', userId)
+        .order('uploaded_at', { ascending: false });
+
+      if (error) {
+        console.error("Error fetching videos:", error);
+        return;
+      }
+
+      console.log("Fetched videos:", data);
+      setVideos(data || []);
+
+      // Fetch latest completed analysis if it's new
+      if (data && data.length > 0) {
+        const completedVideos = data.filter(v => v.status === 'completed');
+        if (completedVideos.length > 0) {
+          const latestCompletedId = completedVideos[0].id;
+          // Only fetch analysis and new signed URL if the video ID has changed
+          if (latestCompletedId !== latestAnalysis?.video_id) {
+            await fetchLatestAnalysis(latestCompletedId);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Exception fetching videos:", error);
+    }
+  };
+
+  const fetchLatestAnalysis = async (videoId: string) => {
+    try {
+      // Fetch analysis
+      const { data: analysisData, error: analysisError } = await supabase
+        .from('analyses')
+        .select('*')
+        .eq('video_id', videoId)
+        .single();
+
+      if (analysisError) {
+        console.error("Error fetching analysis:", analysisError);
+        return;
+      }
+
+      setLatestAnalysis(analysisData);
+
+      // Fetch video URL
+      const { data: videoData, error: videoError } = await supabase
+        .from('videos')
+        .select('storage_path')
+        .eq('id', videoId)
+        .single();
+
+      if (videoError) return;
+
+      const { data: urlData, error: urlError } = await supabase.storage
+        .from('videos')
+        .createSignedUrl(videoData.storage_path, 3600);
+
+      if (!urlError && urlData) {
+        setLatestVideoUrl(urlData.signedUrl);
+      }
+    } catch (error) {
+      console.error("Error fetching latest analysis:", error);
+    }
+  };
+
   const fetchPendingInvitations = async (userId: string) => {
     setLoadingInvitations(true);
     try {
@@ -585,6 +460,214 @@ export default function PlayerDashboard() {
       setProcessingInvite(false);
     }
   };
+
+
+  const fetchMyTeams = async (userId: string) => {
+    setLoadingTeams(true);
+    try {
+      const { data, error } = await supabase
+        .from('team_rosters')
+        .select(`
+        id,
+        status,
+        team_id,
+        teams (
+          id,
+          name,
+          age_group,
+          clubs (name)
+        )
+      `)
+        .eq('player_id', userId)
+        .in('status', ['active', 'pending']);
+
+      if (error) throw error;
+
+      const teams = data?.map(item => ({
+        roster_id: item.id,
+        team_id: item.teams.id,
+        team_name: item.teams.name,
+        age_group: item.teams.age_group,
+        club_name: item.teams.clubs?.name,
+        status: item.status
+      })) || [];
+
+      setMyTeams(teams);
+
+    } catch (error: any) {
+      console.error('Error fetching teams:', error);
+    } finally {
+      setLoadingTeams(false);
+    }
+  };
+
+  const handleLeaveTeam = async (rosterId: string, teamName: string) => {
+    if (!confirm(`Are you sure you want to leave ${teamName}?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('team_rosters')
+        .delete()
+        .eq('id', rosterId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Left Team",
+        description: `You have left ${teamName}`,
+      });
+
+      if (dbUser?.id) {
+        await fetchMyTeams(dbUser.id);
+      }
+
+    } catch (error: any) {
+      console.error('Error leaving team:', error);
+      toast({
+        title: "Error",
+        description: "Could not leave team",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Sync Clerk User to Supabase
+  useEffect(() => {
+    const syncUser = async () => {
+      if (!isLoaded || !user) {
+        console.log("Waiting for Clerk to load...");
+        return;
+      }
+
+      console.log("Syncing user:", user.id);
+
+      try {
+        const { data: existingUser, error: fetchError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('clerk_id', user.id)
+          .maybeSingle();
+
+        if (fetchError) {
+          console.error("Supabase fetch error:", fetchError);
+          throw new Error(`DB Fetch Error: ${fetchError.message}`);
+        }
+
+        console.log("Existing user:", existingUser);
+
+        let userId: string;
+
+        if (!existingUser) {
+          console.log("Creating new user in Supabase...");
+          const { data: newUser, error: insertError } = await supabase
+            .from('users')
+            .insert({
+              clerk_id: user.id,
+              email: user.primaryEmailAddress?.emailAddress || '',
+              name: user.fullName || user.firstName || 'Player',
+              role: 'player'
+            })
+            .select()
+            .single();
+
+          if (insertError) {
+            console.error("Supabase insert error:", insertError);
+            throw new Error(`DB Insert Error: ${insertError.message}`);
+          }
+
+          console.log("New user created:", newUser);
+          userId = newUser.id;
+          setDbUser(newUser);
+        } else {
+          userId = existingUser.id;
+          setDbUser(existingUser);
+        }
+
+        console.log("Fetching videos for user:", userId);
+        await fetchVideos(userId);
+        console.log("Fetching pending invitations...");
+        await fetchPendingInvitations(userId);
+
+        console.log("Fetching my teams...");
+        await fetchMyTeams(userId);
+
+      } catch (error: any) {
+        console.error("❌ Sync error:", error);
+        toast({
+          title: "Database Error",
+          description: error.message || "Could not connect to database. Please refresh the page.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    syncUser();
+  }, [isLoaded, user]);
+
+  // Poll for updates if any video is processing
+  useEffect(() => {
+    if (!dbUser?.id || videos.length === 0) return;
+
+    const hasProcessing = videos.some(v => v.status === 'processing');
+    if (!hasProcessing) return;
+
+    console.log("Polling for video status updates...");
+    const interval = setInterval(() => {
+      fetchVideos(dbUser.id);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [videos, dbUser]);
+
+  useEffect(() => {
+    if (!dbUser?.id) return;
+
+    console.log("Setting up invitations polling...");
+    const interval = setInterval(() => {
+      console.log("Polling for invitations...");
+      fetchPendingInvitations(dbUser.id);
+    }, 30000); // Проверять каждые 30 секунд
+
+    return () => {
+      console.log("Cleaning up invitations polling");
+      clearInterval(interval);
+    };
+  }, [dbUser]);
+
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-card">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+          <p className="text-muted-foreground">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!dbUser) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-card p-4">
+        <Card className="max-w-md">
+          <CardContent className="pt-6 text-center space-y-4">
+            <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
+            <h2 className="text-xl font-bold">Connection Error</h2>
+            <p className="text-muted-foreground">
+              Could not load your profile. Please check your internet connection and try again.
+            </p>
+            <Button onClick={() => window.location.reload()}>
+              Reload Page
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-card p-8">
@@ -938,6 +1021,53 @@ export default function PlayerDashboard() {
                     >
                       Join a team manually
                     </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            {/* My Teams Card - добавь ПОСЛЕ карточки Team Invitations */}
+            <Card>
+              <CardHeader>
+                <CardTitle>My Teams</CardTitle>
+                <CardDescription>Teams you're part of</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {loadingTeams ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : myTeams.length > 0 ? (
+                  myTeams.map((team) => (
+                    <div key={team.roster_id} className="border rounded-lg p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-sm">{team.team_name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {team.club_name} • {team.age_group}
+                          </p>
+                        </div>
+                        <Badge variant={team.status === 'active' ? 'default' : 'secondary'}>
+                          {team.status}
+                        </Badge>
+                      </div>
+
+                      {team.status === 'active' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-red-600 hover:text-red-700"
+                          onClick={() => handleLeaveTeam(team.roster_id, team.team_name)}
+                        >
+                          <LogOut className="h-4 w-4 mr-2" />
+                          Leave Team
+                        </Button>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Not part of any team yet</p>
                   </div>
                 )}
               </CardContent>

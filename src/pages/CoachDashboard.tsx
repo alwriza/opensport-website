@@ -17,6 +17,7 @@ import {
   UserPlus,
   Check,
   X,
+  Trash2,
 } from "lucide-react";
 import { CreateTeamModal } from "@/components/ui/CreateTeamModal";
 import { InvitePlayersModal } from "@/components/ui/InvitePlayersModal";
@@ -168,6 +169,76 @@ export default function CoachDashboard() {
     }
   };
 
+  const handleRemovePlayer = async (rosterId: string, playerName: string) => {
+    if (!confirm(`Are you sure you want to remove ${playerName} from the team?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('team_rosters')
+        .delete()
+        .eq('id', rosterId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Player Removed",
+        description: `${playerName} has been removed from the team`,
+      });
+
+      if (selectedTeam) {
+        fetchRoster(selectedTeam.id);
+      }
+    } catch (error: any) {
+      console.error('Error removing player:', error);
+      toast({
+        title: "Error",
+        description: "Could not remove player",
+        variant: "destructive"
+      });
+    }
+  };
+
+
+  const handleDeleteTeam = async (teamId: string, teamName: string) => {
+    if (!confirm(
+      `Are you sure you want to delete "${teamName}"?\n\n` +
+      `This will:\n` +
+      `- Remove all players from the team\n` +
+      `- Delete all team data\n` +
+      `- This action cannot be undone!`
+    )) {
+      return;
+    }
+
+    try {
+      // Delete team (CASCADE will delete team_coaches and team_rosters)
+      const { error } = await supabase
+        .from('teams')
+        .delete()
+        .eq('id', teamId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Team Deleted",
+        description: `${teamName} has been deleted`,
+      });
+
+      // Refresh teams list
+      await fetchCoachData();
+
+    } catch (error: any) {
+      console.error('Error deleting team:', error);
+      toast({
+        title: "Error",
+        description: "Could not delete team",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -212,6 +283,16 @@ export default function CoachDashboard() {
             <Plus className="h-4 w-4 mr-2" />
             Create Team
           </Button>
+
+          {selectedTeam && (
+            <Button
+              variant="destructive"
+              onClick={() => handleDeleteTeam(selectedTeam.id, selectedTeam.name)}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Team
+            </Button>
+          )}
         </div>
 
         {/* Stats Cards */}
@@ -361,8 +442,6 @@ export default function CoachDashboard() {
                           ? new Date(player.last_upload).toLocaleDateString()
                           : 'Never'}
                       </td>
-
-                      {/* ✅ ACTIONS: Approve/Decline для pending */}
                       <td className="p-3">
                         {player.status === 'pending' ? (
                           <div className="flex gap-2">
@@ -384,9 +463,19 @@ export default function CoachDashboard() {
                             </Button>
                           </div>
                         ) : (
-                          <Button variant="ghost" size="sm">
-                            View Profile
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button variant="ghost" size="sm">
+                              View Profile
+                            </Button>
+                            {/* ✅ ДОБАВЬ КНОПКУ УДАЛЕНИЯ */}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemovePlayer(player.roster_id, player.name)}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
+                          </div>
                         )}
                       </td>
                     </tr>
