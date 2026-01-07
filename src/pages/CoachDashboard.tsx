@@ -1,318 +1,333 @@
-import { useState, useMemo } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { useUser } from "@clerk/clerk-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { mockPlayers, Player } from "@/lib/mock-data";
-import { Search, Filter, Users, TrendingUp, Trophy, User, MapPin, Calendar } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Users,
+  TrendingUp,
+  Clock,
+  Award,
+  Plus,
+  Search,
+  Filter
+} from "lucide-react";
+import { CreateTeamModal } from "@/components/ui/CreateTeamModal";
+
 
 export default function CoachDashboard() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [positionFilter, setPositionFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("overall");
+  const { user, isLoaded } = useUser();
+  const { toast } = useToast();
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [coachDbId, setCoachDbId] = useState<string | null>(null);
+  const [teams, setTeams] = useState([]);
+  const [selectedTeam, setSelectedTeam] = useState(null);
+  const [roster, setRoster] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredAndSortedPlayers = useMemo(() => {
-    let filtered = mockPlayers.filter(player => {
-      const matchesSearch = player.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          player.academy.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesPosition = positionFilter === "all" || player.position === positionFilter;
-      return matchesSearch && matchesPosition;
-    });
+  useEffect(() => {
+    if (!isLoaded || !user) return;
+    fetchCoachData();
+  }, [isLoaded, user]);
 
-    filtered.sort((a, b) => {
-      if (sortBy === "overall") {
-        const aOverall = Object.values(a.scores).reduce((sum, score) => sum + score, 0) / 5;
-        const bOverall = Object.values(b.scores).reduce((sum, score) => sum + score, 0) / 5;
-        return bOverall - aOverall;
+  const fetchCoachData = async () => {
+    try {
+      // 1. Get coach's teams
+      const { data: coachTeams, error: teamsError } = await supabase
+        .from('team_coaches')
+        .select(`
+          team_id,
+          role,
+          teams (
+            id,
+            name,
+            age_group,
+            season,
+            clubs (name)
+          )
+        `)
+        .eq('coach_id', (await getDbUserId()));
+
+      if (teamsError) throw teamsError;
+
+      setTeams(coachTeams?.map(ct => ct.teams) || []);
+
+      if (coachTeams && coachTeams.length > 0) {
+        setSelectedTeam(coachTeams[0].teams);
+        await fetchRoster(coachTeams[0].team_id);
       }
-      if (sortBy === "age") return a.age - b.age;
-      if (sortBy === "name") return a.name.localeCompare(b.name);
-      return 0;
-    });
 
-    return filtered;
-  }, [searchTerm, positionFilter, sortBy]);
-
-  const positions = [...new Set(mockPlayers.map(player => player.position))];
-
-  const getOverallScore = (player: Player) => {
-    return Math.round(Object.values(player.scores).reduce((sum, score) => sum + score, 0) / 5);
+    } catch (error: any) {
+      console.error('Error fetching coach data:', error);
+      toast({
+        title: "Error",
+        description: "Could not load teams",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 90) return "bg-primary text-primary-foreground";
-    if (score >= 80) return "bg-success text-white";
-    if (score >= 70) return "bg-warning text-black";
-    return "bg-muted text-muted-foreground";
+  const fetchRoster = async (teamId: string) => {
+    const { data, error } = await supabase
+      .from('team_rosters')
+      .select(`
+        player_id,
+        jersey_number,
+        status,
+        users (
+          id,
+          name,
+          age,
+          position,
+          club
+        )
+      `)
+      .eq('team_id', teamId)
+      .eq('status', 'active');
+
+    if (!error && data) {
+      // Get latest analysis for each player
+      const playersWithStats = await Promise.all(
+        data.map(async (item) => {
+          const { data: analyses } = await supabase
+            .from('analyses')
+            .select('overall, created_at')
+            .eq('user_id', item.player_id)
+            .order('created_at', { ascending: false })
+            .limit(3);
+
+          return {
+            ...item.users,
+            jersey_number: item.jersey_number,
+            latest_score: analyses?.[0]?.overall || null,
+            last_upload: analyses?.[0]?.created_at || null,
+            trend: calculateTrend(analyses || [])
+          };
+        })
+      );
+
+      setRoster(playersWithStats);
+    }
   };
 
-  const getScoreGrade = (score: number) => {
-    if (score >= 90) return "Elite";
-    if (score >= 80) return "Excellent";
-    if (score >= 70) return "Good";
-    return "Developing";
+  const calculateTrend = (analyses: any[]) => {
+    if (analyses.length < 2) return 0;
+    const recent = analyses[0].overall;
+    const previous = analyses[1].overall;
+    return recent - previous;
   };
 
-  const getTopSkill = (player: Player) => {
-    const entries = Object.entries(player.scores);
-    const topSkill = entries.reduce((max, current) => current[1] > max[1] ? current : max);
-    return { skill: topSkill[0], score: topSkill[1] };
+  const getDbUserId = async () => {
+    const { data } = await supabase
+      .from('users')
+      .select('id')
+      .eq('clerk_id', user?.id)
+      .single();
+    return data?.id;
   };
 
-  const formatSkillName = (skill: string) => {
-    return skill
-      .replace(/([A-Z])/g, ' $1')
-      .trim()
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-card">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-card p-8">
+      <div className="container mx-auto max-w-7xl">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2 hero-title">COACH DASHBOARD</h1>
-          <p className="text-muted-foreground text-lg">Discover and evaluate talented young players</p>
+        <header className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Coach Dashboard</h1>
+          <p className="text-muted-foreground">
+            Manage your teams and track player performance
+          </p>
+        </header>
+
+        {/* Team Selector */}
+        <div className="mb-6 flex items-center gap-4">
+          <select
+            className="px-4 py-2 rounded-lg border bg-background"
+            value={selectedTeam?.id || ''}
+            onChange={(e) => {
+              const team = teams.find(t => t.id === e.target.value);
+              setSelectedTeam(team);
+              fetchRoster(e.target.value);
+            }}
+          >
+            {teams.map(team => (
+              <option key={team.id} value={team.id}>
+                {team.clubs?.name} - {team.name}
+              </option>
+            ))}
+          </select>
+
+          <Button onClick={() => setShowCreateModal(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Team
+          </Button>
         </div>
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="shadow-card border-2 border-primary/20 hover:border-primary/40 transition-colors">
-            <CardContent className="p-6">
+        {/* Stats Cards */}
+        <div className="grid md:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground uppercase tracking-wide mb-1">Total Players</p>
-                  <p className="text-3xl font-bold text-primary">{mockPlayers.length}</p>
+                  <p className="text-sm text-muted-foreground">Total Players</p>
+                  <p className="text-2xl font-bold">{roster.length}</p>
                 </div>
-                <div className="p-3 bg-primary/10 rounded-xl">
-                  <Users className="h-6 w-6 text-primary" />
-                </div>
+                <Users className="h-8 w-8 text-primary" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-card border-2 border-primary/20 hover:border-primary/40 transition-colors">
-            <CardContent className="p-6">
+          <Card>
+            <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground uppercase tracking-wide mb-1">Avg Age</p>
-                  <p className="text-3xl font-bold text-primary">
-                    {Math.round(mockPlayers.reduce((sum, p) => sum + p.age, 0) / mockPlayers.length)}
+                  <p className="text-sm text-muted-foreground">Avg Score</p>
+                  <p className="text-2xl font-bold">
+                    {roster.length > 0
+                      ? (roster.reduce((sum, p) => sum + (p.latest_score || 0), 0) / roster.length).toFixed(1)
+                      : '0'}
                   </p>
                 </div>
-                <div className="p-3 bg-primary/10 rounded-xl">
-                  <TrendingUp className="h-6 w-6 text-primary" />
-                </div>
+                <TrendingUp className="h-8 w-8 text-green-500" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-card border-2 border-primary/20 hover:border-primary/40 transition-colors">
-            <CardContent className="p-6">
+          <Card>
+            <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground uppercase tracking-wide mb-1">Top Rated</p>
-                  <p className="text-3xl font-bold text-primary">
-                    {Math.max(...mockPlayers.map(getOverallScore))}
+                  <p className="text-sm text-muted-foreground">Active Today</p>
+                  <p className="text-2xl font-bold">
+                    {roster.filter(p => {
+                      if (!p.last_upload) return false;
+                      const uploadDate = new Date(p.last_upload);
+                      const today = new Date();
+                      return uploadDate.toDateString() === today.toDateString();
+                    }).length}
                   </p>
                 </div>
-                <div className="p-3 bg-primary/10 rounded-xl">
-                  <Trophy className="h-6 w-6 text-primary" />
-                </div>
+                <Clock className="h-8 w-8 text-blue-500" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-card border-2 border-primary/20 hover:border-primary/40 transition-colors">
-            <CardContent className="p-6">
+          <Card>
+            <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground uppercase tracking-wide mb-1">Academies</p>
-                  <p className="text-3xl font-bold text-primary">
-                    {new Set(mockPlayers.map(p => p.academy)).size}
+                  <p className="text-sm text-muted-foreground">Top Performers</p>
+                  <p className="text-2xl font-bold">
+                    {roster.filter(p => p.latest_score >= 80).length}
                   </p>
                 </div>
-                <div className="p-3 bg-primary/10 rounded-xl">
-                  <Filter className="h-6 w-6 text-primary" />
-                </div>
+                <Award className="h-8 w-8 text-yellow-500" />
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Filters */}
-        <Card className="mb-8 shadow-card border-2 border-primary/20">
+        {/* Roster Table */}
+        <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Filter & Search Players</CardTitle>
-            <CardDescription>Find the perfect players for your team</CardDescription>
+            <div className="flex items-center justify-between">
+              <CardTitle>Team Roster</CardTitle>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm">
+                  <Search className="h-4 w-4 mr-2" />
+                  Search
+                </Button>
+                <Button variant="outline" size="sm">
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filter
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search by name or academy..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <Select value={positionFilter} onValueChange={setPositionFilter}>
-                <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="Position" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Positions</SelectItem>
-                  {positions.map(position => (
-                    <SelectItem key={position} value={position}>{position}</SelectItem>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-3">#</th>
+                    <th className="text-left p-3">Name</th>
+                    <th className="text-left p-3">Age</th>
+                    <th className="text-left p-3">Position</th>
+                    <th className="text-left p-3">Latest Score</th>
+                    <th className="text-left p-3">Trend</th>
+                    <th className="text-left p-3">Last Upload</th>
+                    <th className="text-left p-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {roster.map((player) => (
+                    <tr key={player.id} className="border-b hover:bg-muted/50">
+                      <td className="p-3">{player.jersey_number || '-'}</td>
+                      <td className="p-3 font-medium">{player.name}</td>
+                      <td className="p-3">{player.age || '-'}</td>
+                      <td className="p-3">{player.position || '-'}</td>
+                      <td className="p-3">
+                        {player.latest_score ? (
+                          <span className={`font-bold ${player.latest_score >= 80 ? 'text-green-600' :
+                            player.latest_score >= 60 ? 'text-yellow-600' :
+                              'text-red-600'
+                            }`}>
+                            {player.latest_score.toFixed(1)}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">No data</span>
+                        )}
+                      </td>
+                      <td className="p-3">
+                        {player.trend !== 0 && (
+                          <span className={player.trend > 0 ? 'text-green-600' : 'text-red-600'}>
+                            {player.trend > 0 ? '↑' : '↓'} {Math.abs(player.trend).toFixed(1)}
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-3 text-sm text-muted-foreground">
+                        {player.last_upload
+                          ? new Date(player.last_upload).toLocaleDateString()
+                          : 'Never'}
+                      </td>
+                      <td className="p-3">
+                        <Button variant="ghost" size="sm">
+                          View Profile
+                        </Button>
+                      </td>
+                    </tr>
                   ))}
-                </SelectContent>
-              </Select>
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="overall">Overall Score</SelectItem>
-                  <SelectItem value="age">Age</SelectItem>
-                  <SelectItem value="name">Name</SelectItem>
-                </SelectContent>
-              </Select>
+                </tbody>
+              </table>
             </div>
+
+            {roster.length === 0 && (
+              <div className="text-center py-12 text-muted-foreground">
+                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No players in this team yet</p>
+                <Button className="mt-4">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Invite Players
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
-
-        {/* Players Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredAndSortedPlayers.map((player) => {
-            const overallScore = getOverallScore(player);
-            const topSkill = getTopSkill(player);
-            
-            return (
-              <Card 
-                key={player.id} 
-                className="shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 border-2 border-primary/10 hover:border-primary/30 bg-card/50 backdrop-blur-sm overflow-hidden"
-              >
-                {/* Header with Score Badge */}
-                <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 border-b border-primary/10">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center ring-2 ring-primary/30">
-                        <User className="h-7 w-7 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-foreground mb-1">{player.name}</h3>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Badge variant="outline" className="border-primary/50 text-primary font-medium">
-                            {player.position}
-                          </Badge>
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {player.age} yrs
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <div className={`px-4 py-2 rounded-lg font-bold text-xl ${getScoreColor(overallScore)}`}>
-                        {overallScore}
-                      </div>
-                      <span className="text-xs text-muted-foreground font-medium">
-                        {getScoreGrade(overallScore)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <CardContent className="p-6 space-y-5">
-                  {/* Academy */}
-                  <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                    <MapPin className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide mb-0.5">Academy</p>
-                      <p className="font-semibold text-foreground">{player.academy}</p>
-                    </div>
-                  </div>
-                  
-                  {/* Top Skill */}
-                  <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Best Attribute</p>
-                    <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg border border-primary/20">
-                      <span className="font-bold text-foreground">
-                        {formatSkillName(topSkill.skill)}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-primary rounded-full transition-all" 
-                            style={{ width: `${topSkill.score}%` }}
-                          />
-                        </div>
-                        <span className="font-bold text-primary min-w-[3rem] text-right">
-                          {topSkill.score}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Physical Stats */}
-                  <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Physical</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-muted/50 rounded-lg p-3 text-center border border-border">
-                        <div className="text-2xl font-bold text-foreground mb-1">{player.height}</div>
-                        <div className="text-xs text-muted-foreground uppercase tracking-wide">cm</div>
-                      </div>
-                      <div className="bg-muted/50 rounded-lg p-3 text-center border border-border">
-                        <div className="text-2xl font-bold text-foreground mb-1">{player.weight}</div>
-                        <div className="text-xs text-muted-foreground uppercase tracking-wide">kg</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* All Skills Overview */}
-                  <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Skills Overview</p>
-                    <div className="space-y-2">
-                      {Object.entries(player.scores).map(([skill, score]) => (
-                        <div key={skill} className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">{formatSkillName(skill)}</span>
-                          <span className="font-semibold text-foreground">{score}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Action Button */}
-                  <Button 
-                    className="w-full bg-primary hover:bg-primary-dark text-primary-foreground font-semibold"
-                    size="lg"
-                  >
-                    View Full Profile
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {filteredAndSortedPlayers.length === 0 && (
-          <Card className="shadow-card border-2 border-primary/20">
-            <CardContent className="py-16 text-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Search className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold mb-2 text-foreground">No players found</h3>
-              <p className="text-muted-foreground">Try adjusting your search or filter criteria</p>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </div>
+
   );
 }

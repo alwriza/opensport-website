@@ -132,11 +132,15 @@ export default function PlayerDashboard() {
       console.log("Fetched videos:", data);
       setVideos(data || []);
 
-      // Fetch latest completed analysis
+      // Fetch latest completed analysis if it's new
       if (data && data.length > 0) {
         const completedVideos = data.filter(v => v.status === 'completed');
         if (completedVideos.length > 0) {
-          await fetchLatestAnalysis(completedVideos[0].id);
+          const latestCompletedId = completedVideos[0].id;
+          // Only fetch analysis and new signed URL if the video ID has changed
+          if (latestCompletedId !== latestAnalysis?.video_id) {
+            await fetchLatestAnalysis(latestCompletedId);
+          }
         }
       }
     } catch (error) {
@@ -282,13 +286,14 @@ export default function PlayerDashboard() {
 
       console.log("✓ Video record created:", newVideo.id);
 
-      // Call ML Worker directly
+      // 3. Call ML Worker directly (without Edge Function)
       try {
         console.log('🚀 Creating signed URL for ML Worker...');
 
+        // Create signed URL
         const { data: urlData, error: signError } = await supabase.storage
           .from('videos')
-          .createSignedUrl(filePath, 3600);
+          .createSignedUrl(filePath, 3600); // 1 hour expiry
 
         if (signError) {
           console.error("Signed URL error:", signError);
@@ -297,7 +302,7 @@ export default function PlayerDashboard() {
 
         console.log('📞 Calling ML Worker...');
 
-        const mlWorkerUrl = 'https://opensport-ml-worker.onrender.com';
+        const mlWorkerUrl = 'https://opensportml-production.up.railway.app/';
         const mlResponse = await fetch(`${mlWorkerUrl}/analyze`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -316,6 +321,7 @@ export default function PlayerDashboard() {
         const result = await mlResponse.json();
         console.log('✅ ML analysis complete:', result);
 
+        // Save analysis to database
         const { error: analysisError } = await supabase
           .from('analyses')
           .insert({
@@ -336,6 +342,7 @@ export default function PlayerDashboard() {
           throw analysisError;
         }
 
+        // Update video status to completed
         await supabase
           .from('videos')
           .update({ status: 'completed' })
@@ -349,6 +356,7 @@ export default function PlayerDashboard() {
       } catch (mlError: any) {
         console.error('❌ ML processing failed:', mlError);
 
+        // Mark video as failed
         await supabase
           .from('videos')
           .update({ status: 'failed' })
@@ -356,7 +364,7 @@ export default function PlayerDashboard() {
 
         toast({
           title: "Analysis Failed",
-          description: mlError.message || "Could not analyze video.",
+          description: mlError.message || "Could not analyze video. The video has been saved but analysis failed.",
           variant: "destructive"
         });
       }
@@ -478,10 +486,12 @@ export default function PlayerDashboard() {
                 <CardContent>
                   <div className="grid md:grid-cols-2 gap-6">
                     {/* Video */}
-                    <div>
+                    <div className="aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center">
                       <video
                         controls
-                        className="w-full rounded-lg"
+                        playsInline
+                        preload="metadata"
+                        className="w-full h-full object-contain"
                         src={latestVideoUrl}
                       />
                     </div>
@@ -763,11 +773,13 @@ export default function PlayerDashboard() {
             <div className="space-y-6">
               {/* Video and Overall Score */}
               <div className="grid md:grid-cols-2 gap-6">
-                <div>
+                <div className="aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center">
                   {selectedVideoUrl && (
                     <video
                       controls
-                      className="w-full rounded-lg"
+                      playsInline
+                      preload="metadata"
+                      className="w-full h-full object-contain"
                       src={selectedVideoUrl}
                     />
                   )}
