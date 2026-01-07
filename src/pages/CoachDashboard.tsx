@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 import {
   Users,
   TrendingUp,
@@ -14,6 +15,8 @@ import {
   Search,
   Filter,
   UserPlus,
+  Check,
+  X,
 } from "lucide-react";
 import { CreateTeamModal } from "@/components/ui/CreateTeamModal";
 import { InvitePlayersModal } from "@/components/ui/InvitePlayersModal";
@@ -23,6 +26,7 @@ import { InvitePlayersModal } from "@/components/ui/InvitePlayersModal";
 export default function CoachDashboard() {
   const { user, isLoaded } = useUser();
   const { toast } = useToast();
+
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [coachDbId, setCoachDbId] = useState<string | null>(null);
   const [teams, setTeams] = useState([]);
@@ -31,10 +35,51 @@ export default function CoachDashboard() {
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
 
+  // Helper functions for styling
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return "text-green-600";
+    if (score >= 60) return "text-yellow-600";
+    return "text-red-600";
+  };
+  const getScoreBgColor = (score: number) => {
+    if (score >= 80) return "bg-green-600";
+    if (score >= 60) return "bg-yellow-600";
+    return "bg-red-600";
+  };
+  const calculateTrend = (analyses: any[]) => {
+    if (!analyses || analyses.length < 2) return 0;
+    const recent = analyses[0]?.overall || 0;
+    const previous = analyses[1]?.overall || 0;
+    return recent - previous;
+  };
+  const getDbUserId = async () => {
+    if (!user) return null;
+
+    const { data } = await supabase
+      .from('users')
+      .select('id')
+      .eq('clerk_id', user.id)
+      .single();
+
+    return data?.id || null;
+  };
+
   useEffect(() => {
     if (!isLoaded || !user) return;
     fetchCoachData();
   }, [isLoaded, user]);
+  useEffect(() => {
+    if (!selectedTeam?.id) return;
+
+    const interval = setInterval(() => {
+      console.log('Polling roster for pending players...');
+      fetchRoster(selectedTeam.id);
+    }, 10000); // Каждые 10 секунд
+
+    return () => clearInterval(interval);
+  }, [selectedTeam]);
+
+
 
   const fetchCoachData = async () => {
     try {
@@ -79,24 +124,24 @@ export default function CoachDashboard() {
       setLoading(false);
     }
   };
-
   const fetchRoster = async (teamId: string) => {
     const { data, error } = await supabase
       .from('team_rosters')
       .select(`
-        player_id,
-        jersey_number,
-        status,
-        users (
-          id,
-          name,
-          age,
-          position,
-          club
-        )
-      `)
+      id,
+      player_id,
+      jersey_number,
+      status,
+      users (
+        id,
+        name,
+        age,
+        position,
+        club
+      )
+    `)
       .eq('team_id', teamId)
-      .eq('status', 'active');
+      .in('status', ['pending', 'active']);
 
     if (!error && data) {
       // Get latest analysis for each player
@@ -121,22 +166,6 @@ export default function CoachDashboard() {
 
       setRoster(playersWithStats);
     }
-  };
-
-  const calculateTrend = (analyses: any[]) => {
-    if (analyses.length < 2) return 0;
-    const recent = analyses[0].overall;
-    const previous = analyses[1].overall;
-    return recent - previous;
-  };
-
-  const getDbUserId = async () => {
-    const { data } = await supabase
-      .from('users')
-      .select('id')
-      .eq('clerk_id', user?.id)
-      .single();
-    return data?.id;
   };
 
   if (loading) {
@@ -279,6 +308,7 @@ export default function CoachDashboard() {
                     <th className="text-left p-3">Name</th>
                     <th className="text-left p-3">Age</th>
                     <th className="text-left p-3">Position</th>
+                    <th className="text-left p-3">Status</th>  {/* ✅ ДОБАВЬ */}
                     <th className="text-left p-3">Latest Score</th>
                     <th className="text-left p-3">Trend</th>
                     <th className="text-left p-3">Last Upload</th>
@@ -287,17 +317,32 @@ export default function CoachDashboard() {
                 </thead>
                 <tbody>
                   {roster.map((player) => (
-                    <tr key={player.id} className="border-b hover:bg-muted/50">
+                    <tr
+                      key={player.id}
+                      className={`border-b hover:bg-muted/50 ${player.status === 'pending' ? 'bg-yellow-50' : ''
+                        }`}
+                    >
                       <td className="p-3">{player.jersey_number || '-'}</td>
                       <td className="p-3 font-medium">{player.name}</td>
                       <td className="p-3">{player.age || '-'}</td>
                       <td className="p-3">{player.position || '-'}</td>
+
+                      {/* ✅ ДОБАВЬ STATUS COLUMN */}
+                      <td className="p-3">
+                        <Badge variant={
+                          player.status === 'active' ? 'default' :
+                            player.status === 'pending' ? 'secondary' :
+                              'destructive'
+                        }>
+                          {player.status === 'pending' ? '⏳ Pending Approval' :
+                            player.status === 'active' ? '✓ Active' :
+                              player.status}
+                        </Badge>
+                      </td>
+
                       <td className="p-3">
                         {player.latest_score ? (
-                          <span className={`font-bold ${player.latest_score >= 80 ? 'text-green-600' :
-                            player.latest_score >= 60 ? 'text-yellow-600' :
-                              'text-red-600'
-                            }`}>
+                          <span className={`font-bold ${getScoreColor(player.latest_score)}`}>
                             {player.latest_score.toFixed(1)}
                           </span>
                         ) : (
@@ -316,10 +361,33 @@ export default function CoachDashboard() {
                           ? new Date(player.last_upload).toLocaleDateString()
                           : 'Never'}
                       </td>
+
+                      {/* ✅ ACTIONS: Approve/Decline для pending */}
                       <td className="p-3">
-                        <Button variant="ghost" size="sm">
-                          View Profile
-                        </Button>
+                        {player.status === 'pending' ? (
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={() => handleApprovePlayer(player.id, player.roster_id)}
+                            >
+                              <Check className="h-4 w-4 mr-1" />
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDeclinePlayer(player.roster_id)}
+                            >
+                              <X className="h-4 w-4 mr-1" />
+                              Decline
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button variant="ghost" size="sm">
+                            View Profile
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   ))}
