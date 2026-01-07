@@ -223,22 +223,86 @@ export default function PlayerDashboard() {
 
       console.log("✓ Video record created:", newVideo.id);
 
-      // 3. Trigger Analysis (Edge Function)
-      console.log("Triggering analysis...");
-      const { error: fnError } = await supabase.functions.invoke('process-video', {
-        body: { video_id: newVideo.id }
-      });
+      // 3. Call ML Worker directly (without Edge Function)
+      try {
+        console.log('🚀 Creating signed URL for ML Worker...');
+        
+        // Create signed URL
+        const { data: urlData, error: signError } = await supabase.storage
+          .from('videos')
+          .createSignedUrl(filePath, 3600); // 1 hour expiry
 
-      if (fnError) {
-        console.error("Edge function error:", fnError);
-        toast({
-          title: "Analysis Queued",
-          description: "Video uploaded. Analysis will start shortly.",
+        if (signError) {
+          console.error("Signed URL error:", signError);
+          throw new Error('Could not create signed URL');
+        }
+
+        console.log('📞 Calling ML Worker...');
+        
+        const mlWorkerUrl = 'https://opensport-ml.onrender.com';
+        const mlResponse = await fetch(`${mlWorkerUrl}/analyze`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            video_url: urlData.signedUrl,
+            video_id: newVideo.id 
+          })
         });
-      } else {
+
+        if (!mlResponse.ok) {
+          const errorText = await mlResponse.text();
+          console.error('ML Worker error:', errorText);
+          throw new Error(`ML analysis failed: ${mlResponse.status}`);
+        }
+
+        const result = await mlResponse.json();
+        console.log('✅ ML analysis complete:', result);
+
+        // Save analysis to database
+        const { error: analysisError } = await supabase
+          .from('analyses')
+          .insert({
+            user_id: dbUser.id,
+            video_id: newVideo.id,
+            stability: result.scores.stability,
+            power: result.scores.power,
+            technique: result.scores.technique,
+            balance: result.scores.balance,
+            overall: result.scores.overall,
+            feedback: result.feedback,
+            tags: result.tags || [],
+            processing_time_ms: result.processing_time_ms || 0
+          });
+
+        if (analysisError) {
+          console.error('Failed to save analysis:', analysisError);
+          throw analysisError;
+        }
+
+        // Update video status to completed
+        await supabase
+          .from('videos')
+          .update({ status: 'completed' })
+          .eq('id', newVideo.id);
+
         toast({
-          title: "Upload Successful",
-          description: "Your video is being analyzed. This may take 30-60 seconds.",
+          title: "Analysis Complete! 🎉",
+          description: "Your kick has been analyzed successfully.",
+        });
+
+      } catch (mlError: any) {
+        console.error('❌ ML processing failed:', mlError);
+        
+        // Mark video as failed
+        await supabase
+          .from('videos')
+          .update({ status: 'failed' })
+          .eq('id', newVideo.id);
+        
+        toast({
+          title: "Analysis Failed",
+          description: mlError.message || "Could not analyze video. The video has been saved but analysis failed.",
+          variant: "destructive"
         });
       }
 
