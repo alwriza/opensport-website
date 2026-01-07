@@ -302,7 +302,7 @@ export default function PlayerDashboard() {
 
         console.log('📞 Calling ML Worker...');
 
-        const mlWorkerUrl = 'https://opensportml-production.up.railway.app/';
+        const mlWorkerUrl = 'https://opensportml-production.up.railway.app';
         const mlResponse = await fetch(`${mlWorkerUrl}/analyze`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
