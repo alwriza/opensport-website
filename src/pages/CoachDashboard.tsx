@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { CreateTeamModal } from "@/components/ui/CreateTeamModal";
 import { InvitePlayersModal } from "@/components/ui/InvitePlayersModal";
+import { PlayerProfileOverlay } from "@/components/ui/PlayerProfileOverlay";
 import {
   Select,
   SelectContent,
@@ -52,6 +53,7 @@ export default function CoachDashboard() {
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [selectedPlayerProfileId, setSelectedPlayerProfileId] = useState<string | null>(null);
 
   const POSITIONS = ['All', 'Forward', 'Midfielder', 'Defender', 'Goalkeeper'];
 
@@ -151,7 +153,9 @@ export default function CoachDashboard() {
             name,
             age,
             position,
-            club
+            club,
+            height,
+            weight
           )
         `)
         .eq('team_id', activeTeamId);
@@ -694,11 +698,12 @@ export default function CoachDashboard() {
                     <th className="text-left p-3">Name</th>
                     <th className="text-left p-3 text-xs uppercase text-muted-foreground">Age</th>
                     <th className="text-left p-3 text-xs uppercase text-muted-foreground">Pos</th>
-                    <th className="text-left p-3 text-xs uppercase text-muted-foreground">Overall</th>
-                    <th className="text-left p-3 text-xs uppercase text-muted-foreground">Trend (Last 3)</th>
-                    <th className="text-left p-3 text-xs uppercase text-muted-foreground">Recency</th>
-                    <th className="text-left p-3 text-xs uppercase text-muted-foreground">Flags</th>
-                    <th className="text-left p-3 text-xs uppercase text-muted-foreground">Actions</th>
+                    <th className="text-left p-3">Overall</th>
+                    <th className="text-left p-3">Trend</th>
+                    <th className="text-left p-3">History</th>
+                    <th className="text-left p-3">Recency</th>
+                    <th className="text-left p-3">Flags</th>
+                    <th className="text-right p-3">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -708,7 +713,8 @@ export default function CoachDashboard() {
                       return (
                         <tr
                           key={player.id}
-                          className={`border-b hover:bg-muted/50 ${player.status === 'pending' ? 'bg-yellow-50/50' : ''}`}
+                          className={`border-b hover:bg-muted/50 transition-all cursor-pointer ${player.status === 'pending' ? 'bg-yellow-50/50' : ''}`}
+                          onClick={() => setSelectedPlayerProfileId(player.id)}
                         >
                           <td className="p-3 text-muted-foreground font-mono">{player.jersey_number || '-'}</td>
                           <td className="p-3">
@@ -787,28 +793,45 @@ export default function CoachDashboard() {
                                 <Button
                                   size="sm"
                                   variant="default"
-                                  onClick={() => handleApprovePlayer(player.id, player.roster_id)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleApprovePlayer(player.id, player.roster_id);
+                                  }}
                                 >
                                   <Check className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => handleDeclinePlayer(player.roster_id)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeclinePlayer(player.roster_id);
+                                  }}
                                 >
                                   <X className="h-4 w-4" />
                                 </Button>
                               </div>
                             ) : (
                               <div className="flex gap-2">
-                                <Button variant="ghost" size="sm">
-                                  View
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-primary hover:bg-primary/5 border-primary/20"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedPlayerProfileId(player.id);
+                                  }}
+                                >
+                                  View Profile
                                 </Button>
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                  onClick={() => handleRemovePlayer(player.roster_id, player.name)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemovePlayer(player.roster_id, player.name);
+                                  }}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -884,6 +907,16 @@ export default function CoachDashboard() {
           />
         )
       }
+
+      {/* Player Profile Overlay */}
+      {selectedPlayerProfileId && (
+        <PlayerProfileOverlay
+          player={filteredRoster.find(p => p.id === selectedPlayerProfileId)}
+          isOpen={!!selectedPlayerProfileId}
+          onClose={() => setSelectedPlayerProfileId(null)}
+          teamName={selectedTeam?.name}
+        />
+      )}
     </div >
   );
 }
