@@ -26,6 +26,13 @@ import {
 } from "lucide-react";
 import { CreateTeamModal } from "@/components/ui/CreateTeamModal";
 import { InvitePlayersModal } from "@/components/ui/InvitePlayersModal";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 
 
@@ -43,6 +50,8 @@ export default function CoachDashboard() {
   const [filterRecency, setFilterRecency] = useState('All');
   const [playerFlags, setPlayerFlags] = useState<Record<string, { needsReview?: boolean, injuryNote?: boolean, topProspect?: boolean }>>({});
   const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const POSITIONS = ['All', 'Forward', 'Midfielder', 'Defender', 'Goalkeeper'];
 
@@ -154,7 +163,7 @@ export default function CoachDashboard() {
       const playerIds = rosterData.map(r => r.player_id);
       const { data: analysesData, error: analysesError } = await supabase
         .from('analyses')
-        .select('user_id, overall, created_at')
+        .select('user_id, overall, stability, power, technique, balance, created_at')
         .in('user_id', playerIds)
         .order('created_at', { ascending: false });
 
@@ -174,14 +183,22 @@ export default function CoachDashboard() {
       return (rosterData as any[]).map(item => {
         const playerAnalyses = analysesByPlayer[item.player_id] || [];
         const recentScores = getRecentScores(playerAnalyses);
+        const latestAnalysis = playerAnalyses[0] || {};
+
         return {
           ...item.users,
           roster_id: item.id,
           jersey_number: item.jersey_number,
           latest_score: recentScores[0] || null,
-          last_upload: playerAnalyses[0]?.created_at || null,
+          last_upload: latestAnalysis.created_at || null,
           recent_scores: recentScores,
-          trend: calculateTrendValue(recentScores)
+          trend: calculateTrendValue(recentScores),
+          metrics: {
+            stability: latestAnalysis.stability || 0,
+            power: latestAnalysis.power || 0,
+            technique: latestAnalysis.technique || 0,
+            balance: latestAnalysis.balance || 0
+          }
         };
       });
     },
@@ -190,7 +207,7 @@ export default function CoachDashboard() {
   });
 
   const filteredRoster = useMemo(() => {
-    return roster.filter(player => {
+    const filtered = roster.filter(player => {
       // Name search
       const matchesSearch = searchQuery === '' ||
         player.name?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -223,7 +240,49 @@ export default function CoachDashboard() {
 
       return matchesSearch && matchesPosition && matchesAge && matchesScore && matchesRecency;
     });
-  }, [roster, searchQuery, filterPosition, filterAgeRange, filterScoreRange, filterRecency]);
+
+    // Apply Sorting
+    return [...filtered].sort((a, b) => {
+      let valA: any, valB: any;
+
+      switch (sortBy) {
+        case 'name':
+          valA = a.name?.toLowerCase() || '';
+          valB = b.name?.toLowerCase() || '';
+          break;
+        case 'age':
+          valA = a.age || 0;
+          valB = b.age || 0;
+          break;
+        case 'overall':
+          valA = a.latest_score || 0;
+          valB = b.latest_score || 0;
+          break;
+        case 'stability':
+          valA = a.metrics?.stability || 0;
+          valB = b.metrics?.stability || 0;
+          break;
+        case 'power':
+          valA = a.metrics?.power || 0;
+          valB = b.metrics?.power || 0;
+          break;
+        case 'technique':
+          valA = a.metrics?.technique || 0;
+          valB = b.metrics?.technique || 0;
+          break;
+        case 'balance':
+          valA = a.metrics?.balance || 0;
+          valB = b.metrics?.balance || 0;
+          break;
+        default:
+          return 0;
+      }
+
+      if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [roster, searchQuery, filterPosition, filterAgeRange, filterScoreRange, filterRecency, sortBy, sortOrder]);
 
   const handleApprovePlayer = async (playerId: string, rosterId: string) => {
     try {
@@ -386,20 +445,19 @@ export default function CoachDashboard() {
         </header>
 
         {/* Team Selector */}
-        <div className="mb-6 flex items-center gap-4">
-          <select
-            className="px-4 py-2 rounded-lg border bg-background"
-            value={activeTeamId || ''}
-            onChange={(e) => {
-              setSelectedTeamId(e.target.value);
-            }}
-          >
-            {teams.map(team => (
-              <option key={team.id} value={team.id}>
-                {team.clubs?.name} - {team.name}
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-8">
+          <Select value={selectedTeamId || teams[0]?.id} onValueChange={setSelectedTeamId}>
+            <SelectTrigger className="w-full md:w-64 bg-background border-muted-foreground/20">
+              <SelectValue placeholder="Select a team" />
+            </SelectTrigger>
+            <SelectContent>
+              {teams.map((team: any) => (
+                <SelectItem key={team.id} value={team.id}>
+                  {team.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           <Button onClick={() => setShowCreateModal(true)}>
             <Plus className="h-4 w-4 mr-2" />
@@ -517,20 +575,21 @@ export default function CoachDashboard() {
               </div>
 
               {showFilters && (
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg bg-muted/30">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 p-4 border rounded-lg bg-muted/30">
                   <div className="space-y-2">
                     <label className="text-xs font-medium uppercase text-muted-foreground">Position</label>
-                    <select
-                      value={filterPosition}
-                      onChange={(e) => setFilterPosition(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg border bg-background"
-                    >
-                      {POSITIONS.map(pos => (
-                        <option key={pos} value={pos}>
-                          {pos === 'All' ? 'All Positions' : pos}
-                        </option>
-                      ))}
-                    </select>
+                    <Select value={filterPosition} onValueChange={setFilterPosition}>
+                      <SelectTrigger className="w-full bg-background border-muted-foreground/20">
+                        <SelectValue placeholder="Position" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {POSITIONS.map(pos => (
+                          <SelectItem key={pos} value={pos}>
+                            {pos === 'All' ? 'All Positions' : pos}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">
@@ -538,17 +597,19 @@ export default function CoachDashboard() {
                     <div className="flex gap-2">
                       <input
                         type="number"
+                        min="0"
                         placeholder="Min"
                         className="w-1/2 px-3 py-2 rounded-lg border bg-background"
                         value={filterAgeRange[0]}
-                        onChange={(e) => setFilterAgeRange([parseInt(e.target.value) || 0, filterAgeRange[1]])}
+                        onChange={(e) => setFilterAgeRange([Math.max(0, parseInt(e.target.value) || 0), filterAgeRange[1]])}
                       />
                       <input
                         type="number"
+                        min="0"
                         placeholder="Max"
                         className="w-1/2 px-3 py-2 rounded-lg border bg-background"
                         value={filterAgeRange[1]}
-                        onChange={(e) => setFilterAgeRange([filterAgeRange[0], parseInt(e.target.value) || 100])}
+                        onChange={(e) => setFilterAgeRange([filterAgeRange[0], Math.max(0, parseInt(e.target.value) || 100)])}
                       />
                     </div>
                   </div>
@@ -558,33 +619,67 @@ export default function CoachDashboard() {
                     <div className="flex gap-2">
                       <input
                         type="number"
+                        min="0"
                         placeholder="Min"
                         className="w-1/2 px-3 py-2 rounded-lg border bg-background"
                         value={filterScoreRange[0]}
-                        onChange={(e) => setFilterScoreRange([parseInt(e.target.value) || 0, filterScoreRange[1]])}
+                        onChange={(e) => setFilterScoreRange([Math.max(0, parseInt(e.target.value) || 0), filterScoreRange[1]])}
                       />
                       <input
                         type="number"
+                        min="0"
                         placeholder="Max"
                         className="w-1/2 px-3 py-2 rounded-lg border bg-background"
                         value={filterScoreRange[1]}
-                        onChange={(e) => setFilterScoreRange([filterScoreRange[0], parseInt(e.target.value) || 100])}
+                        onChange={(e) => setFilterScoreRange([filterScoreRange[0], Math.max(0, parseInt(e.target.value) || 100)])}
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <label className="text-xs font-medium uppercase text-muted-foreground">Last Upload</label>
-                    <select
-                      value={filterRecency}
-                      onChange={(e) => setFilterRecency(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg border bg-background"
-                    >
-                      <option value="All">All Time</option>
-                      <option value="Today">Today</option>
-                      <option value="This Week">This Week</option>
-                      <option value="This Month">This Month</option>
-                    </select>
+                    <Select value={filterRecency} onValueChange={setFilterRecency}>
+                      <SelectTrigger className="w-full bg-background border-muted-foreground/20">
+                        <SelectValue placeholder="Last Upload" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All">All Time</SelectItem>
+                        <SelectItem value="Today">Today</SelectItem>
+                        <SelectItem value="This Week">This Week</SelectItem>
+                        <SelectItem value="This Month">This Month</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium uppercase text-muted-foreground">Sort By</label>
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                      <SelectTrigger className="w-full bg-background border-muted-foreground/20">
+                        <SelectValue placeholder="Sort By" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="name">Name</SelectItem>
+                        <SelectItem value="age">Age</SelectItem>
+                        <SelectItem value="overall">Overall Score</SelectItem>
+                        <SelectItem value="stability">Stability</SelectItem>
+                        <SelectItem value="power">Power</SelectItem>
+                        <SelectItem value="technique">Technique</SelectItem>
+                        <SelectItem value="balance">Balance</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium uppercase text-muted-foreground">Order</label>
+                    <Select value={sortOrder} onValueChange={(val) => setSortOrder(val as 'asc' | 'desc')}>
+                      <SelectTrigger className="w-full bg-background border-muted-foreground/20">
+                        <SelectValue placeholder="Order" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="asc">Ascending</SelectItem>
+                        <SelectItem value="desc">Descending</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               )}
