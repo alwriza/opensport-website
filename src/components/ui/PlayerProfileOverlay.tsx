@@ -44,7 +44,7 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
     }, [playerId]);
 
     // Fetch recent videos for this player
-    const { data: recentVideos = [], isLoading: loadingVideos } = useQuery({
+    const { data: recentVideos = [], isLoading: loadingVideos } = useQuery<any[]>({
         queryKey: ['player-recent-videos', playerId],
         queryFn: async () => {
             if (!playerId) return [];

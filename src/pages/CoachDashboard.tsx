@@ -698,12 +698,10 @@ export default function CoachDashboard() {
                     <th className="text-left p-3">Name</th>
                     <th className="text-left p-3 text-xs uppercase text-muted-foreground">Age</th>
                     <th className="text-left p-3 text-xs uppercase text-muted-foreground">Pos</th>
-                    <th className="text-left p-3">Overall</th>
-                    <th className="text-left p-3">Trend</th>
+                    <th className="text-left p-3">Performance</th>
                     <th className="text-left p-3">History</th>
-                    <th className="text-left p-3">Recency</th>
+                    <th className="text-left p-3">Actions</th>
                     <th className="text-left p-3">Flags</th>
-                    <th className="text-right p-3">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -713,8 +711,7 @@ export default function CoachDashboard() {
                       return (
                         <tr
                           key={player.id}
-                          className={`border-b hover:bg-muted/50 transition-all cursor-pointer ${player.status === 'pending' ? 'bg-yellow-50/50' : ''}`}
-                          onClick={() => setSelectedPlayerProfileId(player.id)}
+                          className={`border-b hover:bg-muted/50 transition-all ${player.status === 'pending' ? 'bg-yellow-50/50' : ''}`}
                         >
                           <td className="p-3 text-muted-foreground font-mono">{player.jersey_number || '-'}</td>
                           <td className="p-3">
@@ -727,15 +724,20 @@ export default function CoachDashboard() {
                           </td>
                           <td className="p-3">
                             {player.latest_score ? (
-                              <div className="flex items-center gap-2">
-                                <span className={`text-xl font-bold ${getScoreColor(player.latest_score)}`}>
-                                  {player.latest_score.toFixed(1)}
-                                </span>
-                                {player.trend !== 0 && (
-                                  <span className={`text-xs ${player.trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                    {player.trend > 0 ? '▲' : '▼'}{Math.abs(player.trend).toFixed(1)}
+                              <div className="flex flex-col">
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-xl font-bold ${getScoreColor(player.latest_score)}`}>
+                                    {player.latest_score.toFixed(1)}
                                   </span>
-                                )}
+                                  {player.trend !== 0 && (
+                                    <span className={`text-xs ${player.trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                      {player.trend > 0 ? '▲' : '▼'}{Math.abs(player.trend).toFixed(1)}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[10px] text-muted-foreground font-bold tracking-tighter">
+                                  Last Upload: {player.last_upload ? new Date(player.last_upload).toLocaleDateString() : 'N/A'}
+                                </div>
                               </div>
                             ) : (
                               <span className="text-muted-foreground text-sm">No data</span>
@@ -756,10 +758,47 @@ export default function CoachDashboard() {
                             </div>
                           </td>
                           <td className="p-3">
-                            <div className="text-sm">
-                              {player.last_upload
-                                ? new Date(player.last_upload).toLocaleDateString()
-                                : <span className="text-muted-foreground">Never</span>}
+                            <div className="flex gap-2">
+                              {player.status === 'pending' ? (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="default"
+                                    onClick={() => handleApprovePlayer(player.id, player.roster_id)}
+                                    title="Approve"
+                                  >
+                                    <Check className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleDeclinePlayer(player.roster_id)}
+                                    title="Decline"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </>
+                              ) : (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-primary hover:bg-black hover:text-white transition-all duration-200 border-primary/20"
+                                    onClick={() => setSelectedPlayerProfileId(player.id)}
+                                  >
+                                    View Profile
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    onClick={() => handleRemovePlayer(player.roster_id, player.name)}
+                                    title="Remove from Team"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </>
+                              )}
                             </div>
                           </td>
                           <td className="p-3">
@@ -787,63 +826,12 @@ export default function CoachDashboard() {
                               </button>
                             </div>
                           </td>
-                          <td className="p-3">
-                            {player.status === 'pending' ? (
-                              <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="default"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleApprovePlayer(player.id, player.roster_id);
-                                  }}
-                                >
-                                  <Check className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeclinePlayer(player.roster_id);
-                                  }}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            ) : (
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-primary hover:bg-black hover:text-white transition-all duration-200 border-primary/20"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedPlayerProfileId(player.id);
-                                  }}
-                                >
-                                  View Profile
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleRemovePlayer(player.roster_id, player.name);
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            )}
-                          </td>
                         </tr>
                       );
                     })
                   ) : (
                     <tr>
-                      <td colSpan={9} className="p-8 text-center text-muted-foreground">
+                      <td colSpan={8} className="p-8 text-center text-muted-foreground">
                         {(searchQuery || filterPosition !== 'All') ? (
                           <div>
                             <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
