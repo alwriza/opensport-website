@@ -30,9 +30,9 @@ export default function CoachDashboard() {
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [coachDbId, setCoachDbId] = useState<string | null>(null);
-  const [teams, setTeams] = useState([]);
-  const [selectedTeam, setSelectedTeam] = useState(null);
-  const [roster, setRoster] = useState([]);
+  const [teams, setTeams] = useState<any[]>([]);
+  const [selectedTeam, setSelectedTeam] = useState<any>(null);
+  const [roster, setRoster] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
 
@@ -103,7 +103,7 @@ export default function CoachDashboard() {
           clubs (name)
         )
       `)
-        .eq('coach_id', dbUserId); // ✅ ИЗМЕНЕНО: Используем dbUserId вместо await
+        .eq('coach_id', dbUserId) as any;
 
       if (teamsError) throw teamsError;
 
@@ -142,8 +142,7 @@ export default function CoachDashboard() {
       )
     `)
       .eq('team_id', teamId)
-      .in('status', ['pending', 'active']);
-
+      .in('status', ['active', 'pending']) as any;
     if (!error && data) {
       // Get latest analysis for each player
       const playersWithStats = await Promise.all(
@@ -157,7 +156,9 @@ export default function CoachDashboard() {
 
           return {
             ...item.users,
+            roster_id: item.id, // Add roster_id for actions
             jersey_number: item.jersey_number,
+            status: item.status,
             latest_score: analyses?.[0]?.overall || null,
             last_upload: analyses?.[0]?.created_at || null,
             trend: calculateTrend(analyses || [])
@@ -166,6 +167,64 @@ export default function CoachDashboard() {
       );
 
       setRoster(playersWithStats);
+    }
+  };
+
+  const handleApprovePlayer = async (playerId: string, rosterId: string) => {
+    try {
+      const { error } = await (supabase
+        .from('team_rosters') as any)
+        .update({ status: 'active' })
+        .eq('id', rosterId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Player Approved",
+        description: "The player has been added to the team roster.",
+      });
+
+      if (selectedTeam) {
+        fetchRoster(selectedTeam.id);
+      }
+    } catch (error: any) {
+      console.error('Error approving player:', error);
+      toast({
+        title: "Error",
+        description: "Could not approve player",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeclinePlayer = async (rosterId: string) => {
+    if (!confirm("Are you sure you want to decline this player's request?")) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('team_rosters')
+        .delete()
+        .eq('id', rosterId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Request Declined",
+        description: "The player's request has been removed.",
+      });
+
+      if (selectedTeam) {
+        fetchRoster(selectedTeam.id);
+      }
+    } catch (error: any) {
+      console.error('Error declining player:', error);
+      toast({
+        title: "Error",
+        description: "Could not decline player",
+        variant: "destructive"
+      });
     }
   };
 
@@ -389,7 +448,6 @@ export default function CoachDashboard() {
                     <th className="text-left p-3">Name</th>
                     <th className="text-left p-3">Age</th>
                     <th className="text-left p-3">Position</th>
-                    <th className="text-left p-3">Status</th>  {/* ✅ ДОБАВЬ */}
                     <th className="text-left p-3">Latest Score</th>
                     <th className="text-left p-3">Trend</th>
                     <th className="text-left p-3">Last Upload</th>
@@ -407,20 +465,6 @@ export default function CoachDashboard() {
                       <td className="p-3 font-medium">{player.name}</td>
                       <td className="p-3">{player.age || '-'}</td>
                       <td className="p-3">{player.position || '-'}</td>
-
-                      {/* ✅ ДОБАВЬ STATUS COLUMN */}
-                      <td className="p-3">
-                        <Badge variant={
-                          player.status === 'active' ? 'default' :
-                            player.status === 'pending' ? 'secondary' :
-                              'destructive'
-                        }>
-                          {player.status === 'pending' ? '⏳ Pending Approval' :
-                            player.status === 'active' ? '✓ Active' :
-                              player.status}
-                        </Badge>
-                      </td>
-
                       <td className="p-3">
                         {player.latest_score ? (
                           <span className={`font-bold ${getScoreColor(player.latest_score)}`}>
@@ -467,13 +511,13 @@ export default function CoachDashboard() {
                             <Button variant="ghost" size="sm">
                               View Profile
                             </Button>
-                            {/* ✅ ДОБАВЬ КНОПКУ УДАЛЕНИЯ */}
                             <Button
                               variant="ghost"
                               size="sm"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
                               onClick={() => handleRemovePlayer(player.roster_id, player.name)}
                             >
-                              <Trash2 className="h-4 w-4 text-red-600" />
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         )}

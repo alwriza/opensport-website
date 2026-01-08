@@ -114,35 +114,35 @@ export default function JoinTeam() {
                         title: "Already in team",
                         description: "You are already a member of this team",
                     });
-                } else if (existing.status === 'pending') {
+                } else if (existing.status === 'declined') {
                     toast({
-                        title: "Invitation pending",
-                        description: "Your invitation is already pending approval",
+                        title: "Previously declined",
+                        description: "You previously declined this team invitation",
                     });
                 }
                 return;
             }
 
-            // Add to roster with pending status
+            // ✅ СРАЗУ ДОБАВЛЯЕМ КАК ACTIVE (код = автоматический approve)
             const { error: rosterError } = await supabase
                 .from('team_rosters')
                 .insert({
                     team_id: teamInfo.id,
                     player_id: dbUserId,
-                    status: 'pending'
+                    status: 'active'  // ✅ Правильно!
                 });
 
             if (rosterError) throw rosterError;
 
             toast({
-                title: "Request Sent! 🎉",
-                description: `Your request to join ${teamInfo.name} has been sent to the coach`,
+                title: "Joined Team! 🎉",
+                description: `You are now a member of ${teamInfo.name}`,
             });
 
             // Redirect to player dashboard
             setTimeout(() => {
                 navigate('/player-dashboard');
-            }, 2000);
+            }, 1500);
 
         } catch (error: any) {
             console.error('Error joining team:', error);
