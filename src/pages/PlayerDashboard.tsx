@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
+import { TeamProfileOverlay } from "@/components/ui/TeamProfileOverlay";
+import { Info } from "lucide-react";
 
 interface VideoRecord {
   id: string;
@@ -45,6 +47,8 @@ export default function PlayerDashboard() {
   const [resultsModalOpen, setResultsModalOpen] = useState(false);
   const [selectedAnalysis, setSelectedAnalysis] = useState<any>(null);
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string>("");
+  const [selectedTeamProfileId, setSelectedTeamProfileId] = useState<string | null>(null);
+  const [teamProfileOpen, setTeamProfileOpen] = useState(false);
 
   // 1. Sync & Fetch DB User
   const { data: dbUser, isLoading: loadingUser } = useQuery({
@@ -801,15 +805,28 @@ export default function PlayerDashboard() {
                       </div>
 
                       {team.status === 'active' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full text-red-600 hover:text-red-700"
-                          onClick={() => handleLeaveTeam(team.roster_id, team.team_name)}
-                        >
-                          <LogOut className="h-4 w-4 mr-2" />
-                          Leave Team
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => {
+                              setSelectedTeamProfileId(team.team_id);
+                              setTeamProfileOpen(true);
+                            }}
+                          >
+                            <Info className="h-4 w-4 mr-2" />
+                            View Team
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700"
+                            onClick={() => handleLeaveTeam(team.roster_id, team.team_name)}
+                          >
+                            <LogOut className="h-4 w-4 mr-2" />
+                          </Button>
+                        </div>
                       )}
                     </div>
                   ))
@@ -961,6 +978,11 @@ export default function PlayerDashboard() {
           )}
         </DialogContent>
       </Dialog>
+      <TeamProfileOverlay
+        teamId={selectedTeamProfileId}
+        isOpen={teamProfileOpen}
+        onClose={() => setTeamProfileOpen(false)}
+      />
     </div>
   );
 }
