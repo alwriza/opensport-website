@@ -816,7 +816,7 @@ export default function CoachDashboard() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="text-primary hover:bg-primary/5 border-primary/20"
+                                  className="text-primary hover:bg-black hover:text-white transition-all duration-200 border-primary/20"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setSelectedPlayerProfileId(player.id);

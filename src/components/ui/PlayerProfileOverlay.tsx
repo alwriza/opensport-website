@@ -35,32 +35,67 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
     onClose,
     teamName
 }) => {
+    const playerId = player?.player_id || player?.id;
+    const [selectedVideoIndex, setSelectedVideoIndex] = React.useState<number>(0);
+
+    // Reset selection when player changes
+    React.useEffect(() => {
+        setSelectedVideoIndex(0);
+    }, [playerId]);
+
     // Fetch recent videos for this player
     const { data: recentVideos = [], isLoading: loadingVideos } = useQuery({
-        queryKey: ['player-recent-videos', player?.id],
+        queryKey: ['player-recent-videos', playerId],
         queryFn: async () => {
-            if (!player?.id) return [];
+            if (!playerId) return [];
+            console.log("Fetching videos for player:", playerId);
             const { data, error } = await supabase
                 .from('videos')
-                .select('id, created_at, status, analyses(overall)')
-                .eq('user_id', player.id)
-                .order('created_at', { ascending: false })
+                .select(`
+                    id, 
+                    uploaded_at, 
+                    status, 
+                    analyses (
+                        overall,
+                        stability,
+                        power,
+                        technique,
+                        balance
+                    )
+                `)
+                .eq('user_id', playerId)
+                .order('uploaded_at', { ascending: false })
                 .limit(3);
 
-            if (error) throw error;
+            if (error) {
+                console.error("Error fetching videos:", error);
+                throw error;
+            }
             return data || [];
         },
-        enabled: !!player?.id && isOpen,
+        enabled: !!playerId && isOpen,
     });
 
-    if (!player) return null;
+    const selectedVideo = recentVideos[selectedVideoIndex];
+    const selectedAnalysis = selectedVideo?.analyses?.[0];
 
-    const metrics = player.metrics || {
+    // Use selected analysis metrics if available, otherwise fall back to player metrics
+    const displayMetrics = selectedAnalysis ? {
+        stability: selectedAnalysis.stability || 0,
+        power: selectedAnalysis.power || 0,
+        technique: selectedAnalysis.technique || 0,
+        balance: selectedAnalysis.balance || 0
+    } : (player.metrics || {
         stability: 0,
         power: 0,
         technique: 0,
         balance: 0
-    };
+    });
+
+    const displayScore = selectedAnalysis?.overall || player.latest_score || 0;
+    const isHistorical = selectedVideoIndex > 0;
+
+    if (!player) return null;
 
     const getScoreColor = (score: number) => {
         if (score >= 80) return "text-green-600";
@@ -127,8 +162,17 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
                                 </div>
 
                                 <div className="flex items-center justify-between relative z-10">
-                                    <span className="text-lg font-semibold text-muted-foreground">Overall Performance</span>
-                                    {trendValue !== 0 && (
+                                    <div className="flex flex-col">
+                                        <span className="text-lg font-semibold text-muted-foreground">
+                                            {isHistorical ? "Historical Analysis" : "Latest Performance"}
+                                        </span>
+                                        {isHistorical && (
+                                            <span className="text-xs text-primary font-medium">
+                                                Session from {format(new Date(selectedVideo.uploaded_at), 'MMM d, yyyy')}
+                                            </span>
+                                        )}
+                                    </div>
+                                    {!isHistorical && trendValue !== 0 && (
                                         <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold border ${trendValue > 0 ? 'text-green-600 bg-green-50 border-green-100' : 'text-red-600 bg-red-50 border-red-100'}`}>
                                             {trendValue > 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                                             {Math.abs(trendValue).toFixed(1)}%
@@ -137,18 +181,18 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
                                 </div>
 
                                 <div className="flex items-baseline gap-2 relative z-10">
-                                    <span className={`text-7xl font-black tracking-tighter ${getScoreColor(player.latest_score || 0)}`}>
-                                        {player.latest_score?.toFixed(0) || '0'}
+                                    <span className={`text-7xl font-black tracking-tighter ${getScoreColor(displayScore)}`}>
+                                        {displayScore.toFixed(0)}
                                     </span>
                                     <span className="text-2xl font-bold text-muted-foreground">/100</span>
                                 </div>
 
                                 <div className="space-y-5 pt-4 relative z-10">
                                     {[
-                                        { label: "Stability", value: metrics.stability },
-                                        { label: "Power", value: metrics.power },
-                                        { label: "Technique", value: metrics.technique },
-                                        { label: "Balance", value: metrics.balance }
+                                        { label: "Stability", value: displayMetrics.stability },
+                                        { label: "Power", value: displayMetrics.power },
+                                        { label: "Technique", value: displayMetrics.technique },
+                                        { label: "Balance", value: displayMetrics.balance }
                                     ].map((m) => (
                                         <div key={m.label} className="space-y-1.5">
                                             <div className="flex justify-between text-sm font-semibold">
@@ -176,10 +220,20 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
                                             <div key={i} className="h-20 bg-muted animate-pulse rounded-2xl" />
                                         ))
                                     ) : recentVideos.length > 0 ? (
-                                        recentVideos.map((video: any) => (
-                                            <div key={video.id} className="flex items-center justify-between p-4 bg-muted/40 rounded-2xl border border-transparent hover:border-primary/20 hover:bg-muted/60 transition-all group">
+                                        recentVideos.map((video: any, index: number) => (
+                                            <div
+                                                key={video.id}
+                                                onClick={() => setSelectedVideoIndex(index)}
+                                                className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer group ${selectedVideoIndex === index
+                                                    ? 'bg-primary/5 border-primary/30 ring-1 ring-primary/20 shadow-sm'
+                                                    : 'bg-muted/40 border-transparent hover:border-primary/20 hover:bg-muted/60'
+                                                    }`}
+                                            >
                                                 <div className="flex items-center gap-4">
-                                                    <div className="h-12 w-12 rounded-xl bg-background border flex items-center justify-center text-muted-foreground group-hover:text-primary transition-colors">
+                                                    <div className={`h-12 w-12 rounded-xl border flex items-center justify-center transition-colors ${selectedVideoIndex === index
+                                                        ? 'bg-primary text-white'
+                                                        : 'bg-background text-muted-foreground group-hover:text-primary'
+                                                        }`}>
                                                         <PlayCircle className="h-6 w-6" />
                                                     </div>
                                                     <div>
@@ -189,7 +243,7 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
                                                         </div>
                                                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
                                                             <Calendar className="h-3 w-3" />
-                                                            {format(new Date(video.created_at), 'MMM d, yyyy')}
+                                                            {format(new Date(video.uploaded_at), 'MMM d, yyyy')}
                                                         </div>
                                                     </div>
                                                 </div>
