@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useUser } from "@clerk/clerk-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,16 +28,12 @@ import { InvitePlayersModal } from "@/components/ui/InvitePlayersModal";
 export default function CoachDashboard() {
   const { user, isLoaded } = useUser();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [coachDbId, setCoachDbId] = useState<string | null>(null);
-  const [teams, setTeams] = useState<any[]>([]);
-  const [selectedTeam, setSelectedTeam] = useState<any>(null);
-  const [roster, setRoster] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
-
+  const [searchQuery, setSearchQuery] = useState('');
 
 
   // Helper functions for styling
@@ -59,129 +56,130 @@ export default function CoachDashboard() {
     return recent - previous;
   };
 
-  const getDbUserId = async () => {
-    if (!user) return null;
+  // 1. Get coach's DB ID
+  const { data: coachDbId } = useQuery({
+    queryKey: ['coach-db-id', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await supabase
+        .from('users')
+        .select('id')
+        .eq('clerk_id', user.id)
+        .maybeSingle();
 
-    const { data } = await supabase
-      .from('users')
-      .select('id')
-      .eq('clerk_id', user.id)
-      .single();
+      if (error) throw error;
+      return data?.id || null;
+    },
+    enabled: !!user,
+  });
 
-    return data?.id || null;
-  };
-
-  const fetchRoster = async (teamId: string, isBackgroundRefresh = false) => {
-    console.log('Fetching roster for team:', teamId);
-
-    // ✅ Только показывай loading если НЕ фоновое обновление
-    if (!isBackgroundRefresh) {
-      setRefreshing(true);
-    }
-
-    const { data, error } = await supabase
-      .from('team_rosters')
-      .select(`
-      id,
-      player_id,
-      jersey_number,
-      status,
-      users (
-        id,
-        name,
-        age,
-        position,
-        club
-      )
-    `)
-      .eq('team_id', teamId)
-      .eq('status', 'active');
-
-    if (!error && data) {
-      const playersWithStats = await Promise.all(
-        data.map(async (item) => {
-          const { data: analyses } = await supabase
-            .from('analyses')
-            .select('overall, created_at')
-            .eq('user_id', item.player_id)
-            .order('created_at', { ascending: false })
-            .limit(3);
-
-          return {
-            ...item.users,
-            roster_id: item.id,
-            jersey_number: item.jersey_number,
-            latest_score: analyses?.[0]?.overall || null,
-            last_upload: analyses?.[0]?.created_at || null,
-            trend: calculateTrend(analyses || [])
-          };
-        })
-      );
-
-      setRoster(playersWithStats);
-    }
-
-    // ✅ Убери loading state
-    setRefreshing(false);
-  };
-
-  const fetchCoachData = async () => {
-    try {
-      // 0. Get coach DB user ID first
-      const dbUserId = await getDbUserId();
-      setCoachDbId(dbUserId); // ✅ ДОБАВЛЕНО: Сохраняем coach ID
-
-      // 1. Get coach's teams
-      const { data: coachTeams, error: teamsError } = await supabase
+  // 2. Get coach's teams
+  const { data: teams = [], isLoading: loadingTeams } = useQuery({
+    queryKey: ['coach-teams', coachDbId],
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from('team_coaches')
         .select(`
-        team_id,
-        role,
-        teams (
-          id,
-          name,
-          age_group,
-          season,
-          invite_code,
-          clubs (name)
-        )
-      `)
-        .eq('coach_id', dbUserId) as any;
+          team_id,
+          role,
+          teams (
+            id,
+            name,
+            age_group,
+            season,
+            invite_code,
+            clubs (name)
+          )
+        `)
+        .eq('coach_id', coachDbId) as any;
 
-      if (teamsError) throw teamsError;
+      if (error) throw error;
+      const fetchedTeams = data?.map((ct: any) => ct.teams) || [];
 
-      setTeams(coachTeams?.map(ct => ct.teams) || []);
-
-      if (coachTeams && coachTeams.length > 0) {
-        setSelectedTeam(coachTeams[0].teams);
-        await fetchRoster(coachTeams[0].team_id, false);
+      // Auto-select first team if none selected
+      if (fetchedTeams.length > 0 && !selectedTeamId) {
+        setSelectedTeamId(fetchedTeams[0].id);
       }
 
-    } catch (error: any) {
-      console.error('Error fetching coach data:', error);
-      toast({
-        title: "Error",
-        description: "Could not load teams",
-        variant: "destructive"
+      return fetchedTeams;
+    },
+    enabled: !!coachDbId,
+  });
+
+  const selectedTeam = useMemo(() =>
+    teams.find(t => t.id === selectedTeamId) || null,
+    [teams, selectedTeamId]);
+
+  // 3. Get team roster with optimized stats fetching
+  const { data: roster = [], isLoading: loadingRoster } = useQuery({
+    queryKey: ['team-roster', selectedTeamId],
+    queryFn: async () => {
+      if (!selectedTeamId) return [];
+
+      // Fetch roster members
+      const { data: rosterData, error: rosterError } = await supabase
+        .from('team_rosters')
+        .select(`
+          id,
+          player_id,
+          jersey_number,
+          status,
+          users (
+            id,
+            name,
+            age,
+            position,
+            club
+          )
+        `)
+        .eq('team_id', selectedTeamId)
+        .eq('status', 'active');
+
+      if (rosterError) throw rosterError;
+      if (!rosterData || rosterData.length === 0) return [];
+
+      // OPTIMIZATION: Fetch ALL recent analyses for ALL players in one go
+      const playerIds = rosterData.map(r => r.player_id);
+      const { data: analysesData, error: analysesError } = await supabase
+        .from('analyses')
+        .select('user_id, overall, created_at')
+        .in('user_id', playerIds)
+        .order('created_at', { ascending: false });
+
+      if (analysesError) throw analysesError;
+
+      // Group analyses by player
+      const analysesByPlayer: Record<string, any[]> = {};
+      (analysesData || []).forEach((analysis: any) => {
+        if (!analysesByPlayer[analysis.user_id]) {
+          analysesByPlayer[analysis.user_id] = [];
+        }
+        if (analysesByPlayer[analysis.user_id].length < 3) {
+          analysesByPlayer[analysis.user_id].push(analysis);
+        }
       });
-    } finally {
-      setLoading(false);
-    }
-  };
 
+      return (rosterData as any[]).map(item => {
+        const playerAnalyses = analysesByPlayer[item.player_id] || [];
+        return {
+          ...item.users,
+          roster_id: item.id,
+          jersey_number: item.jersey_number,
+          latest_score: playerAnalyses[0]?.overall || null,
+          last_upload: playerAnalyses[0]?.created_at || null,
+          trend: calculateTrend(playerAnalyses)
+        };
+      });
+    },
+    enabled: !!selectedTeamId,
+    refetchInterval: 7000, // Background refresh
+  });
 
-
-  useEffect(() => {
-    if (!selectedTeam?.id) return;
-
-    fetchRoster(selectedTeam.id, false);
-
-    const interval = setInterval(() => {
-      fetchRoster(selectedTeam.id, true);
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [selectedTeam]);
+  const filteredRoster = useMemo(() =>
+    roster.filter(player =>
+      player.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    ),
+    [roster, searchQuery]);
 
 
 
@@ -203,8 +201,8 @@ export default function CoachDashboard() {
         description: "The player has been added to the team roster.",
       });
 
-      if (selectedTeam) {
-        fetchRoster(selectedTeam.id, false);
+      if (selectedTeamId) {
+        queryClient.invalidateQueries({ queryKey: ['team-roster', selectedTeamId] });
       }
     } catch (error: any) {
       console.error('Error approving player:', error);
@@ -234,8 +232,8 @@ export default function CoachDashboard() {
         description: "The player's request has been removed.",
       });
 
-      if (selectedTeam) {
-        fetchRoster(selectedTeam.id);
+      if (selectedTeamId) {
+        queryClient.invalidateQueries({ queryKey: ['team-roster', selectedTeamId] });
       }
     } catch (error: any) {
       console.error('Error declining player:', error);
@@ -265,8 +263,8 @@ export default function CoachDashboard() {
         description: `${playerName} has been removed from the team`,
       });
 
-      if (selectedTeam) {
-        fetchRoster(selectedTeam.id);
+      if (selectedTeamId) {
+        queryClient.invalidateQueries({ queryKey: ['team-roster', selectedTeamId] });
       }
     } catch (error: any) {
       console.error('Error removing player:', error);
@@ -305,7 +303,10 @@ export default function CoachDashboard() {
       });
 
       // Refresh teams list
-      await fetchCoachData();
+      queryClient.invalidateQueries({ queryKey: ['coach-teams', coachDbId] });
+      if (selectedTeamId === teamId) {
+        setSelectedTeamId(null);
+      }
 
     } catch (error: any) {
       console.error('Error deleting team:', error);
@@ -317,7 +318,7 @@ export default function CoachDashboard() {
     }
   };
 
-  if (loading) {
+  if (!isLoaded || loadingTeams) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -343,11 +344,9 @@ export default function CoachDashboard() {
         <div className="mb-6 flex items-center gap-4">
           <select
             className="px-4 py-2 rounded-lg border bg-background"
-            value={selectedTeam?.id || ''}
+            value={selectedTeamId || ''}
             onChange={(e) => {
-              const team = teams.find(t => t.id === e.target.value);
-              setSelectedTeam(team);
-              fetchRoster(e.target.value);
+              setSelectedTeamId(e.target.value);
             }}
           >
             {teams.map(team => (
@@ -458,6 +457,15 @@ export default function CoachDashboard() {
               </div>
             </div>
           </CardHeader>
+          <div className="mb-4">
+            <input
+              type="text"
+              placeholder="Search players..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="px-4 py-2 rounded-lg border w-full max-w-md"
+            />
+          </div>
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -568,7 +576,7 @@ export default function CoachDashboard() {
             onClose={() => setShowCreateModal(false)}
             coachId={coachDbId}
             onSuccess={() => {
-              fetchCoachData(); // Refresh teams
+              queryClient.invalidateQueries({ queryKey: ['coach-teams', coachDbId] });
             }}
           />
         )
@@ -580,7 +588,7 @@ export default function CoachDashboard() {
             onClose={() => setShowInviteModal(false)}
             team={selectedTeam}
             onSuccess={() => {
-              fetchRoster(selectedTeam.id); // Refresh roster
+              queryClient.invalidateQueries({ queryKey: ['team-roster', selectedTeamId] });
             }}
           />
         )
