@@ -611,18 +611,20 @@ export default function CoachDashboard() {
                       <input
                         type="number"
                         min="0"
+                        max="100"
                         placeholder="Min"
                         className="w-1/2 px-3 py-2 rounded-lg border bg-background"
                         value={filterAgeRange[0]}
-                        onChange={(e) => setFilterAgeRange([Math.max(0, parseInt(e.target.value) || 0), filterAgeRange[1]])}
+                        onChange={(e) => setFilterAgeRange([Math.min(100, Math.max(0, parseInt(e.target.value) || 0)), filterAgeRange[1]])}
                       />
                       <input
                         type="number"
                         min="0"
+                        max="100"
                         placeholder="Max"
                         className="w-1/2 px-3 py-2 rounded-lg border bg-background"
                         value={filterAgeRange[1]}
-                        onChange={(e) => setFilterAgeRange([filterAgeRange[0], Math.max(0, parseInt(e.target.value) || 100)])}
+                        onChange={(e) => setFilterAgeRange([filterAgeRange[0], Math.min(100, Math.max(0, parseInt(e.target.value) || 100))])}
                       />
                     </div>
                   </div>
@@ -633,18 +635,20 @@ export default function CoachDashboard() {
                       <input
                         type="number"
                         min="0"
+                        max="100"
                         placeholder="Min"
                         className="w-1/2 px-3 py-2 rounded-lg border bg-background"
                         value={filterScoreRange[0]}
-                        onChange={(e) => setFilterScoreRange([Math.max(0, parseInt(e.target.value) || 0), filterScoreRange[1]])}
+                        onChange={(e) => setFilterScoreRange([Math.min(100, Math.max(0, parseInt(e.target.value) || 0)), filterScoreRange[1]])}
                       />
                       <input
                         type="number"
                         min="0"
+                        max="100"
                         placeholder="Max"
                         className="w-1/2 px-3 py-2 rounded-lg border bg-background"
                         value={filterScoreRange[1]}
-                        onChange={(e) => setFilterScoreRange([filterScoreRange[0], Math.max(0, parseInt(e.target.value) || 100)])}
+                        onChange={(e) => setFilterScoreRange([filterScoreRange[0], Math.min(100, Math.max(0, parseInt(e.target.value) || 100))])}
                       />
                     </div>
                   </div>
