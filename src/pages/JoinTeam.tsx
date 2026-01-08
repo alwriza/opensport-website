@@ -100,6 +100,24 @@ export default function JoinTeam() {
 
         setLoading(true);
         try {
+            // Check if user is a coach for this team
+            const { data: isCoach } = await supabase
+                .from('team_coaches')
+                .select('id')
+                .eq('team_id', teamInfo.id)
+                .eq('coach_id', dbUserId)
+                .maybeSingle();
+
+            if (isCoach) {
+                toast({
+                    title: "Action restricted",
+                    description: "You are a coach for this team and cannot join as a player.",
+                    variant: "destructive"
+                });
+                setLoading(false);
+                return;
+            }
+
             // Check if already in team
             const { data: existing } = await supabase
                 .from('team_rosters')

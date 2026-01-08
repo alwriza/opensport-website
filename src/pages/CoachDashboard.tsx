@@ -83,22 +83,24 @@ export default function CoachDashboard() {
 
 
 
-  // 1. Get coach's DB ID
-  const { data: coachDbId } = useQuery({
-    queryKey: ['coach-db-id', user?.id],
+  // 1. Get coach's DB profile
+  const { data: coachProfile } = useQuery({
+    queryKey: ['coach-profile', user?.id],
     queryFn: async () => {
       if (!user) return null;
       const { data, error } = await supabase
         .from('users')
-        .select('id')
+        .select('*')
         .eq('clerk_id', user.id)
         .maybeSingle();
 
       if (error) throw error;
-      return (data as { id: string } | null)?.id || null;
+      return data;
     },
     enabled: !!user,
   });
+
+  const coachDbId = (coachProfile as any)?.id;
 
   // 2. Get coach's teams
   const { data: teams = [], isLoading: loadingTeams } = useQuery({
@@ -441,11 +443,18 @@ export default function CoachDashboard() {
     <div className="min-h-screen bg-gradient-card p-8">
       <div className="container mx-auto max-w-7xl">
         {/* Header */}
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Coach Dashboard</h1>
-          <p className="text-muted-foreground">
-            Manage your teams and track player performance
-          </p>
+        <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 mb-1">Coach Dashboard</h1>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground font-medium">
+                Welcome back, <span className="text-primary">{(coachProfile as any)?.name || user?.fullName || 'Coach'}</span>
+              </span>
+              <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-bold px-3 py-1 uppercase tracking-wider text-[10px]">
+                Coach
+              </Badge>
+            </div>
+          </div>
         </header>
 
         {/* Team Selector */}
