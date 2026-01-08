@@ -19,6 +19,10 @@ import {
   Check,
   X,
   Trash2,
+  Star,
+  Stethoscope,
+  AlertCircle,
+  ChevronDown,
 } from "lucide-react";
 import { CreateTeamModal } from "@/components/ui/CreateTeamModal";
 import { InvitePlayersModal } from "@/components/ui/InvitePlayersModal";
@@ -29,11 +33,18 @@ export default function CoachDashboard() {
   const { user, isLoaded } = useUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterPosition, setFilterPosition] = useState('All');
+  const [filterAgeRange, setFilterAgeRange] = useState<[number, number]>([0, 100]);
+  const [filterScoreRange, setFilterScoreRange] = useState<[number, number]>([0, 100]);
+  const [filterRecency, setFilterRecency] = useState('All');
+  const [playerFlags, setPlayerFlags] = useState<Record<string, { needsReview?: boolean, injuryNote?: boolean, topProspect?: boolean }>>({});
+  const [showFilters, setShowFilters] = useState(false);
+
+  const POSITIONS = ['All', 'Forward', 'Midfielder', 'Defender', 'Goalkeeper'];
 
 
   // Helper functions for styling
@@ -49,12 +60,17 @@ export default function CoachDashboard() {
     return "bg-red-600";
   };
 
-  const calculateTrend = (analyses: any[]) => {
-    if (!analyses || analyses.length < 2) return 0;
-    const recent = analyses[0]?.overall || 0;
-    const previous = analyses[1]?.overall || 0;
-    return recent - previous;
+  const getRecentScores = (analyses: any[]) => {
+    if (!analyses) return [];
+    return analyses.slice(0, 3).map(a => a.overall);
   };
+
+  const calculateTrendValue = (scores: number[]) => {
+    if (scores.length < 2) return 0;
+    return scores[0] - scores[1];
+  };
+
+
 
   // 1. Get coach's DB ID
   const { data: coachDbId } = useQuery({
@@ -68,7 +84,7 @@ export default function CoachDashboard() {
         .maybeSingle();
 
       if (error) throw error;
-      return data?.id || null;
+      return (data as { id: string } | null)?.id || null;
     },
     enabled: !!user,
   });
@@ -94,31 +110,28 @@ export default function CoachDashboard() {
         .eq('coach_id', coachDbId) as any;
 
       if (error) throw error;
-      const fetchedTeams = data?.map((ct: any) => ct.teams) || [];
-
-      // Auto-select first team if none selected
-      if (fetchedTeams.length > 0 && !selectedTeamId) {
-        setSelectedTeamId(fetchedTeams[0].id);
-      }
-
-      return fetchedTeams;
+      if (!data) return [];
+      return data.map((ct: any) => ct.teams);
     },
     enabled: !!coachDbId,
   });
 
+  // Derived state to handle auto-selection of the first team
+  const activeTeamId = selectedTeamId || teams[0]?.id;
+
   const selectedTeam = useMemo(() =>
-    teams.find(t => t.id === selectedTeamId) || null,
-    [teams, selectedTeamId]);
+    teams.find(t => t.id === activeTeamId) || null,
+    [teams, activeTeamId]);
 
   // 3. Get team roster with optimized stats fetching
   const { data: roster = [], isLoading: loadingRoster } = useQuery({
-    queryKey: ['team-roster', selectedTeamId],
+    queryKey: ['team-roster', activeTeamId],
     queryFn: async () => {
-      if (!selectedTeamId) return [];
+      if (!activeTeamId) return [];
 
       // Fetch roster members
-      const { data: rosterData, error: rosterError } = await supabase
-        .from('team_rosters')
+      const { data: rosterData, error: rosterError } = await (supabase
+        .from('team_rosters') as any)
         .select(`
           id,
           player_id,
@@ -132,8 +145,7 @@ export default function CoachDashboard() {
             club
           )
         `)
-        .eq('team_id', selectedTeamId)
-        .eq('status', 'active');
+        .eq('team_id', activeTeamId);
 
       if (rosterError) throw rosterError;
       if (!rosterData || rosterData.length === 0) return [];
@@ -161,31 +173,57 @@ export default function CoachDashboard() {
 
       return (rosterData as any[]).map(item => {
         const playerAnalyses = analysesByPlayer[item.player_id] || [];
+        const recentScores = getRecentScores(playerAnalyses);
         return {
           ...item.users,
           roster_id: item.id,
           jersey_number: item.jersey_number,
-          latest_score: playerAnalyses[0]?.overall || null,
+          latest_score: recentScores[0] || null,
           last_upload: playerAnalyses[0]?.created_at || null,
-          trend: calculateTrend(playerAnalyses)
+          recent_scores: recentScores,
+          trend: calculateTrendValue(recentScores)
         };
       });
     },
-    enabled: !!selectedTeamId,
-    refetchInterval: 7000, // Background refresh
+    enabled: !!activeTeamId,
+    refetchInterval: 7000,
   });
 
-  const filteredRoster = useMemo(() =>
-    roster.filter(player =>
-      player.name?.toLowerCase().includes(searchQuery.toLowerCase())
-    ),
-    [roster, searchQuery]);
+  const filteredRoster = useMemo(() => {
+    return roster.filter(player => {
+      // Name search
+      const matchesSearch = searchQuery === '' ||
+        player.name?.toLowerCase().includes(searchQuery.toLowerCase());
 
+      // Position filter
+      const matchesPosition = filterPosition === 'All' ||
+        player.position?.toLowerCase() === filterPosition.toLowerCase();
 
+      // Age filter
+      const age = player.age || 0;
+      const matchesAge = age >= filterAgeRange[0] && age <= filterAgeRange[1];
 
+      // Score filter
+      const score = player.latest_score || 0;
+      const matchesScore = score >= filterScoreRange[0] && score <= filterScoreRange[1];
 
+      // Recency filter
+      let matchesRecency = true;
+      if (filterRecency !== 'All' && player.last_upload) {
+        const uploadDate = new Date(player.last_upload);
+        const now = new Date();
+        const diffDays = Math.floor((now.getTime() - uploadDate.getTime()) / (1000 * 60 * 60 * 24));
 
+        if (filterRecency === 'Today') matchesRecency = diffDays === 0;
+        else if (filterRecency === 'This Week') matchesRecency = diffDays <= 7;
+        else if (filterRecency === 'This Month') matchesRecency = diffDays <= 30;
+      } else if (filterRecency !== 'All') {
+        matchesRecency = false;
+      }
 
+      return matchesSearch && matchesPosition && matchesAge && matchesScore && matchesRecency;
+    });
+  }, [roster, searchQuery, filterPosition, filterAgeRange, filterScoreRange, filterRecency]);
 
   const handleApprovePlayer = async (playerId: string, rosterId: string) => {
     try {
@@ -201,8 +239,8 @@ export default function CoachDashboard() {
         description: "The player has been added to the team roster.",
       });
 
-      if (selectedTeamId) {
-        queryClient.invalidateQueries({ queryKey: ['team-roster', selectedTeamId] });
+      if (activeTeamId) {
+        queryClient.invalidateQueries({ queryKey: ['team-roster', activeTeamId] });
       }
     } catch (error: any) {
       console.error('Error approving player:', error);
@@ -232,8 +270,8 @@ export default function CoachDashboard() {
         description: "The player's request has been removed.",
       });
 
-      if (selectedTeamId) {
-        queryClient.invalidateQueries({ queryKey: ['team-roster', selectedTeamId] });
+      if (activeTeamId) {
+        queryClient.invalidateQueries({ queryKey: ['team-roster', activeTeamId] });
       }
     } catch (error: any) {
       console.error('Error declining player:', error);
@@ -263,8 +301,8 @@ export default function CoachDashboard() {
         description: `${playerName} has been removed from the team`,
       });
 
-      if (selectedTeamId) {
-        queryClient.invalidateQueries({ queryKey: ['team-roster', selectedTeamId] });
+      if (activeTeamId) {
+        queryClient.invalidateQueries({ queryKey: ['team-roster', activeTeamId] });
       }
     } catch (error: any) {
       console.error('Error removing player:', error);
@@ -275,7 +313,6 @@ export default function CoachDashboard() {
       });
     }
   };
-
 
   const handleDeleteTeam = async (teamId: string, teamName: string) => {
     if (!confirm(
@@ -289,7 +326,6 @@ export default function CoachDashboard() {
     }
 
     try {
-      // Delete team (CASCADE will delete team_coaches and team_rosters)
       const { error } = await supabase
         .from('teams')
         .delete()
@@ -302,9 +338,8 @@ export default function CoachDashboard() {
         description: `${teamName} has been deleted`,
       });
 
-      // Refresh teams list
       queryClient.invalidateQueries({ queryKey: ['coach-teams', coachDbId] });
-      if (selectedTeamId === teamId) {
+      if (activeTeamId === teamId) {
         setSelectedTeamId(null);
       }
 
@@ -316,6 +351,16 @@ export default function CoachDashboard() {
         variant: "destructive"
       });
     }
+  };
+
+  const toggleFlag = (playerId: string, flag: 'needsReview' | 'injuryNote' | 'topProspect') => {
+    setPlayerFlags(prev => ({
+      ...prev,
+      [playerId]: {
+        ...prev[playerId],
+        [flag]: !prev[playerId]?.[flag]
+      }
+    }));
   };
 
   if (!isLoaded || loadingTeams) {
@@ -344,7 +389,7 @@ export default function CoachDashboard() {
         <div className="mb-6 flex items-center gap-4">
           <select
             className="px-4 py-2 rounded-lg border bg-background"
-            value={selectedTeamId || ''}
+            value={activeTeamId || ''}
             onChange={(e) => {
               setSelectedTeamId(e.target.value);
             }}
@@ -439,33 +484,112 @@ export default function CoachDashboard() {
         {/* Roster Table */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Team Roster</CardTitle>
-              <div className="flex gap-2">
-                <Button onClick={() => setShowInviteModal(true)}>
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Invite Players
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Search className="h-4 w-4 mr-2" />
-                  Search
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filter
-                </Button>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <CardTitle>Team Roster</CardTitle>
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <input
+                      type="text"
+                      placeholder="Search players..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-9 pr-4 py-2 rounded-lg border bg-background w-full md:w-64 focus:ring-2 focus:ring-primary/20 transition-all"
+                    />
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowFilters(!showFilters)}
+                    className={`${showFilters ? 'bg-muted' : ''} transition-all`}
+                  >
+                    <Filter className="h-4 w-4 mr-2" />
+                    Filters
+                    <ChevronDown className={`ml-2 h-4 w-4 transition-transform duration-300 ${showFilters ? 'rotate-180' : ''}`} />
+                  </Button>
+
+                  <Button onClick={() => setShowInviteModal(true)}>
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Invite Players
+                  </Button>
+                </div>
               </div>
+
+              {showFilters && (
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg bg-muted/30">
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium uppercase text-muted-foreground">Position</label>
+                    <select
+                      value={filterPosition}
+                      onChange={(e) => setFilterPosition(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border bg-background"
+                    >
+                      {POSITIONS.map(pos => (
+                        <option key={pos} value={pos}>
+                          {pos === 'All' ? 'All Positions' : pos}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium uppercase text-muted-foreground">Age Range</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        placeholder="Min"
+                        className="w-1/2 px-3 py-2 rounded-lg border bg-background"
+                        value={filterAgeRange[0]}
+                        onChange={(e) => setFilterAgeRange([parseInt(e.target.value) || 0, filterAgeRange[1]])}
+                      />
+                      <input
+                        type="number"
+                        placeholder="Max"
+                        className="w-1/2 px-3 py-2 rounded-lg border bg-background"
+                        value={filterAgeRange[1]}
+                        onChange={(e) => setFilterAgeRange([filterAgeRange[0], parseInt(e.target.value) || 100])}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium uppercase text-muted-foreground">Score Range</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        placeholder="Min"
+                        className="w-1/2 px-3 py-2 rounded-lg border bg-background"
+                        value={filterScoreRange[0]}
+                        onChange={(e) => setFilterScoreRange([parseInt(e.target.value) || 0, filterScoreRange[1]])}
+                      />
+                      <input
+                        type="number"
+                        placeholder="Max"
+                        className="w-1/2 px-3 py-2 rounded-lg border bg-background"
+                        value={filterScoreRange[1]}
+                        onChange={(e) => setFilterScoreRange([filterScoreRange[0], parseInt(e.target.value) || 100])}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium uppercase text-muted-foreground">Last Upload</label>
+                    <select
+                      value={filterRecency}
+                      onChange={(e) => setFilterRecency(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border bg-background"
+                    >
+                      <option value="All">All Time</option>
+                      <option value="Today">Today</option>
+                      <option value="This Week">This Week</option>
+                      <option value="This Month">This Month</option>
+                    </select>
+                  </div>
+                </div>
+              )}
             </div>
           </CardHeader>
-          <div className="mb-4">
-            <input
-              type="text"
-              placeholder="Search players..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="px-4 py-2 rounded-lg border w-full max-w-md"
-            />
-          </div>
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -473,102 +597,173 @@ export default function CoachDashboard() {
                   <tr className="border-b">
                     <th className="text-left p-3">#</th>
                     <th className="text-left p-3">Name</th>
-                    <th className="text-left p-3">Age</th>
-                    <th className="text-left p-3">Position</th>
-                    <th className="text-left p-3">Latest Score</th>
-                    <th className="text-left p-3">Trend</th>
-                    <th className="text-left p-3">Last Upload</th>
-                    <th className="text-left p-3">Actions</th>
+                    <th className="text-left p-3 text-xs uppercase text-muted-foreground">Age</th>
+                    <th className="text-left p-3 text-xs uppercase text-muted-foreground">Pos</th>
+                    <th className="text-left p-3 text-xs uppercase text-muted-foreground">Overall</th>
+                    <th className="text-left p-3 text-xs uppercase text-muted-foreground">Trend (Last 3)</th>
+                    <th className="text-left p-3 text-xs uppercase text-muted-foreground">Recency</th>
+                    <th className="text-left p-3 text-xs uppercase text-muted-foreground">Flags</th>
+                    <th className="text-left p-3 text-xs uppercase text-muted-foreground">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {roster.map((player) => (
-                    <tr
-                      key={player.id}
-                      className={`border-b hover:bg-muted/50 ${player.status === 'pending' ? 'bg-yellow-50' : ''
-                        }`}
-                    >
-                      <td className="p-3">{player.jersey_number || '-'}</td>
-                      <td className="p-3 font-medium">{player.name}</td>
-                      <td className="p-3">{player.age || '-'}</td>
-                      <td className="p-3">{player.position || '-'}</td>
-                      <td className="p-3">
-                        {player.latest_score ? (
-                          <span className={`font-bold ${getScoreColor(player.latest_score)}`}>
-                            {player.latest_score.toFixed(1)}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">No data</span>
-                        )}
-                      </td>
-                      <td className="p-3">
-                        {player.trend !== 0 && (
-                          <span className={player.trend > 0 ? 'text-green-600' : 'text-red-600'}>
-                            {player.trend > 0 ? '↑' : '↓'} {Math.abs(player.trend).toFixed(1)}
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-3 text-sm text-muted-foreground">
-                        {player.last_upload
-                          ? new Date(player.last_upload).toLocaleDateString()
-                          : 'Never'}
-                      </td>
-                      <td className="p-3">
-                        {player.status === 'pending' ? (
-                          <div className="flex gap-2">
+                  {filteredRoster.length > 0 ? (
+                    filteredRoster.map((player) => {
+                      const flags = playerFlags[player.id] || {};
+                      return (
+                        <tr
+                          key={player.id}
+                          className={`border-b hover:bg-muted/50 ${player.status === 'pending' ? 'bg-yellow-50/50' : ''}`}
+                        >
+                          <td className="p-3 text-muted-foreground font-mono">{player.jersey_number || '-'}</td>
+                          <td className="p-3">
+                            <div className="font-medium">{player.name}</div>
+                            {player.status === 'pending' && <Badge variant="secondary" className="mt-1">Pending Approval</Badge>}
+                          </td>
+                          <td className="p-3">{player.age || '-'}</td>
+                          <td className="p-3">
+                            <Badge variant="outline" className="font-mono">{player.position || '-'}</Badge>
+                          </td>
+                          <td className="p-3">
+                            {player.latest_score ? (
+                              <div className="flex items-center gap-2">
+                                <span className={`text-xl font-bold ${getScoreColor(player.latest_score)}`}>
+                                  {player.latest_score.toFixed(1)}
+                                </span>
+                                {player.trend !== 0 && (
+                                  <span className={`text-xs ${player.trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                    {player.trend > 0 ? '▲' : '▼'}{Math.abs(player.trend).toFixed(1)}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">No data</span>
+                            )}
+                          </td>
+                          <td className="p-3">
+                            <div className="flex gap-1 items-center">
+                              {player.recent_scores?.map((score: number, idx: number) => (
+                                <div
+                                  key={idx}
+                                  className={`h-6 w-8 rounded text-[10px] flex items-center justify-center font-bold text-white ${getScoreBgColor(score)}`}
+                                  title={`Upload ${idx + 1}: ${score.toFixed(1)}`}
+                                >
+                                  {score.toFixed(0)}
+                                </div>
+                              ))}
+                              {!player.recent_scores?.length && <span className="text-muted-foreground text-xs italic">N/A</span>}
+                            </div>
+                          </td>
+                          <td className="p-3">
+                            <div className="text-sm">
+                              {player.last_upload
+                                ? new Date(player.last_upload).toLocaleDateString()
+                                : <span className="text-muted-foreground">Never</span>}
+                            </div>
+                          </td>
+                          <td className="p-3">
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => toggleFlag(player.id, 'needsReview')}
+                                className={`p-1 rounded transition-colors ${flags.needsReview ? 'text-orange-500 bg-orange-100' : 'text-muted-foreground/30 hover:text-muted-foreground'}`}
+                                title="Needs Review"
+                              >
+                                <AlertCircle className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => toggleFlag(player.id, 'injuryNote')}
+                                className={`p-1 rounded transition-colors ${flags.injuryNote ? 'text-red-500 bg-red-100' : 'text-muted-foreground/30 hover:text-muted-foreground'}`}
+                                title="Injury Note"
+                              >
+                                <Stethoscope className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => toggleFlag(player.id, 'topProspect')}
+                                className={`p-1 rounded transition-colors ${flags.topProspect ? 'text-yellow-500 bg-yellow-100' : 'text-muted-foreground/30 hover:text-muted-foreground'}`}
+                                title="Top Prospect"
+                              >
+                                <Star className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                          <td className="p-3">
+                            {player.status === 'pending' ? (
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  onClick={() => handleApprovePlayer(player.id, player.roster_id)}
+                                >
+                                  <Check className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleDeclinePlayer(player.roster_id)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm">
+                                  View
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  onClick={() => handleRemovePlayer(player.roster_id, player.name)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan={9} className="p-8 text-center text-muted-foreground">
+                        {(searchQuery || filterPosition !== 'All') ? (
+                          <div>
+                            <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                            <p className="mb-4">
+                              No players found
+                              {searchQuery && ` for "${searchQuery}"`}
+                              {filterPosition !== 'All' && ` in position ${filterPosition}`}
+                            </p>
                             <Button
-                              size="sm"
-                              variant="default"
-                              onClick={() => handleApprovePlayer(player.id, player.roster_id)}
+                              variant="link"
+                              onClick={() => {
+                                setSearchQuery('');
+                                setFilterPosition('All');
+                              }}
                             >
-                              <Check className="h-4 w-4 mr-1" />
-                              Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleDeclinePlayer(player.roster_id)}
-                            >
-                              <X className="h-4 w-4 mr-1" />
-                              Decline
+                              Clear all filters
                             </Button>
                           </div>
                         ) : (
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="sm">
-                              View Profile
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                              onClick={() => handleRemovePlayer(player.roster_id, player.name)}
-                            >
-                              <Trash2 className="h-4 w-4" />
+                          <div className="flex flex-col items-center py-6">
+                            <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                            <p className="mb-4">No players in team yet</p>
+                            <Button onClick={() => setShowInviteModal(true)}>
+                              <UserPlus className="h-4 w-4 mr-2" />
+                              Invite Players
                             </Button>
                           </div>
                         )}
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
-
-            {roster.length === 0 && (
-              <div className="text-center py-12 text-muted-foreground">
-                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No players in this team yet</p>
-                <Button onClick={() => setShowInviteModal(true)}>
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Invite Players
-                </Button>
-              </div>
-            )}
           </CardContent>
         </Card>
-
       </div>
+
       {
         showCreateModal && coachDbId && (
           <CreateTeamModal
@@ -581,6 +776,7 @@ export default function CoachDashboard() {
           />
         )
       }
+
       {
         showInviteModal && selectedTeam && (
           <InvitePlayersModal
@@ -588,12 +784,11 @@ export default function CoachDashboard() {
             onClose={() => setShowInviteModal(false)}
             team={selectedTeam}
             onSuccess={() => {
-              queryClient.invalidateQueries({ queryKey: ['team-roster', selectedTeamId] });
+              queryClient.invalidateQueries({ queryKey: ['team-roster', activeTeamId] });
             }}
           />
         )
       }
-    </div>
-
+    </div >
   );
 }
