@@ -34,7 +34,10 @@ export default function CoachDashboard() {
   const [selectedTeam, setSelectedTeam] = useState<any>(null);
   const [roster, setRoster] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
+
+
 
   // Helper functions for styling
   const getScoreColor = (score: number) => {
@@ -42,17 +45,20 @@ export default function CoachDashboard() {
     if (score >= 60) return "text-yellow-600";
     return "text-red-600";
   };
+
   const getScoreBgColor = (score: number) => {
     if (score >= 80) return "bg-green-600";
     if (score >= 60) return "bg-yellow-600";
     return "bg-red-600";
   };
+
   const calculateTrend = (analyses: any[]) => {
     if (!analyses || analyses.length < 2) return 0;
     const recent = analyses[0]?.overall || 0;
     const previous = analyses[1]?.overall || 0;
     return recent - previous;
   };
+
   const getDbUserId = async () => {
     if (!user) return null;
 
@@ -65,22 +71,59 @@ export default function CoachDashboard() {
     return data?.id || null;
   };
 
-  useEffect(() => {
-    if (!isLoaded || !user) return;
-    fetchCoachData();
-  }, [isLoaded, user]);
-  useEffect(() => {
-    if (!selectedTeam?.id) return;
+  const fetchRoster = async (teamId: string, isBackgroundRefresh = false) => {
+    console.log('Fetching roster for team:', teamId);
 
-    const interval = setInterval(() => {
-      console.log('Polling roster for pending players...');
-      fetchRoster(selectedTeam.id);
-    }, 10000); // Каждые 10 секунд
+    // ✅ Только показывай loading если НЕ фоновое обновление
+    if (!isBackgroundRefresh) {
+      setRefreshing(true);
+    }
 
-    return () => clearInterval(interval);
-  }, [selectedTeam]);
+    const { data, error } = await supabase
+      .from('team_rosters')
+      .select(`
+      id,
+      player_id,
+      jersey_number,
+      status,
+      users (
+        id,
+        name,
+        age,
+        position,
+        club
+      )
+    `)
+      .eq('team_id', teamId)
+      .eq('status', 'active');
 
+    if (!error && data) {
+      const playersWithStats = await Promise.all(
+        data.map(async (item) => {
+          const { data: analyses } = await supabase
+            .from('analyses')
+            .select('overall, created_at')
+            .eq('user_id', item.player_id)
+            .order('created_at', { ascending: false })
+            .limit(3);
 
+          return {
+            ...item.users,
+            roster_id: item.id,
+            jersey_number: item.jersey_number,
+            latest_score: analyses?.[0]?.overall || null,
+            last_upload: analyses?.[0]?.created_at || null,
+            trend: calculateTrend(analyses || [])
+          };
+        })
+      );
+
+      setRoster(playersWithStats);
+    }
+
+    // ✅ Убери loading state
+    setRefreshing(false);
+  };
 
   const fetchCoachData = async () => {
     try {
@@ -111,7 +154,7 @@ export default function CoachDashboard() {
 
       if (coachTeams && coachTeams.length > 0) {
         setSelectedTeam(coachTeams[0].teams);
-        await fetchRoster(coachTeams[0].team_id);
+        await fetchRoster(coachTeams[0].team_id, false);
       }
 
     } catch (error: any) {
@@ -125,50 +168,26 @@ export default function CoachDashboard() {
       setLoading(false);
     }
   };
-  const fetchRoster = async (teamId: string) => {
-    const { data, error } = await supabase
-      .from('team_rosters')
-      .select(`
-      id,
-      player_id,
-      jersey_number,
-      status,
-      users (
-        id,
-        name,
-        age,
-        position,
-        club
-      )
-    `)
-      .eq('team_id', teamId)
-      .in('status', ['active', 'pending']) as any;
-    if (!error && data) {
-      // Get latest analysis for each player
-      const playersWithStats = await Promise.all(
-        data.map(async (item) => {
-          const { data: analyses } = await supabase
-            .from('analyses')
-            .select('overall, created_at')
-            .eq('user_id', item.player_id)
-            .order('created_at', { ascending: false })
-            .limit(3);
 
-          return {
-            ...item.users,
-            roster_id: item.id, // Add roster_id for actions
-            jersey_number: item.jersey_number,
-            status: item.status,
-            latest_score: analyses?.[0]?.overall || null,
-            last_upload: analyses?.[0]?.created_at || null,
-            trend: calculateTrend(analyses || [])
-          };
-        })
-      );
 
-      setRoster(playersWithStats);
-    }
-  };
+
+  useEffect(() => {
+    if (!selectedTeam?.id) return;
+
+    fetchRoster(selectedTeam.id, false);
+
+    const interval = setInterval(() => {
+      fetchRoster(selectedTeam.id, true);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [selectedTeam]);
+
+
+
+
+
+
 
   const handleApprovePlayer = async (playerId: string, rosterId: string) => {
     try {
@@ -185,7 +204,7 @@ export default function CoachDashboard() {
       });
 
       if (selectedTeam) {
-        fetchRoster(selectedTeam.id);
+        fetchRoster(selectedTeam.id, false);
       }
     } catch (error: any) {
       console.error('Error approving player:', error);

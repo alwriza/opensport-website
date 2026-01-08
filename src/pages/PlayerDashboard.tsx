@@ -37,6 +37,7 @@ export default function PlayerDashboard() {
 
   const [dbUser, setDbUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshingTeams, setRefreshingTeams] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [videos, setVideos] = useState<VideoRecord[]>([]);
   const [latestAnalysis, setLatestAnalysis] = useState<Analysis | null>(null);
@@ -352,8 +353,12 @@ export default function PlayerDashboard() {
     }
   };
 
-  const fetchMyTeams = async (userId: string) => {
-    setLoadingTeams(true);
+  const fetchMyTeams = async (userId: string, isBackgroundRefresh = false) => {
+    // ✅ Только показывай loading если НЕ фоновое
+    if (!isBackgroundRefresh) {
+      setLoadingTeams(true);
+    }
+
     try {
       const { data, error } = await supabase
         .from('team_rosters')
@@ -410,7 +415,7 @@ export default function PlayerDashboard() {
       });
 
       if (dbUser?.id) {
-        await fetchMyTeams(dbUser.id);
+        await fetchMyTeams(dbUser.id, false);
       }
 
     } catch (error: any) {
@@ -479,7 +484,7 @@ export default function PlayerDashboard() {
         await fetchVideos(userId);
 
         console.log("Fetching my teams...");
-        await fetchMyTeams(userId);
+        await fetchMyTeams(userId, false);
 
       } catch (error: any) {
         console.error("❌ Sync error:", error);
@@ -510,7 +515,20 @@ export default function PlayerDashboard() {
 
     return () => clearInterval(interval);
   }, [videos, dbUser]);
+  useEffect(() => {
+    if (!dbUser?.id) return;
 
+    // Initial fetch
+    fetchMyTeams(dbUser.id, false);
+
+    // ✅ Polling каждые 2-3 секунды
+    const interval = setInterval(() => {
+      console.log('🔄 Refreshing My Teams...');
+      fetchMyTeams(dbUser.id, true);
+    }, 2000); // 2 секунды
+
+    return () => clearInterval(interval);
+  }, [dbUser]);
 
 
   if (loading) {
