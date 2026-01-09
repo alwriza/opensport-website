@@ -1,0 +1,35 @@
+🎯 ЧТО ДАЛЬШЕ (финальные штрихи):
+КРИТИЧНО (Must Have):
+1. Player Profile для Coach ⭐⭐⭐ (2-3 часа)
+Зачем: Coach должен видеть прогресс игрока в тренировках
+Что добавить в Player Profile Modal (Coach View):
+┌─────────────────────────────┐
+│ John Smith Profile     [X]  │
+├─────────────────────────────┤
+│ [Overview] [Videos] [Training] ← Tabs
+│                             │
+│ Training Tab:               │
+│ • Total XP: 450             │
+│ • Level: 5                  │
+│ • Streak: 7 days 🔥         │
+│ • Completed Skills: 3/10    │
+│                             │
+│ Skills Progress:            │
+│ ✅ Passing Accuracy (3/3)   │
+│ ⏳ First Touch (1/3)        │
+│ 🔒 Ball Control (locked)    │
+└─────────────────────────────┘
+
+2. Dashboard Stats Improvements ⭐⭐ (2 часа)
+Player Dashboard:
+
+Add Training stats card
+Show current level + XP progress bar
+Show streak prominently
+
+Coach Dashboard:
+
+Team average training level
+Top performers (by XP)
+Activity this week
+

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Upload, Trophy, Loader2, Video, AlertCircle, Plus, X, Users, Check, XCircle, LogOut } from "lucide-react";
+import { Upload, Trophy, Loader2, Video, AlertCircle, Plus, X, Users, Check, XCircle, LogOut, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -49,6 +49,7 @@ export default function PlayerDashboard() {
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string>("");
   const [selectedTeamProfileId, setSelectedTeamProfileId] = useState<string | null>(null);
   const [teamProfileOpen, setTeamProfileOpen] = useState(false);
+  const [recommendedTraining, setRecommendedTraining] = useState<any[]>([]);
 
   // 1. Sync & Fetch DB User
   const { data: dbUser, isLoading: loadingUser } = useQuery({
@@ -123,6 +124,97 @@ export default function PlayerDashboard() {
       return data as any;
     },
     enabled: !!latestCompletedVideoId,
+  });
+
+  // 5. Fetch AI Recommendations based on latest analysis
+  const { data: latestRecommendations = [] } = useQuery({
+    queryKey: ['latest-recommendations', latestAnalysis?.id],
+    queryFn: async () => {
+      if (!latestAnalysis || !dbUser?.id) return [];
+
+      const scores = {
+        stability: (latestAnalysis as any)?.stability || 0,
+        power: (latestAnalysis as any)?.power || 0,
+        technique: (latestAnalysis as any)?.technique || 0,
+        balance: (latestAnalysis as any)?.balance || 0
+      };
+
+      try {
+        const recommendations: any[] = [];
+
+        // 1. Check stability/balance
+        if (scores.stability < 60 || scores.balance < 60) {
+          const { data: skillData } = await supabase
+            .from('skills')
+            .select('id')
+            .eq('name', 'Balance & Core')
+            .single();
+
+          if (skillData) {
+            const { data } = await supabase
+              .from('skill_levels' as any)
+              .select(`
+                *,
+                skills (name, icon)
+              `)
+              .eq('skill_id', (skillData as any).id)
+              .in('level_name', ['beginner', 'intermediate'])
+              .order('level_order');
+            if (data) recommendations.push(...(data as any[]));
+          }
+        }
+
+        // 2. Check power
+        if (scores.power < 60) {
+          const { data: skillData } = await supabase
+            .from('skills')
+            .select('id')
+            .eq('name', 'Speed & Acceleration')
+            .single();
+
+          if (skillData) {
+            const { data } = await supabase
+              .from('skill_levels' as any)
+              .select(`
+                *,
+                skills (name, icon)
+              `)
+              .eq('skill_id', (skillData as any).id)
+              .in('level_name', ['beginner', 'intermediate'])
+              .order('level_order');
+            if (data) recommendations.push(...(data as any[]));
+          }
+        }
+
+        // 3. Check technique
+        if (scores.technique < 60) {
+          const { data: skillData } = await supabase
+            .from('skills')
+            .select('id')
+            .eq('name', 'Shooting Precision')
+            .single();
+
+          if (skillData) {
+            const { data } = await supabase
+              .from('skill_levels' as any)
+              .select(`
+                *,
+                skills (name, icon)
+              `)
+              .eq('skill_id', (skillData as any).id)
+              .in('level_name', ['beginner'])
+              .order('level_order');
+            if (data) recommendations.push(...(data as any[]));
+          }
+        }
+
+        return recommendations.slice(0, 3);
+      } catch (error) {
+        console.error('Error getting recommendations:', error);
+        return [];
+      }
+    },
+    enabled: !!latestAnalysis && !!dbUser?.id,
   });
 
   // 4. Fetch My Teams
@@ -318,14 +410,14 @@ export default function PlayerDashboard() {
           .insert({
             user_id: dbUser.id,
             video_id: (newVideo as any).id,
-            stability: result.scores.stability,
-            power: result.scores.power,
-            technique: result.scores.technique,
-            balance: result.scores.balance,
-            overall: result.scores.overall,
-            feedback: result.feedback,
-            tags: result.tags || [],
-            processing_time_ms: result.processing_time_ms || 0
+            stability: (result as any).scores?.stability || 0,
+            power: (result as any).scores?.power || 0,
+            technique: (result as any).scores?.technique || 0,
+            balance: (result as any).scores?.balance || 0,
+            overall: (result as any).scores?.overall || 0,
+            feedback: (result as any).feedback || '',
+            tags: (result as any).tags || [],
+            processing_time_ms: (result as any).processing_time_ms || 0
           });
 
         if (analysisError) {
@@ -376,6 +468,85 @@ export default function PlayerDashboard() {
     }
   };
 
+  const getRecommendedTraining = async (scores: any) => {
+    if (!dbUser?.id) return [];
+
+    try {
+      const recommendations: any[] = [];
+
+      // 1. Check stability/balance
+      if (scores.stability < 60 || scores.balance < 60) {
+        const { data: skillData } = await supabase
+          .from('skills')
+          .select('id')
+          .eq('name', 'Balance & Core')
+          .single();
+
+        if (skillData) {
+          const { data } = await supabase
+            .from('skill_levels' as any)
+            .select(`
+              *,
+              skills (name, icon)
+            `)
+            .eq('skill_id', (skillData as any).id)
+            .in('level_name', ['beginner', 'intermediate'])
+            .order('level_order');
+          if (data) recommendations.push(...(data as any[]));
+        }
+      }
+
+      // 2. Check power
+      if (scores.power < 60) {
+        const { data: skillData } = await supabase
+          .from('skills')
+          .select('id')
+          .eq('name', 'Speed & Acceleration')
+          .single();
+
+        if (skillData) {
+          const { data } = await supabase
+            .from('skill_levels' as any)
+            .select(`
+              *,
+              skills (name, icon)
+            `)
+            .eq('skill_id', (skillData as any).id)
+            .in('level_name', ['beginner', 'intermediate'])
+            .order('level_order');
+          if (data) recommendations.push(...(data as any[]));
+        }
+      }
+
+      // 3. Check technique
+      if (scores.technique < 60) {
+        const { data: skillData } = await supabase
+          .from('skills')
+          .select('id')
+          .eq('name', 'Shooting Precision')
+          .single();
+
+        if (skillData) {
+          const { data } = await supabase
+            .from('skill_levels' as any)
+            .select(`
+              *,
+              skills (name, icon)
+            `)
+            .eq('skill_id', (skillData as any).id)
+            .in('level_name', ['beginner'])
+            .order('level_order');
+          if (data) recommendations.push(...(data as any[]));
+        }
+      }
+
+      return recommendations.slice(0, 3);
+    } catch (error) {
+      console.error('Error getting recommendations:', error);
+      return [];
+    }
+  };
+
   const openResultsModal = async (videoId: string) => {
     try {
       // Fetch analysis
@@ -403,6 +574,16 @@ export default function PlayerDashboard() {
 
       if (urlError) throw urlError;
       setSelectedVideoUrl(urlData.signedUrl);
+
+      // Get recommendations
+      const scores = {
+        stability: (analysisData as any)?.stability || 0,
+        power: (analysisData as any)?.power || 0,
+        technique: (analysisData as any)?.technique || 0,
+        balance: (analysisData as any)?.balance || 0
+      };
+      const recommendations = await getRecommendedTraining(scores);
+      setRecommendedTraining(recommendations);
 
       setResultsModalOpen(true);
     } catch (error: any) {
@@ -582,6 +763,56 @@ export default function PlayerDashboard() {
                       </div>
                     </div>
                   </div>
+
+                  {/* AI Recommendations */}
+                  {latestRecommendations.length > 0 && (
+                    <div className="mt-6 pt-6 border-t">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Trophy className="h-5 w-5 text-primary" />
+                        <h3 className="font-semibold">AI Recommendations</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Based on your analysis, we recommend these exercises:
+                      </p>
+                      <div className="grid gap-3">
+                        {latestRecommendations.map((level: any) => (
+                          <Card
+                            key={level.id}
+                            className="cursor-pointer hover:border-primary transition-all group bg-gradient-to-r from-white to-primary/5"
+                            onClick={() => {
+                              navigate(`/training?skill=${level.skill_id}&level=${level.level_name}`);
+                            }}
+                          >
+                            <CardContent className="p-4">
+                              <div className="flex items-center gap-4">
+                                <div className="text-3xl grayscale group-hover:grayscale-0 transition-all">
+                                  {level.skills?.icon}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-semibold text-sm">
+                                    {level.skills?.name}
+                                  </h4>
+                                  <p className="text-xs text-muted-foreground line-clamp-1">
+                                    {level.video_title}
+                                  </p>
+                                  <div className="flex items-center gap-3 mt-2 text-[10px] uppercase font-bold tracking-widest text-slate-400">
+                                    <Badge variant="outline" className="text-[9px] px-2 py-0">
+                                      {level.level_name}
+                                    </Badge>
+                                    <span>⏱️ {level.duration_minutes} min</span>
+                                    <span className="text-primary">+{level.xp_reward} XP</span>
+                                  </div>
+                                </div>
+                                <Button variant="outline" size="sm" className="rounded-xl">
+                                  Start →
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ) : (
@@ -778,6 +1009,7 @@ export default function PlayerDashboard() {
                 </div>
               </CardContent>
             </Card>
+
             {/* My Teams Card - добавь ПОСЛЕ карточки Team Invitations */}
             <Card>
               <CardHeader>
@@ -970,6 +1202,52 @@ export default function PlayerDashboard() {
                       <Badge key={index} variant="secondary">
                         {tag.replace(/_/g, ' ')}
                       </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Recommended Training */}
+              {recommendedTraining.length > 0 && (
+                <div className="pt-4 border-t">
+                  <h3 className="font-semibold mb-3 flex items-center gap-2">
+                    <Trophy className="h-5 w-5 text-primary" />
+                    Recommended Training
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Based on your analysis, these exercises will help improve your weak areas:
+                  </p>
+                  <div className="space-y-3">
+                    {recommendedTraining.map((level) => (
+                      <Card
+                        key={level.id}
+                        className="cursor-pointer hover:border-primary transition-colors group"
+                        onClick={() => {
+                          setResultsModalOpen(false);
+                          navigate(`/training?skill=${level.skill_id}&level=${level.level_name}`);
+                        }}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="text-3xl grayscale group-hover:grayscale-0 transition-all">{level.skills?.icon}</div>
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-sm">
+                                {level.skills?.name} - {level.level_name.charAt(0).toUpperCase() + level.level_name.slice(1)}
+                              </h4>
+                              <p className="text-xs text-muted-foreground line-clamp-1">
+                                {level.video_title}
+                              </p>
+                              <div className="flex items-center gap-3 mt-2 text-[10px] uppercase font-bold tracking-widest text-slate-400">
+                                <span>⏱️ {level.duration_minutes} min</span>
+                                <span>+{level.xp_reward} XP</span>
+                              </div>
+                            </div>
+                            <Button variant="outline" size="sm" className="rounded-xl px-4">
+                              Start Training
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
                     ))}
                   </div>
                 </div>

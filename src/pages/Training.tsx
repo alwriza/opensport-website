@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@clerk/clerk-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useSearchParams } from "react-router-dom";
 import { Play, TrendingUp, Target, Brain, Loader2, Filter, Lock, CheckCircle, Circle, Trophy, Flame, Star, Zap, ChevronRight, ExternalLink } from "lucide-react";
 
 interface Exercise {
@@ -101,6 +102,38 @@ const Training = () => {
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [activeTab, setActiveTab] = useState("interactive");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [searchParams] = useSearchParams();
+  const skillDetailsRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll when skill is selected
+  useEffect(() => {
+    if (selectedSkill && skillDetailsRef.current) {
+      skillDetailsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [selectedSkill]);
+
+  // Handle URL parameters for auto-opening
+  useEffect(() => {
+    const skillParam = searchParams.get('skill');
+    const levelParam = searchParams.get('level');
+
+    if (skillParam && skills.length > 0) {
+      const skill = skills.find(s => s.id === skillParam);
+      if (skill) {
+        setSelectedSkill(skill);
+
+        if (levelParam && skillLevels.length > 0) {
+          const level = skillLevels.find(
+            l => l.skill_id === skillParam && l.level_name === levelParam
+          );
+          if (level) {
+            setSelectedLevel(level);
+            setShowVideoModal(true);
+          }
+        }
+      }
+    }
+  }, [searchParams, skills, skillLevels]);
 
   // Pre-calculated stats for UI
   const userXP = playerProgress?.total_xp || 0;
@@ -168,7 +201,6 @@ const Training = () => {
             .single();
           progressData = newProgress;
         }
-
         // Fetch skill-specific progress
         const { data: skillProgData } = await supabase
           .from('player_skill_progress' as any)
@@ -178,7 +210,7 @@ const Training = () => {
         setSkills(skillsData || []);
         setSkillLevels(levelsData || []);
         setPlayerProgress(progressData);
-        setSkillProgress(skillProgData || []);
+        setSkillProgress((skillProgData || []) as any[]);
       } catch (error) {
         console.error("Error fetching training data:", error);
         toast({
@@ -244,7 +276,7 @@ const Training = () => {
     const progress = getSkillProgress(skillId);
     if (!progress) return false;
     const previousLevelName = levelOrder === 2 ? 'beginner' : 'intermediate';
-    return progress.completed_levels.includes(previousLevelName);
+    return (progress.completed_levels as any).includes(previousLevelName);
   };
 
   // Complete level function
@@ -285,14 +317,14 @@ const Training = () => {
           .eq('player_id', dbUserId)
           .eq('skill_id', skillId);
       } else {
-        await supabase
-          .from('player_skill_progress' as any)
+        await (supabase as any)
+          .from('player_skill_progress')
           .insert({
             player_id: dbUserId,
             skill_id: skillId,
             completed_levels: completedLevels,
             is_completed: allLevelsCompleted
-          } as any);
+          });
       }
 
       // 3. Update player XP and Streak
@@ -592,62 +624,64 @@ const Training = () => {
 
           {/* Detailed Skill View Modal/Section could go here */}
           {selectedSkill && (
-            <Card className="mt-8 border-2 border-primary/20 bg-white p-8 rounded-[2rem] shadow-xl animate-in fade-in slide-in-from-bottom-4">
-              <div className="flex flex-col md:flex-row gap-8">
-                <div className="md:w-1/3 space-y-4">
-                  <div className="text-7xl mb-4">{selectedSkill.icon}</div>
-                  <h2 className="text-3xl font-bold">{selectedSkill.name}</h2>
-                  <p className="text-slate-600 leading-relaxed font-medium">{selectedSkill.description}</p>
-                  <Button variant="outline" onClick={() => setSelectedSkill(null)} className="w-full rounded-2xl">
-                    Back to Tree
-                  </Button>
-                </div>
-                <div className="md:w-2/3 space-y-4">
-                  <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">Available Training Tiers</h3>
-                  <div className="grid gap-3">
-                    {getLevelsForSkill(selectedSkill.id).map((level) => {
-                      const unlocked = isLevelUnlocked(selectedSkill.id, level.level_order);
-                      const isCompleted = getSkillProgress(selectedSkill.id)?.completed_levels.includes(level.level_name);
+            <div ref={skillDetailsRef}>
+              <Card className="mt-8 border-2 border-primary/20 bg-white p-8 rounded-[2rem] shadow-xl animate-in fade-in slide-in-from-bottom-4">
+                <div className="flex flex-col md:flex-row gap-8">
+                  <div className="md:w-1/3 space-y-4">
+                    <div className="text-7xl mb-4">{selectedSkill.icon}</div>
+                    <h2 className="text-3xl font-bold">{selectedSkill.name}</h2>
+                    <p className="text-slate-600 leading-relaxed font-medium">{selectedSkill.description}</p>
+                    <Button variant="outline" onClick={() => setSelectedSkill(null)} className="w-full rounded-2xl">
+                      Back to Tree
+                    </Button>
+                  </div>
+                  <div className="md:w-2/3 space-y-4">
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">Available Training Tiers</h3>
+                    <div className="grid gap-3">
+                      {getLevelsForSkill(selectedSkill.id).map((level) => {
+                        const unlocked = isLevelUnlocked(selectedSkill.id, level.level_order);
+                        const isCompleted = getSkillProgress(selectedSkill.id)?.completed_levels.includes(level.level_name);
 
-                      return (
-                        <div
-                          key={level.id}
-                          className={`p-5 rounded-2xl border-2 flex items-center justify-between transition-all ${unlocked
-                            ? 'border-slate-100 bg-white hover:border-primary/30'
-                            : 'border-transparent bg-slate-50 opacity-40'
-                            }`}
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className={`h-10 w-10 rounded-xl flex items-center justify-center font-bold ${isCompleted ? 'bg-green-500 text-white' : 'bg-slate-100 text-slate-400'
-                              }`}>
-                              {isCompleted ? <CheckCircle className="h-6 w-6" /> : level.level_order}
+                        return (
+                          <div
+                            key={level.id}
+                            className={`p-5 rounded-2xl border-2 flex items-center justify-between transition-all ${unlocked
+                              ? 'border-slate-100 bg-white hover:border-primary/30'
+                              : 'border-transparent bg-slate-50 opacity-40'
+                              }`}
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className={`h-10 w-10 rounded-xl flex items-center justify-center font-bold ${isCompleted ? 'bg-green-500 text-white' : 'bg-slate-100 text-slate-400'
+                                }`}>
+                                {isCompleted ? <CheckCircle className="h-6 w-6" /> : level.level_order}
+                              </div>
+                              <div>
+                                <p className="font-bold text-slate-900 capitalize">{level.level_name} Tier</p>
+                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">{level.video_title}</p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-bold text-slate-900 capitalize">{level.level_name} Tier</p>
-                              <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">{level.video_title}</p>
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs font-bold text-primary">+{level.xp_reward} XP</span>
+                              <Button
+                                size="sm"
+                                disabled={!unlocked}
+                                className="rounded-xl px-6"
+                                onClick={() => {
+                                  setSelectedLevel(level);
+                                  setShowVideoModal(true);
+                                }}
+                              >
+                                {isCompleted ? 'Review' : 'Train'}
+                              </Button>
                             </div>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <span className="text-xs font-bold text-primary">+{level.xp_reward} XP</span>
-                            <Button
-                              size="sm"
-                              disabled={!unlocked}
-                              className="rounded-xl px-6"
-                              onClick={() => {
-                                setSelectedLevel(level);
-                                setShowVideoModal(true);
-                              }}
-                            >
-                              {isCompleted ? 'Review' : 'Train'}
-                            </Button>
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Card>
+              </Card>
+            </div>
           )}
         </TabsContent>
 
