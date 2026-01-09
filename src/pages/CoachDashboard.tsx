@@ -23,6 +23,7 @@ import {
   Stethoscope,
   AlertCircle,
   ChevronDown,
+  Trophy,
 } from "lucide-react";
 import { CreateTeamModal } from "@/components/ui/CreateTeamModal";
 import { InvitePlayersModal } from "@/components/ui/InvitePlayersModal";
@@ -488,62 +489,69 @@ export default function CoachDashboard() {
           )}
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
+
+        {/* Team Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          {/* Total Players */}
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Total Players</p>
                   <p className="text-2xl font-bold">{roster.length}</p>
                 </div>
-                <Users className="h-8 w-8 text-primary" />
+                <Users className="h-8 w-8 text-muted-foreground" />
               </div>
             </CardContent>
           </Card>
 
+          {/* Average Score */}
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Avg Score</p>
                   <p className="text-2xl font-bold">
                     {roster.length > 0
-                      ? (roster.reduce((sum, p) => sum + (p.latest_score || 0), 0) / roster.length).toFixed(1)
-                      : '0'}
+                      ? (roster.reduce((sum: number, p: any) => sum + (p.latest_score || 0), 0) / roster.length).toFixed(1)
+                      : '-'}
                   </p>
                 </div>
-                <TrendingUp className="h-8 w-8 text-green-500" />
+                <Trophy className="h-8 w-8 text-muted-foreground" />
               </div>
             </CardContent>
           </Card>
 
+          {/* Active This Week */}
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Active Today</p>
+                  <p className="text-sm text-muted-foreground">Active This Week</p>
                   <p className="text-2xl font-bold">
-                    {roster.filter(p => {
+                    {roster.filter((p: any) => {
                       if (!p.last_upload) return false;
-                      const uploadDate = new Date(p.last_upload);
-                      const today = new Date();
-                      return uploadDate.toDateString() === today.toDateString();
+                      const weekAgo = new Date();
+                      weekAgo.setDate(weekAgo.getDate() - 7);
+                      return new Date(p.last_upload) > weekAgo;
                     }).length}
                   </p>
                 </div>
-                <Clock className="h-8 w-8 text-blue-500" />
+                <TrendingUp className="h-8 w-8 text-green-600" />
               </div>
             </CardContent>
           </Card>
 
+          {/* Top Performer */}
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Top Performers</p>
-                  <p className="text-2xl font-bold">
-                    {roster.filter(p => p.latest_score >= 80).length}
+                  <p className="text-sm text-muted-foreground">Top Performer</p>
+                  <p className="text-lg font-bold">
+                    {roster.length > 0
+                      ? roster.reduce((max: any, p: any) => (p.latest_score || 0) > (max.latest_score || 0) ? p : max, roster[0])?.name
+                      : '-'}
                   </p>
                 </div>
                 <Award className="h-8 w-8 text-yellow-500" />

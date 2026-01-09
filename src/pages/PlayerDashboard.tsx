@@ -126,6 +126,27 @@ export default function PlayerDashboard() {
     enabled: !!latestCompletedVideoId,
   });
 
+  // 4. Fetch Training Progress
+  const { data: trainingStats } = useQuery({
+    queryKey: ['training-stats', dbUser?.id],
+    queryFn: async () => {
+      if (!dbUser?.id) return null;
+      const { data: progress } = await supabase
+        .from('player_progress')
+        .select('*')
+        .eq('player_id', dbUser.id)
+        .single();
+
+      const { data: skills } = await supabase
+        .from('player_skill_progress')
+        .select('*')
+        .eq('player_id', dbUser.id);
+
+      return { progress, skills: skills || [] };
+    },
+    enabled: !!dbUser?.id
+  });
+
   // 5. Fetch AI Recommendations based on latest analysis
   const { data: latestRecommendations = [] } = useQuery({
     queryKey: ['latest-recommendations', latestAnalysis?.id],
@@ -993,6 +1014,62 @@ export default function PlayerDashboard() {
                   <span className="text-muted-foreground">Videos Processing</span>
                   <span className="font-bold text-lg">{videos.filter(v => v.status === 'processing').length}</span>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Training Progress Card */}
+            <Card className="border-2 border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="text-xl">🎮</span>
+                  Training Progress
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Level & XP */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">Level {trainingStats?.progress?.level || 1}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {trainingStats?.progress?.total_xp || 0} XP
+                    </span>
+                  </div>
+                  <Progress
+                    value={((trainingStats?.progress?.total_xp || 0) % 100)}
+                    className="h-2"
+                  />
+                </div>
+
+                {/* Streak */}
+                <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">🔥</span>
+                    <div>
+                      <div className="font-bold text-orange-600 dark:text-orange-400">
+                        {trainingStats?.progress?.current_streak || 0} Day Streak
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Best: {trainingStats?.progress?.longest_streak || 0} days
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Skills Completed */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Skills Completed</span>
+                  <span className="font-bold text-lg">
+                    {trainingStats?.skills?.filter((sp: any) => sp.is_completed).length || 0}/10
+                  </span>
+                </div>
+
+                {/* Button to Training */}
+                <Button
+                  className="w-full"
+                  onClick={() => navigate('/training')}
+                >
+                  Continue Training →
+                </Button>
               </CardContent>
             </Card>
 
