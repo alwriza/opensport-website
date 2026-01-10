@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useNavigate } from "react-router-dom";
 import { TeamProfileOverlay } from "@/components/ui/TeamProfileOverlay";
 import { Info } from "lucide-react";
+import { TermsAcceptanceModal } from "@/components/ui/TermsAcceptanceModal";
 
 interface VideoRecord {
   id: string;
@@ -50,6 +51,8 @@ export default function PlayerDashboard() {
   const [selectedTeamProfileId, setSelectedTeamProfileId] = useState<string | null>(null);
   const [teamProfileOpen, setTeamProfileOpen] = useState(false);
   const [recommendedTraining, setRecommendedTraining] = useState<any[]>([]);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+
 
   // 1. Sync & Fetch DB User
   const { data: dbUser, isLoading: loadingUser } = useQuery({
@@ -274,10 +277,18 @@ export default function PlayerDashboard() {
     refetchInterval: 3000,
   });
 
-  // Sync local editing state
+  // Sync local editing state and check for terms acceptance
   useEffect(() => {
-    if (dbUser) {
-      setLocalUser(dbUser);
+    const userProfile = dbUser as any;
+    if (userProfile) {
+      setLocalUser(userProfile);
+
+      // Check if user accepted terms
+      if (!userProfile.terms_accepted_at || !userProfile.privacy_accepted_at) {
+        setShowTermsModal(true);
+      } else {
+        setShowTermsModal(false);
+      }
     }
   }, [dbUser]);
 
@@ -689,6 +700,18 @@ export default function PlayerDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-card p-8">
+      {/* Terms Acceptance Modal */}
+      {dbUser && (
+        <TermsAcceptanceModal
+          open={showTermsModal}
+          userId={(dbUser as any).id}
+          onAccept={() => {
+            setShowTermsModal(false);
+            queryClient.invalidateQueries({ queryKey: ['db-user', user?.id] });
+          }}
+        />
+      )}
+
       <div className="container mx-auto max-w-6xl">
         <header className="mb-10">
           <h1 className="text-3xl font-bold mb-2">Welcome, {user?.firstName || 'Player'}!</h1>

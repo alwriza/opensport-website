@@ -269,3 +269,185 @@ CREATE TRIGGER teams_invite_code_trigger
   BEFORE INSERT ON teams
   FOR EACH ROW
   EXECUTE FUNCTION set_invite_code();
+
+
+-- ==========================================
+-- TRAINING SYSTEM TABLES
+-- ==========================================
+
+-- 1. Skills (10 nodes в Skill Tree)
+CREATE TABLE skills (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  category TEXT NOT NULL,
+  description TEXT,
+  icon TEXT,
+  order_index INT NOT NULL UNIQUE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2. Skill Levels (30 levels: 10 skills × 3 levels each)
+CREATE TABLE skill_levels (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  skill_id UUID NOT NULL REFERENCES skills(id) ON DELETE CASCADE,
+  level_name TEXT NOT NULL CHECK (level_name IN ('beginner', 'intermediate', 'advanced')),
+  level_order INT NOT NULL CHECK (level_order IN (1, 2, 3)),
+  youtube_url TEXT NOT NULL,
+  video_title TEXT NOT NULL,
+  duration_minutes INT,
+  target_metrics TEXT[] DEFAULT '{}',
+  xp_reward INT DEFAULT 50,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(skill_id, level_order)
+);
+
+-- 3. Player Skill Progress (tracking прогресса по skills)
+CREATE TABLE player_skill_progress (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  player_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  skill_id UUID NOT NULL REFERENCES skills(id) ON DELETE CASCADE,
+  completed_levels TEXT[] DEFAULT '{}',
+  is_completed BOOLEAN DEFAULT false,
+  started_at TIMESTAMPTZ DEFAULT NOW(),
+  completed_at TIMESTAMPTZ,
+  UNIQUE(player_id, skill_id)
+);
+
+-- 4. Level Completions (история завершенных уровней)
+CREATE TABLE level_completions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  player_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  skill_level_id UUID NOT NULL REFERENCES skill_levels(id) ON DELETE CASCADE,
+  completed_at TIMESTAMPTZ DEFAULT NOW(),
+  xp_earned INT NOT NULL
+);
+
+-- 5. Player Progress (XP, Level, Streak)
+CREATE TABLE player_progress (
+  player_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  total_xp INT DEFAULT 0,
+  level INT DEFAULT 1,
+  current_streak INT DEFAULT 0,
+  longest_streak INT DEFAULT 0,
+  last_activity_date DATE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ==========================================
+-- INDEXES для производительности
+-- ==========================================
+
+CREATE INDEX idx_skill_levels_skill_id ON skill_levels(skill_id);
+CREATE INDEX idx_player_skill_progress_player_id ON player_skill_progress(player_id);
+CREATE INDEX idx_level_completions_player_id ON level_completions(player_id);
+CREATE INDEX idx_skills_order_index ON skills(order_index);
+
+-- ==========================================
+-- TRIGGER для auto-update updated_at
+-- ==========================================
+
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_player_progress_updated_at
+  BEFORE UPDATE ON player_progress
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+
+-- ==========================================
+-- SEED: 10 SKILLS
+-- ==========================================
+
+INSERT INTO skills (name, category, description, icon, order_index) VALUES
+  ('Passing Accuracy', 'passing', 'Master short and long passing techniques', '🎯', 1),
+  ('First Touch', 'technical', 'Improve ball control and first touch', '⚡', 2),
+  ('Ball Control Basics', 'technical', 'Develop fundamental ball control skills', '🦶', 3),
+  ('Speed Dribbling', 'dribbling', 'Enhance dribbling speed and agility', '💨', 4),
+  ('Shooting Precision', 'shooting', 'Improve shooting accuracy and power', '⚽', 5),
+  ('Defensive Positioning', 'defensive', 'Learn proper defensive stance and positioning', '🛡️', 6),
+  ('Speed & Acceleration', 'physical', 'Build explosive speed and acceleration', '🏃', 7),
+  ('Balance & Core', 'physical', 'Strengthen balance and core stability', '⚖️', 8),
+  ('1v1 Attacking', 'attacking', 'Master one-on-one attacking moves', '⚔️', 9),
+  ('Game Awareness', 'mental', 'Develop tactical awareness and decision making', '🧠', 10);
+
+-- ==========================================
+-- SEED: 30 SKILL LEVELS (10 skills × 3 levels)
+-- ==========================================
+
+-- 1) Passing Accuracy
+INSERT INTO skill_levels (skill_id, level_name, level_order, youtube_url, video_title, duration_minutes, target_metrics) VALUES
+  ((SELECT id FROM skills WHERE name = 'Passing Accuracy'), 'beginner', 1, 'https://www.youtube.com/watch?v=F8LCioV8z_s', '5 Soccer Passing Drills | adidas', 12, '{"technique"}'),
+  ((SELECT id FROM skills WHERE name = 'Passing Accuracy'), 'intermediate', 2, 'https://www.youtube.com/watch?v=-V88Iy1X-is', 'New Passing Drills to Improve Speed & Accuracy', 15, '{"technique"}'),
+  ((SELECT id FROM skills WHERE name = 'Passing Accuracy'), 'advanced', 3, 'https://www.youtube.com/watch?v=0kGgL_aglEE', 'Passing & 1st Touch Drill (ADVANCED)', 10, '{"technique"}');
+
+-- 2) First Touch
+INSERT INTO skill_levels (skill_id, level_name, level_order, youtube_url, video_title, duration_minutes, target_metrics) VALUES
+  ((SELECT id FROM skills WHERE name = 'First Touch'), 'beginner', 1, 'https://www.youtube.com/watch?v=ud84rp3Vphs', '10 Exercises To Master Your First Touch', 14, '{"technique"}'),
+  ((SELECT id FROM skills WHERE name = 'First Touch'), 'intermediate', 2, 'https://www.youtube.com/watch?v=el7QvVnprOk', 'Perfect Your First Touch | 5 First Touch Exercises', 12, '{"technique"}'),
+  ((SELECT id FROM skills WHERE name = 'First Touch'), 'advanced', 3, 'https://www.youtube.com/watch?v=8xfWkNLdVYE', 'How I Coach First Touch Under Pressure', 16, '{"technique", "balance"}');
+
+-- 3) Ball Control Basics
+INSERT INTO skill_levels (skill_id, level_name, level_order, youtube_url, video_title, duration_minutes, target_metrics) VALUES
+  ((SELECT id FROM skills WHERE name = 'Ball Control Basics'), 'beginner', 1, 'https://www.youtube.com/watch?v=e5RxAJM-oxc', '10 EASY Ball Mastery Exercises For Beginners', 10, '{"technique"}'),
+  ((SELECT id FROM skills WHERE name = 'Ball Control Basics'), 'intermediate', 2, 'https://www.youtube.com/watch?v=Fj3Jsn0Pa7c', '10 Close Control Dribbling Exercises', 15, '{"technique", "balance"}'),
+  ((SELECT id FROM skills WHERE name = 'Ball Control Basics'), 'advanced', 3, 'https://www.youtube.com/watch?v=ezi5VhbOgsQ', 'Tight Space Control Training Drills', 12, '{"technique", "balance"}');
+
+-- 4) Speed Dribbling
+INSERT INTO skill_levels (skill_id, level_name, level_order, youtube_url, video_title, duration_minutes, target_metrics) VALUES
+  ((SELECT id FROM skills WHERE name = 'Speed Dribbling'), 'beginner', 1, 'https://www.youtube.com/watch?v=QqjaavLXdHs', '5 Close Control Dribbling Drills', 10, '{"technique"}'),
+  ((SELECT id FROM skills WHERE name = 'Speed Dribbling'), 'intermediate', 2, 'https://www.youtube.com/watch?v=NMfLJynwyTk', '32 Close Control Dribbling Cone Drills', 18, '{"technique", "power"}'),
+  ((SELECT id FROM skills WHERE name = 'Speed Dribbling'), 'advanced', 3, 'https://www.youtube.com/watch?v=i3jSMolxtsE', 'How To Train Solo Like a Pro | Dribbling & Ball Mastery', 20, '{"technique", "power"}');
+
+-- 5) Shooting Precision
+INSERT INTO skill_levels (skill_id, level_name, level_order, youtube_url, video_title, duration_minutes, target_metrics) VALUES
+  ((SELECT id FROM skills WHERE name = 'Shooting Precision'), 'beginner', 1, 'https://www.youtube.com/watch?v=ARGE2_MjaNY', 'Passing - Technique - Shooting - Soccer Drills', 12, '{"technique", "power"}'),
+  ((SELECT id FROM skills WHERE name = 'Shooting Precision'), 'intermediate', 2, 'https://www.youtube.com/watch?v=BdCBar17CTU', 'Striker Masterclass | 5 Drills To Improve Finishing', 16, '{"technique", "power"}'),
+  ((SELECT id FROM skills WHERE name = 'Shooting Precision'), 'advanced', 3, 'https://www.youtube.com/watch?v=BdCBar17CTU', 'Advanced Striker Training', 16, '{"technique", "power"}');
+
+-- 6) Defensive Positioning
+INSERT INTO skill_levels (skill_id, level_name, level_order, youtube_url, video_title, duration_minutes, target_metrics) VALUES
+  ((SELECT id FROM skills WHERE name = 'Defensive Positioning'), 'beginner', 1, 'https://www.youtube.com/watch?v=FS1LrWzSSmQ', 'LOADS OF SOCCER DRILLS FOR BEGINNERS', 15, '{"balance", "technique"}'),
+  ((SELECT id FROM skills WHERE name = 'Defensive Positioning'), 'intermediate', 2, 'https://www.youtube.com/watch?v=0F_sLDwOMNc', '25 Partner Passing Drills | PRO LEVEL', 18, '{"balance", "technique"}'),
+  ((SELECT id FROM skills WHERE name = 'Defensive Positioning'), 'advanced', 3, 'https://www.youtube.com/watch?v=h3o-MKSehJA', 'Full Partner Training Session', 20, '{"balance", "technique"}');
+
+-- 7) Speed & Acceleration
+INSERT INTO skill_levels (skill_id, level_name, level_order, youtube_url, video_title, duration_minutes, target_metrics) VALUES
+  ((SELECT id FROM skills WHERE name = 'Speed & Acceleration'), 'beginner', 1, 'https://www.youtube.com/watch?v=rSlJU8cO9js', 'Fast Feet & Agility Training', 12, '{"power"}'),
+  ((SELECT id FROM skills WHERE name = 'Speed & Acceleration'), 'intermediate', 2, 'https://www.youtube.com/watch?v=nckkvbxgnUM', 'Quick 15 Minute Soccer Training | Ball Control', 15, '{"power"}'),
+  ((SELECT id FROM skills WHERE name = 'Speed & Acceleration'), 'advanced', 3, 'https://www.youtube.com/watch?v=5IR4Ecfssyw', 'Advanced Speed Training', 14, '{"power"}');
+
+-- 8) Balance & Core
+INSERT INTO skill_levels (skill_id, level_name, level_order, youtube_url, video_title, duration_minutes, target_metrics) VALUES
+  ((SELECT id FROM skills WHERE name = 'Balance & Core'), 'beginner', 1, 'https://www.youtube.com/watch?v=i3jSMolxtsE', 'How To Train Solo Like a Pro', 20, '{"stability", "balance"}'),
+  ((SELECT id FROM skills WHERE name = 'Balance & Core'), 'intermediate', 2, 'https://www.youtube.com/watch?v=NMfLJynwyTk', '10 Close Control Dribbling Cone Drills', 18, '{"stability", "balance"}'),
+  ((SELECT id FROM skills WHERE name = 'Balance & Core'), 'advanced', 3, 'https://www.youtube.com/watch?v=ezi5VhbOgsQ', 'Tight Space Control Training Drills', 12, '{"stability", "balance"}');
+
+-- 9) 1v1 Attacking
+INSERT INTO skill_levels (skill_id, level_name, level_order, youtube_url, video_title, duration_minutes, target_metrics) VALUES
+  ((SELECT id FROM skills WHERE name = '1v1 Attacking'), 'beginner', 1, 'https://www.youtube.com/watch?v=QqjaavLXdHs', '5 Close Control Dribbling Drills', 10, '{"technique"}'),
+  ((SELECT id FROM skills WHERE name = '1v1 Attacking'), 'intermediate', 2, 'https://www.youtube.com/watch?v=NMfLJynwyTk', '32 Close Control Dribbling Cone Drills', 18, '{"technique", "power"}'),
+  ((SELECT id FROM skills WHERE name = '1v1 Attacking'), 'advanced', 3, 'https://www.youtube.com/watch?v=i3jSMolxtsE', 'How To Train Solo Like a Pro', 20, '{"technique", "power"}');
+
+-- 10) Game Awareness
+INSERT INTO skill_levels (skill_id, level_name, level_order, youtube_url, video_title, duration_minutes, target_metrics) VALUES
+  ((SELECT id FROM skills WHERE name = 'Game Awareness'), 'beginner', 1, 'https://www.youtube.com/watch?v=FS1LrWzSSmQ', 'LOADS OF SOCCER DRILLS FOR BEGINNERS', 15, '{"technique"}'),
+  ((SELECT id FROM skills WHERE name = 'Game Awareness'), 'intermediate', 2, 'https://www.youtube.com/watch?v=-F6OecCUHLA', 'Passing & 1st Touch Combinations', 12, '{"technique"}'),
+  ((SELECT id FROM skills WHERE name = 'Game Awareness'), 'advanced', 3, 'https://www.youtube.com/watch?v=moLy3vQ1q_E', '4v2 Rondo | Possession Exercise', 14, '{"technique", "balance"}');
+
+
+-- Add compliance tracking fields
+ALTER TABLE users 
+  ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS privacy_accepted_at TIMESTAMPTZ;
+
+-- Create index for performance
+CREATE INDEX IF NOT EXISTS idx_users_terms_accepted 
+  ON users(terms_accepted_at) 
+  WHERE terms_accepted_at IS NULL;

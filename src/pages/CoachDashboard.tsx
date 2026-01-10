@@ -35,6 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TermsAcceptanceModal } from "@/components/ui/TermsAcceptanceModal";
 
 
 
@@ -55,6 +56,7 @@ export default function CoachDashboard() {
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [selectedPlayerProfileId, setSelectedPlayerProfileId] = useState<string | null>(null);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   const POSITIONS = ['All', 'Forward', 'Midfielder', 'Defender', 'Goalkeeper'];
 
@@ -100,6 +102,18 @@ export default function CoachDashboard() {
     },
     enabled: !!user,
   });
+
+  // Check for terms acceptance
+  useEffect(() => {
+    const profile = coachProfile as any;
+    if (profile) {
+      if (!profile.terms_accepted_at || !profile.privacy_accepted_at) {
+        setShowTermsModal(true);
+      } else {
+        setShowTermsModal(false);
+      }
+    }
+  }, [coachProfile]);
 
   const coachDbId = (coachProfile as any)?.id;
 
@@ -442,6 +456,17 @@ export default function CoachDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-card p-8">
+      {/* Terms Acceptance Modal */}
+      {coachProfile && (
+        <TermsAcceptanceModal
+          open={showTermsModal}
+          userId={(coachProfile as any).id}
+          onAccept={() => {
+            setShowTermsModal(false);
+            queryClient.invalidateQueries({ queryKey: ['coach-profile', user?.id] });
+          }}
+        />
+      )}
       <div className="container mx-auto max-w-7xl">
         {/* Header */}
         <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
