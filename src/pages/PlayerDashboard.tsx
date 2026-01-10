@@ -403,7 +403,7 @@ export default function PlayerDashboard() {
 
       // 3. Call ML Worker directly (without Edge Function)
       try {
-        console.log('🚀 Creating signed URL for ML Worker...');
+        console.log('Creating signed URL for ML Worker...');
 
         // Create signed URL
         const { data: urlData, error: signError } = await supabase.storage
@@ -415,7 +415,7 @@ export default function PlayerDashboard() {
           throw new Error('Could not create signed URL');
         }
 
-        console.log('📞 Calling ML Worker...');
+        console.log('Calling ML Worker...');
 
         const mlWorkerUrl = 'https://opensportml-production.up.railway.app';
         const mlResponse = await fetch(`${mlWorkerUrl}/analyze`, {
@@ -434,7 +434,7 @@ export default function PlayerDashboard() {
         }
 
         const result = await mlResponse.json();
-        console.log('✅ ML analysis complete:', result);
+        console.log(' ML analysis complete:', result);
 
         // Save analysis to database
         const { error: analysisError } = await (supabase
@@ -469,7 +469,7 @@ export default function PlayerDashboard() {
         });
 
       } catch (mlError: any) {
-        console.error('❌ ML processing failed:', mlError);
+        console.error(' ML processing failed:', mlError);
 
         // Mark video as failed
         await (supabase
@@ -1006,6 +1006,26 @@ export default function PlayerDashboard() {
                       onBlur={() => updateProfile('weight', localUser?.weight)}
                       placeholder="75"
                     />
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t space-y-3">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Legal & Privacy</p>
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => window.open('/terms', '_blank')}
+                      className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 group"
+                    >
+                      Terms of Service
+                      <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-all -translate-x-1 group-hover:translate-x-0" />
+                    </button>
+                    <button
+                      onClick={() => window.open('/privacy', '_blank')}
+                      className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 group"
+                    >
+                      Privacy Policy
+                      <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-all -translate-x-1 group-hover:translate-x-0" />
+                    </button>
                   </div>
                 </div>
               </CardContent>

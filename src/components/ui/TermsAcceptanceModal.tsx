@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -82,17 +83,18 @@ export function TermsAcceptanceModal({ open, userId, onAccept }: TermsAcceptance
                         <div className="flex-1">
                             <label htmlFor="terms" className="text-sm font-medium cursor-pointer leading-relaxed">
                                 I have read and agree to the{" "}
-
-                                <a
-                                    href="/terms"
-                                    target="_blank"
-                                    className="text-primary hover:underline inline-flex items-center gap-1"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    Terms of Service
-                                    <ExternalLink className="h-3 w-3" />
-                                </a>
                             </label>
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    window.open('/terms', '_blank');
+                                }}
+                                className="text-primary hover:underline inline-flex items-center gap-1 font-bold bg-transparent border-none p-0 cursor-pointer text-sm"
+                            >
+                                Terms of Service
+                                <ExternalLink className="h-3 w-3" />
+                            </button>
                         </div>
                     </div>
 
@@ -107,16 +109,18 @@ export function TermsAcceptanceModal({ open, userId, onAccept }: TermsAcceptance
                         <div className="flex-1">
                             <label htmlFor="privacy" className="text-sm font-medium cursor-pointer leading-relaxed">
                                 I have read and agree to the{" "}
-                                <a
-                                    href="/privacy"
-                                    target="_blank"
-                                    className="text-primary hover:underline inline-flex items-center gap-1"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    Privacy Policy
-                                    <ExternalLink className="h-3 w-3" />
-                                </a>
                             </label>
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    window.open('/privacy', '_blank');
+                                }}
+                                className="text-primary hover:underline inline-flex items-center gap-1 font-bold bg-transparent border-none p-0 cursor-pointer text-sm"
+                            >
+                                Privacy Policy
+                                <ExternalLink className="h-3 w-3" />
+                            </button>
                         </div>
                     </div>
 

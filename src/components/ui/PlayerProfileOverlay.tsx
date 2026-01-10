@@ -293,6 +293,24 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
                                             ))}
                                         </div>
                                     </div>
+
+                                    <div className="pt-4 flex flex-col gap-2 opacity-40 hover:opacity-100 transition-opacity">
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Legal Reference</p>
+                                        <div className="flex flex-col gap-1">
+                                            <button
+                                                onClick={() => window.open('/terms', '_blank')}
+                                                className="text-[10px] text-slate-500 hover:text-primary transition-colors text-left"
+                                            >
+                                                Terms of Service
+                                            </button>
+                                            <button
+                                                onClick={() => window.open('/privacy', '_blank')}
+                                                className="text-[10px] text-slate-500 hover:text-primary transition-colors text-left"
+                                            >
+                                                Privacy Policy
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </TabsContent>
@@ -347,7 +365,7 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
                                             <Trophy className="h-5 w-5 text-primary" />
                                             <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Total XP</p>
                                         </div>
-                                        <p className="text-3xl font-bold text-slate-900">{trainingProgress?.progress?.total_xp || 0}</p>
+                                        <p className="text-3xl font-bold text-slate-900">{(trainingProgress as any)?.progress?.total_xp || 0}</p>
                                     </div>
 
                                     <div className="bg-white rounded-2xl p-6 border-2 border-slate-100">
@@ -355,7 +373,7 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
                                             <TrendingUp className="h-5 w-5 text-primary" />
                                             <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Level</p>
                                         </div>
-                                        <p className="text-3xl font-bold text-slate-900">{trainingProgress?.progress?.level || 1}</p>
+                                        <p className="text-3xl font-bold text-slate-900">{(trainingProgress as any)?.progress?.level || 1}</p>
                                     </div>
 
                                     <div className="bg-white rounded-2xl p-6 border-2 border-slate-100">
@@ -363,7 +381,7 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
                                             <p className="text-lg">🔥</p>
                                             <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Streak</p>
                                         </div>
-                                        <p className="text-3xl font-bold text-orange-500">{trainingProgress?.progress?.current_streak || 0} Days</p>
+                                        <p className="text-3xl font-bold text-orange-500">{(trainingProgress as any)?.progress?.current_streak || 0} Days</p>
                                     </div>
 
                                     <div className="bg-white rounded-2xl p-6 border-2 border-slate-100">
