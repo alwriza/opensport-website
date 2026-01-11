@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { SignInButton, SignedIn, SignedOut } from "@clerk/clerk-react";
 import { ArrowRight, UserPlus, Video, TrendingUp, Sprout } from "lucide-react";
+import AutoScroll from "embla-carousel-auto-scroll";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 
 export default function Home() {
   return (
@@ -133,76 +135,103 @@ export default function Home() {
       {/* How It Works Section */}
       <section className="relative bg-[#0A1628] py-24 md:py-32 px-6">
         <div className="container mx-auto max-w-7xl">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Left Content */}
-            <div>
+          <div className="grid lg:grid-cols-2 gap-16 items-start">
+            {/* Left - Text Content (Fixed) */}
+            <div className="lg:sticky lg:top-32">
               <h2 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight">
                 <span className="text-white">HOW IT</span>
                 <br />
                 <span className="text-[#9FE870]">WORKS?</span>
               </h2>
 
-              <p className="text-gray-400 text-lg leading-relaxed mb-12 max-w-xl">
+              <p className="text-gray-400 text-lg leading-relaxed max-w-xl">
                 OPENsport products are designed to improve how football talent is discovered and developed.
                 From player profiling and performance insights to talent visibility and structured development
                 pathways, each product is built to bring clarity, objectivity, and structure into the football
-                ecosystem — helping players get noticed, academies evaluate potential, and clubs make better decisions.
+                ecosystem.
               </p>
-
-              {/* Steps Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Step 1 */}
-                <div className="space-y-3">
-                  <div className="w-14 h-14 rounded-xl bg-gray-800/50 flex items-center justify-center">
-                    <UserPlus className="h-7 w-7 text-[#9FE870]" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-white">Sign Up</h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">
-                    Create an account and get instant access to the platform.
-                  </p>
-                </div>
-
-                {/* Step 2 */}
-                <div className="space-y-3">
-                  <div className="w-14 h-14 rounded-xl bg-gray-800/50 flex items-center justify-center">
-                    <Video className="h-7 w-7 text-[#9FE870]" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-white">Create Profile & Upload your video</h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">
-                    Upload a match or training video directly from your phone or computer.
-                  </p>
-                </div>
-
-                {/* Step 3 */}
-                <div className="space-y-3">
-                  <div className="w-14 h-14 rounded-xl bg-gray-800/50 flex items-center justify-center">
-                    <TrendingUp className="h-7 w-7 text-[#9FE870]" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-white">Get Analyzed</h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">
-                    Receive AI-powered performance analysis, insights, and personalized feedback.
-                  </p>
-                </div>
-
-                {/* Step 4 */}
-                <div className="space-y-3">
-                  <div className="w-14 h-14 rounded-xl bg-gray-800/50 flex items-center justify-center">
-                    <Sprout className="h-7 w-7 text-[#9FE870]" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-white">Improve & Connect</h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">
-                    Track progress, improve performance, and connect with opportunities.
-                  </p>
-                </div>
-              </div>
             </div>
 
-            {/* Right - Placeholder for 3D Graphic */}
-            <div className="relative hidden lg:block">
-              {/* YOU ADD 3D GRAPHIC HERE LATER */}
-              <div className="w-full h-[600px] rounded-2xl bg-gradient-to-br from-[#9FE870]/10 to-transparent border border-[#9FE870]/20 flex items-center justify-center">
-                <p className="text-gray-600 text-sm">[3D Graphic Placeholder]</p>
-              </div>
+            {/* Right - Vertical Auto-Scroll Carousel */}
+            <div className="relative h-[600px]">
+              <Carousel
+                orientation="vertical"
+                opts={{
+                  loop: true,
+                  align: "start"
+                }}
+                plugins={[
+                  AutoScroll({
+                    playOnInit: true,
+                    speed: 1,
+                    stopOnInteraction: false,
+                    stopOnMouseEnter: true,
+                  })
+                ]}
+                className="h-full"
+              >
+                <CarouselContent className="h-full">
+                  {/* Step 1 */}
+                  <CarouselItem className="pt-4 basis-auto">
+                    <div className="h-[280px] flex flex-col justify-center p-8 rounded-2xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 hover:border-[#9FE870]/30 transition-all duration-500">
+                      <div className="w-14 h-14 rounded-xl bg-[#9FE870]/10 flex items-center justify-center mb-6">
+                        <UserPlus className="h-7 w-7 text-[#9FE870]" />
+                      </div>
+                      <h3 className="text-2xl font-semibold text-white mb-3">Sign Up</h3>
+                      <p className="text-gray-400 leading-relaxed">
+                        Create an account and get instant access to the platform. Join thousands of players
+                        already improving their skills.
+                      </p>
+                    </div>
+                  </CarouselItem>
+
+                  {/* Step 2 */}
+                  <CarouselItem className="pt-4 basis-auto">
+                    <div className="h-[280px] flex flex-col justify-center p-8 rounded-2xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 hover:border-[#9FE870]/30 transition-all duration-500">
+                      <div className="w-14 h-14 rounded-xl bg-[#9FE870]/10 flex items-center justify-center mb-6">
+                        <Video className="h-7 w-7 text-[#9FE870]" />
+                      </div>
+                      <h3 className="text-2xl font-semibold text-white mb-3">Upload Your Video</h3>
+                      <p className="text-gray-400 leading-relaxed">
+                        Upload a match or training video directly from your phone or computer. Our AI handles
+                        the rest.
+                      </p>
+                    </div>
+                  </CarouselItem>
+
+                  {/* Step 3 */}
+                  <CarouselItem className="pt-4 basis-auto">
+                    <div className="h-[280px] flex flex-col justify-center p-8 rounded-2xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 hover:border-[#9FE870]/30 transition-all duration-500">
+                      <div className="w-14 h-14 rounded-xl bg-[#9FE870]/10 flex items-center justify-center mb-6">
+                        <TrendingUp className="h-7 w-7 text-[#9FE870]" />
+                      </div>
+                      <h3 className="text-2xl font-semibold text-white mb-3">Get Analyzed</h3>
+                      <p className="text-gray-400 leading-relaxed">
+                        Receive AI-powered performance analysis with detailed metrics, insights, and personalized
+                        feedback within 60 seconds.
+                      </p>
+                    </div>
+                  </CarouselItem>
+
+                  {/* Step 4 */}
+                  <CarouselItem className="pt-4 basis-auto">
+                    <div className="h-[280px] flex flex-col justify-center p-8 rounded-2xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 hover:border-[#9FE870]/30 transition-all duration-500">
+                      <div className="w-14 h-14 rounded-xl bg-[#9FE870]/10 flex items-center justify-center mb-6">
+                        <Sprout className="h-7 w-7 text-[#9FE870]" />
+                      </div>
+                      <h3 className="text-2xl font-semibold text-white mb-3">Improve & Connect</h3>
+                      <p className="text-gray-400 leading-relaxed">
+                        Track your progress over time, follow personalized training plans, and connect with
+                        coaches and opportunities.
+                      </p>
+                    </div>
+                  </CarouselItem>
+                </CarouselContent>
+              </Carousel>
+
+              {/* Gradient Fade Overlays */}
+              <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#0A1628] to-transparent pointer-events-none z-10" />
+              <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#0A1628] to-transparent pointer-events-none z-10" />
             </div>
           </div>
         </div>
