@@ -11,7 +11,7 @@ export default function Navbar() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-sm border-b border-gray-800">
+    <header className="sticky top-0 z-50 w-full bg-black/95 backdrop-blur-sm border-b border-gray-800">
       {/* ✅ ИЗМЕНЕНИЕ 1: max-w-none вместо container, меньше px */}
       <div className="max-w-none mx-auto px-8">
         {/* ✅ ИЗМЕНЕНИЕ 2: justify-between вместо justify-evenly */}

@@ -952,26 +952,6 @@ export default function CoachDashboard() {
         />
       )}
 
-      {/* Footer Legal Links */}
-      <footer className="mt-12 py-8 border-t">
-        <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4 text-muted-foreground text-sm">
-          <p>© 2026 OpenSport. All rights reserved.</p>
-          <div className="flex gap-6">
-            <button
-              onClick={() => window.open('/terms', '_blank')}
-              className="hover:text-primary transition-colors"
-            >
-              Terms of Service
-            </button>
-            <button
-              onClick={() => window.open('/privacy', '_blank')}
-              className="hover:text-primary transition-colors"
-            >
-              Privacy Policy
-            </button>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

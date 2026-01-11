@@ -163,7 +163,7 @@ export default function Home() {
                 plugins={[
                   AutoScroll({
                     playOnInit: true,
-                    speed: 1,
+                    speed: 0.5,
                     stopOnInteraction: false,
                     stopOnMouseEnter: true,
                   })
