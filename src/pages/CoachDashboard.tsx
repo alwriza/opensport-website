@@ -63,15 +63,15 @@ export default function CoachDashboard() {
 
   // Helper functions for styling
   const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-green-600";
-    if (score >= 60) return "text-yellow-600";
-    return "text-red-600";
+    if (score >= 80) return "text-primary";
+    if (score >= 60) return "text-amber-400";
+    return "text-destructive";
   };
 
   const getScoreBgColor = (score: number) => {
-    if (score >= 80) return "bg-green-600";
-    if (score >= 60) return "bg-yellow-600";
-    return "bg-red-600";
+    if (score >= 80) return "bg-primary";
+    if (score >= 60) return "bg-amber-400";
+    return "bg-destructive";
   };
 
   const getRecentScores = (analyses: any[]) => {
@@ -518,7 +518,7 @@ export default function CoachDashboard() {
         {/* Team Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           {/* Total Players */}
-          <Card>
+          <Card className="bg-card border-white/5 shadow-xl shadow-black/20">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -531,7 +531,7 @@ export default function CoachDashboard() {
           </Card>
 
           {/* Average Score */}
-          <Card>
+          <Card className="bg-card border-white/5 shadow-xl shadow-black/20">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -548,7 +548,7 @@ export default function CoachDashboard() {
           </Card>
 
           {/* Active This Week */}
-          <Card>
+          <Card className="bg-card border-white/5 shadow-xl shadow-black/20">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -562,13 +562,13 @@ export default function CoachDashboard() {
                     }).length}
                   </p>
                 </div>
-                <TrendingUp className="h-8 w-8 text-green-600" />
+                <TrendingUp className="h-8 w-8 text-primary" />
               </div>
             </CardContent>
           </Card>
 
           {/* Top Performer */}
-          <Card>
+          <Card className="bg-card border-white/5 shadow-xl shadow-black/20">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -586,11 +586,11 @@ export default function CoachDashboard() {
         </div>
 
         {/* Roster Table */}
-        <Card>
+        <Card className="bg-card border-white/5 shadow-xl shadow-black/20 overflow-hidden">
           <CardHeader>
             <div className="flex flex-col gap-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <CardTitle>Team Roster</CardTitle>
+                <CardTitle className="text-white">Team Roster</CardTitle>
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -739,89 +739,92 @@ export default function CoachDashboard() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-3">#</th>
-                    <th className="text-left p-3">Name</th>
-                    <th className="text-left p-3 text-xs uppercase text-muted-foreground">Age</th>
-                    <th className="text-left p-3 text-xs uppercase text-muted-foreground">Pos</th>
-                    <th className="text-left p-3">Performance</th>
-                    <th className="text-left p-3">History</th>
-                    <th className="text-left p-3">Actions</th>
-                    <th className="text-left p-3">Flags</th>
+                  <tr className="border-b border-white/5 bg-white/[0.02]">
+                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">#</th>
+                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">Name</th>
+                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">Age</th>
+                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">Pos</th>
+                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">Performance</th>
+                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">History</th>
+                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">Actions</th>
+                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">Flags</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-white/5">
                   {filteredRoster.length > 0 ? (
-                    filteredRoster.map((player) => {
+                    filteredRoster.map((player, idx) => {
+                      const trend = calculateTrendValue(getRecentScores(player.analyses));
+                      const recentScores = getRecentScores(player.analyses);
                       const flags = playerFlags[player.id] || {};
+
                       return (
-                        <tr
-                          key={player.id}
-                          className={`border-b hover:bg-muted/50 transition-all ${player.status === 'pending' ? 'bg-yellow-50/50' : ''}`}
-                        >
-                          <td className="p-3 text-muted-foreground font-mono">{player.jersey_number || '-'}</td>
-                          <td className="p-3">
-                            <div className="font-medium">{player.name}</div>
-                            {player.status === 'pending' && <Badge variant="secondary" className="mt-1">Pending Approval</Badge>}
+                        <tr key={player.id} className="hover:bg-white/[0.02] transition-colors group">
+                          <td className="p-4 text-muted-foreground font-mono text-xs text-center">{idx + 1}</td>
+                          <td className="p-4">
+                            <div className="font-bold text-white group-hover:text-primary transition-colors">{player.name}</div>
+                            {player.status === 'pending' && (
+                              <Badge className="mt-1 bg-amber-400 text-black border-none font-black text-[8px] px-1 py-0 h-4 uppercase tracking-tighter">
+                                Pending
+                              </Badge>
+                            )}
+                            <div className="text-[10px] text-muted-foreground uppercase font-black tracking-tight opacity-70 mt-1">
+                              {player.last_upload ? `Last: ${new Date(player.last_upload).toLocaleDateString()}` : 'No Uploads'}
+                            </div>
                           </td>
-                          <td className="p-3">{player.age || '-'}</td>
-                          <td className="p-3">
-                            <Badge variant="outline" className="font-mono">{player.position || '-'}</Badge>
+                          <td className="p-4 text-sm text-muted-foreground font-medium">{player.age || '-'}</td>
+                          <td className="p-4">
+                            <Badge variant="outline" className="font-mono text-[10px] border-white/10 text-muted-foreground bg-white/5 uppercase">{player.position || '-'}</Badge>
                           </td>
-                          <td className="p-3">
+                          <td className="p-4">
                             {player.latest_score ? (
-                              <div className="flex flex-col">
-                                <div className="flex items-center gap-2">
-                                  <span className={`text-xl font-bold ${getScoreColor(player.latest_score)}`}>
-                                    {player.latest_score.toFixed(1)}
+                              <div className="flex items-center gap-2">
+                                <span className={`text-xl font-black ${getScoreColor(player.latest_score)}`}>
+                                  {player.latest_score.toFixed(1)}
+                                </span>
+                                {trend !== 0 && (
+                                  <span className={`text-xs font-bold ${trend > 0 ? 'text-primary' : 'text-destructive'}`}>
+                                    {trend > 0 ? '▲' : '▼'}{Math.abs(trend).toFixed(1)}
                                   </span>
-                                  {player.trend !== 0 && (
-                                    <span className={`text-xs ${player.trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                      {player.trend > 0 ? '▲' : '▼'}{Math.abs(player.trend).toFixed(1)}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="text-[10px] text-muted-foreground font-bold tracking-tighter">
-                                  Last Upload: {player.last_upload ? new Date(player.last_upload).toLocaleDateString() : 'N/A'}
-                                </div>
+                                )}
                               </div>
                             ) : (
-                              <span className="text-muted-foreground text-sm">No data</span>
+                              <span className="text-muted-foreground text-[10px] font-black uppercase tracking-widest opacity-30">No Data</span>
                             )}
                           </td>
-                          <td className="p-3">
-                            <div className="flex gap-1 items-center">
-                              {player.recent_scores?.map((score: number, idx: number) => (
+                          <td className="p-4">
+                            <div className="flex gap-1.5 items-center">
+                              {recentScores.map((score, sIdx) => (
                                 <div
-                                  key={idx}
-                                  className={`h-6 w-8 rounded text-[10px] flex items-center justify-center font-bold text-white ${getScoreBgColor(score)}`}
-                                  title={`Upload ${idx + 1}: ${score.toFixed(1)}`}
+                                  key={sIdx}
+                                  className={`h-7 w-9 rounded-lg text-[10px] flex items-center justify-center font-black text-white shadow-sm border border-black/20 ${getScoreBgColor(score)}`}
+                                  title={`Score: ${score.toFixed(1)}`}
                                 >
                                   {score.toFixed(0)}
                                 </div>
                               ))}
-                              {!player.recent_scores?.length && <span className="text-muted-foreground text-xs italic">N/A</span>}
+                              {recentScores.length === 0 && (
+                                <span className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest italic opacity-40">N/A</span>
+                              )}
                             </div>
                           </td>
-                          <td className="p-3">
-                            <div className="flex gap-2">
+                          <td className="p-4">
+                            <div className="flex items-center gap-2">
                               {player.status === 'pending' ? (
                                 <>
                                   <Button
                                     size="sm"
-                                    variant="default"
+                                    className="bg-primary text-black hover:bg-primary/90 h-8 font-black text-[10px] uppercase px-3"
                                     onClick={() => handleApprovePlayer(player.id, player.roster_id)}
-                                    title="Approve"
                                   >
-                                    <Check className="h-4 w-4" />
+                                    Approve
                                   </Button>
                                   <Button
                                     size="sm"
                                     variant="outline"
+                                    className="border-white/10 hover:bg-white/5 h-8 font-black text-[10px] uppercase px-3 text-white"
                                     onClick={() => handleDeclinePlayer(player.roster_id)}
-                                    title="Decline"
                                   >
-                                    <X className="h-4 w-4" />
+                                    Decline
                                   </Button>
                                 </>
                               ) : (
@@ -829,17 +832,16 @@ export default function CoachDashboard() {
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    className="text-primary hover:bg-black hover:text-white transition-all duration-200 border-primary/20"
+                                    className="h-8 rounded-xl bg-white/5 border-white/10 hover:bg-primary hover:text-black hover:border-primary transition-all text-white font-bold"
                                     onClick={() => setSelectedPlayerProfileId(player.id)}
                                   >
-                                    View Profile
+                                    Details
                                   </Button>
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    className="h-8 text-destructive/50 hover:text-destructive hover:bg-destructive/10"
                                     onClick={() => handleRemovePlayer(player.roster_id, player.name)}
-                                    title="Remove from Team"
                                   >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
@@ -847,29 +849,35 @@ export default function CoachDashboard() {
                               )}
                             </div>
                           </td>
-                          <td className="p-3">
-                            <div className="flex gap-2">
-                              <button
+                          <td className="p-4">
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className={`h-8 w-8 rounded-xl transition-all ${flags.needsReview ? 'text-blue-400 bg-blue-400/10' : 'text-white/10 hover:text-white/30'}`}
                                 onClick={() => toggleFlag(player.id, 'needsReview')}
-                                className={`p-1 rounded transition-colors ${flags.needsReview ? 'text-orange-500 bg-orange-100' : 'text-muted-foreground/30 hover:text-muted-foreground'}`}
                                 title="Needs Review"
                               >
-                                <AlertCircle className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => toggleFlag(player.id, 'injuryNote')}
-                                className={`p-1 rounded transition-colors ${flags.injuryNote ? 'text-red-500 bg-red-100' : 'text-muted-foreground/30 hover:text-muted-foreground'}`}
-                                title="Injury Note"
-                              >
                                 <Stethoscope className="h-4 w-4" />
-                              </button>
-                              <button
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className={`h-8 w-8 rounded-xl transition-all ${flags.topProspect ? 'text-primary bg-primary/10' : 'text-white/10 hover:text-white/30'}`}
                                 onClick={() => toggleFlag(player.id, 'topProspect')}
-                                className={`p-1 rounded transition-colors ${flags.topProspect ? 'text-yellow-500 bg-yellow-100' : 'text-muted-foreground/30 hover:text-muted-foreground'}`}
                                 title="Top Prospect"
                               >
                                 <Star className="h-4 w-4" />
-                              </button>
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className={`h-8 w-8 rounded-xl transition-all ${flags.injuryNote ? 'text-destructive bg-destructive/10' : 'text-white/10 hover:text-white/30'}`}
+                                onClick={() => toggleFlag(player.id, 'injuryNote')}
+                                title="Injury Note"
+                              >
+                                <AlertCircle className="h-4 w-4" />
+                              </Button>
                             </div>
                           </td>
                         </tr>
@@ -877,17 +885,14 @@ export default function CoachDashboard() {
                     })
                   ) : (
                     <tr>
-                      <td colSpan={8} className="p-8 text-center text-muted-foreground">
-                        {(searchQuery || filterPosition !== 'All') ? (
-                          <div>
-                            <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                            <p className="mb-4">
-                              No players found
-                              {searchQuery && ` for "${searchQuery}"`}
-                              {filterPosition !== 'All' && ` in position ${filterPosition}`}
-                            </p>
+                      <td colSpan={8} className="p-12 text-center text-muted-foreground">
+                        <div className="flex flex-col items-center max-w-xs mx-auto">
+                          <Users className="h-12 w-12 opacity-10 mb-4" />
+                          <p className="text-sm font-bold uppercase tracking-widest opacity-40">No Players Found</p>
+                          {(searchQuery || filterPosition !== 'All') && (
                             <Button
                               variant="link"
+                              className="text-primary mt-2"
                               onClick={() => {
                                 setSearchQuery('');
                                 setFilterPosition('All');
@@ -895,17 +900,8 @@ export default function CoachDashboard() {
                             >
                               Clear all filters
                             </Button>
-                          </div>
-                        ) : (
-                          <div className="flex flex-col items-center py-6">
-                            <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                            <p className="mb-4">No players in team yet</p>
-                            <Button onClick={() => setShowInviteModal(true)}>
-                              <UserPlus className="h-4 w-4 mr-2" />
-                              Invite Players
-                            </Button>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )}
@@ -943,15 +939,17 @@ export default function CoachDashboard() {
       }
 
       {/* Player Profile Overlay */}
-      {selectedPlayerProfileId && (
-        <PlayerProfileOverlay
-          player={filteredRoster.find(p => p.id === selectedPlayerProfileId)}
-          isOpen={!!selectedPlayerProfileId}
-          onClose={() => setSelectedPlayerProfileId(null)}
-          teamName={selectedTeam?.name}
-        />
-      )}
+      {
+        selectedPlayerProfileId && (
+          <PlayerProfileOverlay
+            player={filteredRoster.find(p => p.id === selectedPlayerProfileId)}
+            isOpen={!!selectedPlayerProfileId}
+            onClose={() => setSelectedPlayerProfileId(null)}
+            teamName={selectedTeam?.name}
+          />
+        )
+      }
 
-    </div>
+    </div >
   );
 }

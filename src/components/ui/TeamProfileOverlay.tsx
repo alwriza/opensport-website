@@ -19,7 +19,8 @@ import {
     Activity,
     Award,
     Clock,
-    ChevronLeft
+    ChevronLeft,
+    CheckCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -47,17 +48,17 @@ export const TeamProfileOverlay: React.FC<TeamProfileOverlayProps> = ({
     isOpen,
     onClose,
 }) => {
-    // Helper functions for styling (identical to CoachDashboard)
+    // Helper functions for styling (aligned with new dark theme)
     const getScoreColor = (score: number) => {
-        if (score >= 80) return "text-green-600";
-        if (score >= 60) return "text-yellow-600";
-        return "text-red-600";
+        if (score >= 80) return "text-primary";
+        if (score >= 60) return "text-amber-400";
+        return "text-destructive";
     };
 
     const getScoreBgColor = (score: number) => {
-        if (score >= 80) return "bg-green-600";
-        if (score >= 60) return "bg-yellow-600";
-        return "bg-red-600";
+        if (score >= 80) return "bg-primary";
+        if (score >= 60) return "bg-amber-400";
+        return "bg-destructive";
     };
 
     // 1. Fetch Team Details
@@ -169,53 +170,43 @@ export const TeamProfileOverlay: React.FC<TeamProfileOverlayProps> = ({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[1100px] max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0 border-none shadow-2xl bg-white">
-                <DialogHeader className="p-8 pb-10 bg-slate-900 text-white relative">
+            <DialogContent className="sm:max-w-[1100px] max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0 border-none shadow-2xl bg-background text-white">
+                <DialogHeader className="p-8 pb-10 bg-card border-b border-white/5 relative">
                     <div className="flex justify-between items-start relative z-10">
                         <div className="flex flex-col gap-3">
                             <div>
-                                <DialogTitle className="text-3xl font-black tracking-tight mb-2">
+                                <DialogTitle className="text-3xl font-black tracking-tight mb-2 text-white">
                                     {(team as any)?.name}
                                 </DialogTitle>
-                                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-slate-400 text-sm font-medium">
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-muted-foreground text-sm font-medium">
                                     <span className="flex items-center gap-1.5">
                                         <Shield className="h-4 w-4 text-primary" />
                                         {(team as any)?.clubs?.name || "Independent"}
                                     </span>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-slate-700 font-bold">•</span>
+                                        <span className="text-white/20 font-bold">•</span>
                                         <span>{coachName}</span>
-                                        <Badge variant="outline" className="text-slate-400 font-bold px-2 py-0 uppercase tracking-wider text-[9px]">
+                                        <Badge variant="outline" className="text-primary border-primary/20 font-bold px-2 py-0 uppercase tracking-wider text-[9px]">
                                             Coach
                                         </Badge>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-slate-700 font-bold">•</span>
+                                        <span className="text-white/20 font-bold">•</span>
                                         <span>{(team as any)?.age_group}</span>
                                     </div>
                                     {(team as any)?.season && (
                                         <div className="flex items-center gap-2">
-                                            <span className="text-slate-700 font-bold">•</span>
+                                            <span className="text-white/20 font-bold">•</span>
                                             <span>{(team as any).season}</span>
                                         </div>
                                     )}
                                 </div>
                             </div>
                         </div>
-                        {/* <Trophy className="h-12 w-12 text-slate-500 opacity-24" /> */}
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={onClose}
-                            className="w-fit -ml-2 text-slate-400 hover:text-white hover:bg-white/10 flex items-center gap-1 px-2"
-                        >
-                            <ChevronLeft className="h-4 w-4" />
-                            Back to Dashboard
-                        </Button>
                     </div>
                 </DialogHeader>
 
-                <ScrollArea className="flex-1 bg-slate-50/50">
+                <ScrollArea className="flex-1">
                     <div className="p-8 space-y-8">
                         {isLoading ? (
                             <div className="flex flex-col items-center justify-center py-20 gap-4">
@@ -226,117 +217,125 @@ export const TeamProfileOverlay: React.FC<TeamProfileOverlayProps> = ({
                             <>
                                 {/* Stats Cards */}
                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                    <Card className="shadow-sm border-none bg-white">
+                                    <Card className="shadow-black/20 border-white/5 bg-card">
                                         <CardContent className="pt-6">
                                             <div className="flex items-center justify-between">
                                                 <div>
                                                     <p className="text-sm text-muted-foreground">Total Players</p>
-                                                    <p className="text-2xl font-bold text-slate-900">{roster.length}</p>
+                                                    <p className="text-2xl font-black text-white">{roster.length}</p>
                                                 </div>
-                                                <Users className="h-8 w-8 text-primary opacity-50" />
+                                                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                                                    <Users className="h-6 w-6 text-primary" />
+                                                </div>
                                             </div>
                                         </CardContent>
                                     </Card>
 
-                                    <Card className="shadow-sm border-none bg-white">
+                                    <Card className="shadow-black/20 border-white/5 bg-card">
                                         <CardContent className="pt-6">
                                             <div className="flex items-center justify-between">
                                                 <div>
                                                     <p className="text-sm text-muted-foreground">Avg Score</p>
-                                                    <p className="text-2xl font-bold text-slate-900">{avgScore}</p>
+                                                    <p className="text-2xl font-black text-white">{avgScore}</p>
                                                 </div>
-                                                <TrendingUp className="h-8 w-8 text-green-500 opacity-50" />
+                                                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                                                    <TrendingUp className="h-6 w-6 text-primary" />
+                                                </div>
                                             </div>
                                         </CardContent>
                                     </Card>
 
-                                    <Card className="shadow-sm border-none bg-white">
+                                    <Card className="shadow-black/20 border-white/5 bg-card">
                                         <CardContent className="pt-6">
                                             <div className="flex items-center justify-between">
                                                 <div>
                                                     <p className="text-sm text-muted-foreground">Elite Performers</p>
-                                                    <p className="text-2xl font-bold text-slate-900">{roster.filter(p => p.latest_score >= 80).length}</p>
+                                                    <p className="text-2xl font-black text-white">{roster.filter(p => p.latest_score >= 80).length}</p>
                                                 </div>
-                                                <Award className="h-8 w-8 text-yellow-500 opacity-50" />
+                                                <div className="w-12 h-12 rounded-xl bg-amber-400/10 flex items-center justify-center">
+                                                    <Award className="h-6 w-6 text-amber-400" />
+                                                </div>
                                             </div>
                                         </CardContent>
                                     </Card>
 
-                                    <Card className="shadow-sm border-none bg-white">
+                                    <Card className="shadow-black/20 border-white/5 bg-card">
                                         <CardContent className="pt-6">
                                             <div className="flex items-center justify-between">
                                                 <div>
                                                     <p className="text-sm text-muted-foreground">Active Today</p>
-                                                    <p className="text-2xl font-bold text-slate-900">
+                                                    <p className="text-2xl font-black text-white">
                                                         {roster.filter(p => {
                                                             if (!p.last_upload) return false;
                                                             return new Date(p.last_upload).toDateString() === new Date().toDateString();
                                                         }).length}
                                                     </p>
                                                 </div>
-                                                <Clock className="h-8 w-8 text-blue-500 opacity-50" />
+                                                <div className="w-12 h-12 rounded-xl bg-blue-400/10 flex items-center justify-center">
+                                                    <Clock className="h-6 w-6 text-blue-400" />
+                                                </div>
                                             </div>
                                         </CardContent>
                                     </Card>
                                 </div>
 
                                 {/* Team Roster */}
-                                <Card className="shadow-sm border-none overflow-hidden">
-                                    <div className="p-4 border-b border-slate-100 bg-white">
-                                        <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                                <Card className="shadow-black/20 border-white/5 bg-card overflow-hidden">
+                                    <div className="p-6 border-b border-white/5">
+                                        <h3 className="font-bold text-white flex items-center gap-2">
                                             <Activity className="h-4 w-4 text-primary" />
                                             Team Roster
                                         </h3>
                                     </div>
-                                    <div className="overflow-x-auto bg-white">
+                                    <div className="overflow-x-auto">
                                         <table className="w-full">
                                             <thead>
-                                                <tr className="border-b border-slate-100">
-                                                    <th className="text-left p-4 text-xs font-medium uppercase text-muted-foreground">#</th>
-                                                    <th className="text-left p-4 text-xs font-medium uppercase text-muted-foreground">Name</th>
-                                                    <th className="text-left p-4 text-xs font-medium uppercase text-muted-foreground">Age</th>
-                                                    <th className="text-left p-4 text-xs font-medium uppercase text-muted-foreground">Pos</th>
-                                                    <th className="text-left p-4 text-xs font-medium uppercase text-muted-foreground">Performance</th>
-                                                    <th className="text-left p-4 text-xs font-medium uppercase text-muted-foreground">History</th>
+                                                <tr className="border-b border-white/5 bg-white/2">
+                                                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">#</th>
+                                                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Name</th>
+                                                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Age</th>
+                                                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Pos</th>
+                                                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Performance</th>
+                                                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">History</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {roster.map((p, idx) => (
-                                                    <tr key={idx} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                                    <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors group">
                                                         <td className="p-4 text-muted-foreground font-mono text-xs">{p.jersey_number || '-'}</td>
                                                         <td className="p-4">
-                                                            <div className="font-medium text-slate-900">{p.name}</div>
-                                                            <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">
+                                                            <div className="font-bold text-white group-hover:text-primary transition-colors">{p.name}</div>
+                                                            <div className="text-[10px] text-muted-foreground uppercase font-black tracking-tight opacity-70">
                                                                 Last Upload: {p.last_upload ? new Date(p.last_upload).toLocaleDateString() : 'N/A'}
                                                             </div>
                                                         </td>
-                                                        <td className="p-4 text-sm text-slate-600">{p.age || '-'}</td>
+                                                        <td className="p-4 text-sm text-muted-foreground font-medium">{p.age || '-'}</td>
                                                         <td className="p-4">
-                                                            <Badge variant="outline" className="font-mono text-[10px]">{p.position || '-'}</Badge>
+                                                            <Badge variant="outline" className="font-mono text-[10px] border-white/10 text-muted-foreground">{p.position || '-'}</Badge>
                                                         </td>
                                                         <td className="p-4">
                                                             <div className="flex items-center gap-2">
-                                                                <span className={`text-xl font-bold ${getScoreColor(p.latest_score)}`}>
+                                                                <span className={`text-xl font-black ${getScoreColor(p.latest_score)}`}>
                                                                     {p.latest_score.toFixed(1)}
                                                                 </span>
                                                                 {p.trend !== 0 && (
-                                                                    <span className={`text-xs ${p.trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                    <span className={`text-xs font-bold ${p.trend > 0 ? 'text-primary' : 'text-destructive'}`}>
                                                                         {p.trend > 0 ? '▲' : '▼'}{Math.abs(p.trend).toFixed(1)}
                                                                     </span>
                                                                 )}
                                                             </div>
                                                         </td>
                                                         <td className="p-4">
-                                                            <div className="flex gap-1 items-center">
+                                                            <div className="flex gap-1.5 items-center">
                                                                 {p.recent_scores.map((score, sIdx) => (
                                                                     <div
                                                                         key={sIdx}
-                                                                        className={`h-6 w-8 rounded text-[10px] flex items-center justify-center font-bold text-white ${getScoreBgColor(score)}`}
+                                                                        className={`h-7 w-9 rounded-lg text-[10px] flex items-center justify-center font-black text-white shadow-sm ${getScoreBgColor(score)}`}
                                                                     >
                                                                         {score.toFixed(0)}
                                                                     </div>
                                                                 ))}
-                                                                {p.recent_scores.length === 0 && <span className="text-muted-foreground text-xs italic">N/A</span>}
+                                                                {p.recent_scores.length === 0 && <span className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest italic opacity-40">N/A</span>}
                                                             </div>
                                                         </td>
                                                     </tr>

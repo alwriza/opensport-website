@@ -630,9 +630,9 @@ export default function PlayerDashboard() {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-green-600";
-    if (score >= 60) return "text-yellow-600";
-    return "text-red-600";
+    if (score >= 80) return "text-primary";
+    if (score >= 60) return "text-amber-400";
+    return "text-destructive";
   };
 
   const handleLeaveTeam = async (rosterId: string, teamName: string) => {
@@ -889,9 +889,9 @@ export default function PlayerDashboard() {
                       {latestRecommendations.map((level: any) => (
                         <Card
                           key={level.id}
-                          className="cursor-pointer hover:border-primary/50 transition-all group bg-gradient-to-br from-white to-primary/5 border-primary/5 overflow-hidden"
+                          className="cursor-pointer hover:border-primary/50 transition-all group bg-card border-primary/5 overflow-hidden shadow-lg shadow-black/20"
                           onClick={() => {
-                            navigate(`/training?skill=${level.skill_id}&level=${level.level_name}`);
+                            navigate(`/training?tab=exercises&skill=${level.skill_id}&level=${level.level_name}`);
                           }}
                         >
                           <CardContent className="p-4">
@@ -900,7 +900,7 @@ export default function PlayerDashboard() {
                                 {level.skills?.icon}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <h4 className="font-bold text-sm group-hover:text-primary transition-colors">
+                                <h4 className="font-bold text-sm group-hover:text-primary transition-colors text-white">
                                   {level.skills?.name}
                                 </h4>
                                 <p className="text-[10px] text-muted-foreground line-clamp-1 mb-2">
@@ -1217,9 +1217,8 @@ export default function PlayerDashboard() {
         </div>
       </div>
 
-      {/* Upload Modal */}
       <Dialog open={uploadModalOpen} onOpenChange={setUploadModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-background text-white border-white/5 shadow-2xl">
           <DialogHeader>
             <DialogTitle>Upload New Video</DialogTitle>
           </DialogHeader>
@@ -1256,7 +1255,7 @@ export default function PlayerDashboard() {
 
       {/* Results Modal */}
       <Dialog open={resultsModalOpen} onOpenChange={setResultsModalOpen}>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto bg-background text-white border-white/5 shadow-2xl custom-scrollbar">
           <DialogHeader>
             <DialogTitle>Analysis Results</DialogTitle>
           </DialogHeader>
@@ -1363,17 +1362,17 @@ export default function PlayerDashboard() {
                     {recommendedTraining.map((level) => (
                       <Card
                         key={level.id}
-                        className="cursor-pointer hover:border-primary transition-colors group"
+                        className="cursor-pointer hover:border-primary transition-colors group bg-card border-primary/10 overflow-hidden shadow-lg shadow-black/20"
                         onClick={() => {
                           setResultsModalOpen(false);
-                          navigate(`/training?skill=${level.skill_id}&level=${level.level_name}`);
+                          navigate(`/training?tab=exercises&skill=${level.skill_id}&level=${level.level_name}`);
                         }}
                       >
                         <CardContent className="p-4">
                           <div className="flex items-center gap-3">
                             <div className="text-3xl grayscale group-hover:grayscale-0 transition-all">{level.skills?.icon}</div>
                             <div className="flex-1">
-                              <h4 className="font-semibold text-sm">
+                              <h4 className="font-semibold text-sm text-white group-hover:text-primary transition-colors">
                                 {level.skills?.name} - {level.level_name.charAt(0).toUpperCase() + level.level_name.slice(1)}
                               </h4>
                               <p className="text-xs text-muted-foreground line-clamp-1">

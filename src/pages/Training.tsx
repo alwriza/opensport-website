@@ -123,6 +123,11 @@ const Training = () => {
   useEffect(() => {
     const skillParam = searchParams.get('skill');
     const levelParam = searchParams.get('level');
+    const tabParam = searchParams.get('tab');
+
+    if (tabParam === 'exercises' || tabParam === 'interactive') {
+      setActiveTab(tabParam);
+    }
 
     if (skillParam && skills.length > 0) {
       const skill = skills.find(s => s.id === skillParam);
@@ -305,7 +310,7 @@ const Training = () => {
 
       // 2. Update skill progress
       const currentProgress = getSkillProgress(skillId);
-      const completedLevels = [...(currentProgress?.completed_levels || [])];
+      const completedLevels: any[] = [...(currentProgress?.completed_levels || [])];
 
       if (!completedLevels.includes(levelName)) {
         completedLevels.push(levelName);
@@ -554,12 +559,12 @@ const Training = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 h-14 p-1 bg-muted/50 rounded-xl">
-          <TabsTrigger value="interactive" className="rounded-lg data-[state=active]:bg-gradient-premium data-[state=active]:text-primary ">
+        <TabsList className="grid w-full grid-cols-2 h-14 p-1 bg-card border border-white/5 rounded-xl">
+          <TabsTrigger value="interactive" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-black text-muted-foreground font-bold">
             <Trophy className="h-4 w-4 mr-2" />
             Skill Tree
           </TabsTrigger>
-          <TabsTrigger value="exercises" className="rounded-lg data-[state=active]:bg-gradient-premium data-[state=active]:text-primary">
+          <TabsTrigger value="exercises" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-black text-muted-foreground font-bold">
             <Target className="h-4 w-4 mr-2" />
             Exercise Library
           </TabsTrigger>
@@ -591,8 +596,8 @@ const Training = () => {
                         onClick={() => unlocked && setSelectedSkill(skill)}
                         disabled={!unlocked}
                         className={`group relative p-4 md:p-8 rounded-3xl border-2 transition-all duration-300 text-center flex flex-col items-center gap-2 md:gap-4 ${unlocked
-                          ? 'bg-white border-slate-100 hover:border-primary hover:shadow-2xl hover:-translate-y-1'
-                          : 'bg-slate-50 border-transparent opacity-60 cursor-not-allowed'
+                          ? 'bg-card border-white/5 hover:border-primary hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1'
+                          : 'bg-white/5 border-transparent opacity-40 cursor-not-allowed'
                           } ${isFullyCompleted ? 'ring-4 ring-primary/10 border-primary' : ''}`}
                       >
                         <div className={`text-5xl transition-transform group-hover:scale-110 ${!unlocked && 'grayscale'}`}>
@@ -918,7 +923,7 @@ const Training = () => {
       {
         selectedLevel && (
           <Dialog open={showVideoModal} onOpenChange={setShowVideoModal}>
-            <DialogContent className="max-w-4xl p-0 overflow-hidden bg-slate-900 border-none shadow-2xl rounded-[2.5rem]">
+            <DialogContent className="sm:max-w-[1000px] p-0 overflow-hidden bg-background text-white border-white/5 shadow-2xl rounded-3xl">
               <div className="aspect-video w-full">
                 {/* Replace URL with proper embed if needed */}
                 <iframe
