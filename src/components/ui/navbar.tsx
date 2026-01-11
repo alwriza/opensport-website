@@ -1,157 +1,143 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Trophy } from "lucide-react";
+import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
+import { Menu, X } from "lucide-react";
 import { useState } from "react";
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
 
-export function Navbar() {
+export default function Navbar() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const isActive = (path: string) => location.pathname === path;
 
-  const navItems = [
-    { path: "/", label: "Home", protected: false },
-    { path: "/player-dashboard", label: "Player Dashboard", protected: true },
-    { path: "/coach-dashboard", label: "Coach Dashboard", protected: true },
-    { path: "/training", label: "Training", protected: true },
-  ];
-
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between px-6">
-        <Link to="/" className="flex items-center gap-2 group">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground transition-transform group-hover:scale-105">
-            <Trophy className="h-4 w-4" />
-          </div>
-          <span className="text-lg font-bold tracking-tight text-foreground">AI Scout</span>
-        </Link>
+    <header className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-sm border-b border-gray-800">
+      {/* ✅ ИЗМЕНЕНИЕ 1: max-w-none вместо container, меньше px */}
+      <div className="max-w-none mx-auto px-8">
+        {/* ✅ ИЗМЕНЕНИЕ 2: justify-between вместо justify-evenly */}
+        <div className="flex items-center justify-between h-20 gap-16">
 
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center space-x-8">
-          {navItems.map((item) => (
-            <div key={item.path}>
-              {item.protected ? (
-                <>
-                  <SignedOut>
-                    <SignInButton mode="modal" forceRedirectUrl={item.path}>
-                      <span className="text-sm font-medium transition-colors hover:text-primary text-muted-foreground cursor-pointer">
-                        {item.label}
-                      </span>
-                    </SignInButton>
-                  </SignedOut>
-                  <SignedIn>
-                    <Link
-                      to={item.path}
-                      className={`text-sm font-medium transition-colors hover:text-primary ${isActive(item.path)
-                        ? "text-primary"
-                        : "text-muted-foreground"
-                        }`}
-                    >
-                      {item.label}
-                    </Link>
-                  </SignedIn>
-                </>
-              ) : (
-                <Link
-                  to={item.path}
-                  className={`text-sm font-medium transition-colors hover:text-primary ${isActive(item.path)
-                    ? "text-primary"
-                    : "text-muted-foreground"
-                    }`}
-                >
-                  {item.label}
-                </Link>
-              )}
-            </div>
-          ))}
-          <SignedOut>
-            <SignInButton mode="modal" forceRedirectUrl="/player-dashboard">
-              <Button variant="default" size="sm" className="rounded-full px-6">
-                Get Started
-              </Button>
-            </SignInButton>
-          </SignedOut>
-          <SignedIn>
-            <UserButton afterSignOutUrl="/" />
-          </SignedIn>
-        </div>
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity shrink-0">
+            <img src="logo.svg" alt="" className="w-full h-14" />
+          </Link>
 
-        {/* Mobile Navigation Toggle */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="md:hidden"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-        >
-          {isMenuOpen ? (
-            <X className="h-5 w-5" />
-          ) : (
-            <Menu className="h-5 w-5" />
-          )}
-        </Button>
-      </div>
+          {/* ✅ Navigation Items - в одной группе с gap между собой */}
+          <nav className="hidden lg:flex items-center gap-12 flex-1 justify-center">
+            <Link
+              to="/"
+              className={`text-lg font-medium transition-colors whitespace-nowrap ${isActive('/') ? 'text-white' : 'text-gray-400 hover:text-white'
+                }`}
+            >
+              Home
+            </Link>
 
-      {/* Mobile Navigation Menu */}
-      {isMenuOpen && (
-        <div className="md:hidden border-t bg-background animate-in slide-in-from-top-2">
-          <div className="container px-6 py-6 space-y-4">
-            {navItems.map((item) => (
-              <div key={item.path}>
-                {item.protected ? (
-                  <>
-                    <SignedOut>
-                      <SignInButton mode="modal" forceRedirectUrl={item.path}>
-                        <span
-                          className="block text-base font-medium transition-colors hover:text-primary text-muted-foreground cursor-pointer"
-                          onClick={() => setIsMenuOpen(false)}
-                        >
-                          {item.label}
-                        </span>
-                      </SignInButton>
-                    </SignedOut>
-                    <SignedIn>
-                      <Link
-                        to={item.path}
-                        className={`block text-base font-medium transition-colors hover:text-primary ${isActive(item.path)
-                          ? "text-primary"
-                          : "text-muted-foreground"
-                          }`}
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        {item.label}
-                      </Link>
-                    </SignedIn>
-                  </>
-                ) : (
-                  <Link
-                    to={item.path}
-                    className={`block text-base font-medium transition-colors hover:text-primary ${isActive(item.path)
-                      ? "text-primary"
-                      : "text-muted-foreground"
-                      }`}
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    {item.label}
-                  </Link>
-                )}
-              </div>
-            ))}
+            <Link
+              to="/player-dashboard"
+              className={`text-lg font-medium transition-colors whitespace-nowrap ${isActive('/player-dashboard') ? 'text-white' : 'text-gray-400 hover:text-white'
+                }`}
+            >
+              Player Dashboard
+            </Link>
+
+            <Link
+              to="/coach-dashboard"
+              className={`text-lg font-medium transition-colors whitespace-nowrap ${isActive('/coach-dashboard') ? 'text-white' : 'text-gray-400 hover:text-white'
+                }`}
+            >
+              Coach Dashboard
+            </Link>
+
+            <Link
+              to="/training"
+              className={`text-lg font-medium transition-colors whitespace-nowrap ${isActive('/training') ? 'text-white' : 'text-gray-400 hover:text-white'
+                }`}
+            >
+              Training
+            </Link>
+          </nav>
+
+          {/* CTA Button */}
+          <div className="hidden lg:block shrink-0">
             <SignedOut>
               <SignInButton mode="modal" forceRedirectUrl="/player-dashboard">
-                <Button variant="default" size="lg" className="w-full mt-4" onClick={() => setIsMenuOpen(false)}>
+                <Button className="bg-[#9FE870] hover:bg-[#8DD760] text-black font-semibold px-8 h-12 text-base rounded-full whitespace-nowrap">
                   Get Started
                 </Button>
               </SignInButton>
             </SignedOut>
             <SignedIn>
-              <div className="mt-4 flex justify-center">
-                <UserButton afterSignOutUrl="/" />
-              </div>
+              <UserButton
+                afterSignOutUrl="/"
+                appearance={{
+                  elements: {
+                    avatarBox: "w-10 h-10"
+                  }
+                }}
+              />
             </SignedIn>
           </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="lg:hidden text-white p-2"
+          >
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
         </div>
-      )}
-    </nav>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden py-6 border-t border-gray-800">
+            <nav className="flex flex-col gap-4">
+              <Link
+                to="/"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`text-base font-medium py-2 ${isActive('/') ? 'text-white' : 'text-gray-400'}`}
+              >
+                Home
+              </Link>
+              <Link
+                to="/player-dashboard"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`text-base font-medium py-2 ${isActive('/player-dashboard') ? 'text-white' : 'text-gray-400'}`}
+              >
+                Player Dashboard
+              </Link>
+              <Link
+                to="/coach-dashboard"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`text-base font-medium py-2 ${isActive('/coach-dashboard') ? 'text-white' : 'text-gray-400'}`}
+              >
+                Coach Dashboard
+              </Link>
+              <Link
+                to="/training"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`text-base font-medium py-2 ${isActive('/training') ? 'text-white' : 'text-gray-400'}`}
+              >
+                Training
+              </Link>
+
+              <div className="pt-4 border-t border-gray-800">
+                <SignedOut>
+                  <SignInButton mode="modal" forceRedirectUrl="/player-dashboard">
+                    <Button className="w-full bg-[#9FE870] hover:bg-[#8DD760] text-black font-semibold h-11 rounded-full">
+                      Get Started
+                    </Button>
+                  </SignInButton>
+                </SignedOut>
+                <SignedIn>
+                  <div className="flex justify-center">
+                    <UserButton afterSignOutUrl="/" />
+                  </div>
+                </SignedIn>
+              </div>
+            </nav>
+          </div>
+        )}
+      </div>
+    </header>
   );
 }

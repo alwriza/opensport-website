@@ -161,24 +161,24 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden flex flex-col p-0 gap-0 border-none shadow-2xl bg-slate-50">
-                <DialogHeader className="p-8 bg-white border-b flex flex-row items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                            <User className="h-8 w-8" />
+            <DialogContent className="max-w-5xl w-[95vw] md:w-full max-h-[95vh] overflow-hidden flex flex-col p-0 gap-0 border-none shadow-2xl bg-slate-50">
+                <DialogHeader className="p-4 md:p-8 bg-white border-b flex flex-row items-center justify-between">
+                    <div className="flex items-center gap-3 md:gap-4">
+                        <div className="h-10 w-10 md:h-14 md:w-14 rounded-xl md:rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                            <User className="h-6 w-6 md:h-8 md:w-8" />
                         </div>
                         <div>
-                            <DialogTitle className="text-3xl font-bold tracking-tight text-slate-900">{player.name}</DialogTitle>
-                            <div className="flex items-center gap-3 mt-1">
+                            <DialogTitle className="text-xl md:text-3xl font-bold tracking-tight text-slate-900">{player.name}</DialogTitle>
+                            <div className="flex flex-wrap items-center gap-2 md:gap-3 mt-1">
                                 <Badge className="bg-primary/10 text-primary border-none font-semibold uppercase tracking-wider text-[10px]">
                                     {player.position || 'Prospect'}
                                 </Badge>
-                                <span className="text-slate-400 font-bold">•</span>
-                                <span className="text-slate-500 text-sm font-semibold uppercase tracking-widest">{player.age || '?'} Years Old</span>
+                                <span className="hidden md:inline text-slate-400 font-bold">•</span>
+                                <span className="text-slate-500 text-[10px] md:text-sm font-semibold uppercase tracking-widest">{player.age || '?'} Years Old</span>
                                 {teamName && (
                                     <>
-                                        <span className="text-slate-400 font-bold">•</span>
-                                        <span className="text-slate-900 text-sm font-semibold uppercase tracking-widest">{teamName}</span>
+                                        <span className="hidden md:inline text-slate-400 font-bold">•</span>
+                                        <span className="text-slate-900 text-[10px] md:text-sm font-semibold uppercase tracking-widest">{teamName}</span>
                                     </>
                                 )}
                             </div>
@@ -188,7 +188,7 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
 
                 <ScrollArea className="flex-1">
                     <Tabs defaultValue="overview" className="w-full">
-                        <div className="px-8 pt-6 bg-white border-b sticky top-0 z-10">
+                        <div className="px-4 md:px-8 pt-4 md:pt-6 bg-white border-b sticky top-0 z-10">
                             <TabsList className="grid w-full max-w-md grid-cols-3">
                                 <TabsTrigger value="overview">Overview</TabsTrigger>
                                 <TabsTrigger value="videos">Videos</TabsTrigger>

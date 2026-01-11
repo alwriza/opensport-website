@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
-import { Navbar } from "@/components/ui/navbar";
+import Navbar from "@/components/ui/navbar";
 import Home from "./pages/Home";
 import PlayerDashboard from "./pages/PlayerDashboard";
 import CoachDashboard from "./pages/CoachDashboard";
@@ -17,6 +17,7 @@ import SignUpPage from "./pages/SignUp";
 import JoinTeam from "./pages/JoinTeam";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import Footer from "@/components/ui/Footer";
 
 
 const queryClient = new QueryClient();
@@ -98,6 +99,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
+        <Footer />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

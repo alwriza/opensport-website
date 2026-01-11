@@ -483,51 +483,51 @@ const Training = () => {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container px-4 md:px-6 py-6 md:py-8 space-y-8 max-w-7xl mx-auto">
       {/* Header with Stats */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-6">
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-gradient mb-2">Training Center</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-3xl md:text-4xl font-bold text-gradient mb-2">Training Center</h1>
+            <p className="text-muted-foreground text-sm md:text-base">
               Master your skills with AI-powered training programs
             </p>
           </div>
 
           {/* User Stats */}
-          <div className="flex gap-4">
+          <div className="grid grid-cols-3 md:flex gap-2 md:gap-4 w-full md:w-auto">
             <Card className="glass-card">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-xp flex items-center justify-center">
-                  <Star className="h-6 w-6 text-white" />
+              <CardContent className="p-3 md:p-4 flex items-center gap-2 md:gap-3">
+                <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-gradient-xp flex items-center justify-center flex-shrink-0">
+                  <Star className="h-4 w-4 md:h-6 md:w-6 text-white" />
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Level</p>
-                  <p className="text-2xl font-bold">{userLevel}</p>
+                <div className="min-w-0">
+                  <p className="text-[10px] md:text-xs text-muted-foreground uppercase font-bold tracking-wider">Level</p>
+                  <p className="text-lg md:text-2xl font-bold">{userLevel}</p>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="glass-card">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-premium flex items-center justify-center">
-                  <Flame className="h-6 w-6 text-white" />
+              <CardContent className="p-3 md:p-4 flex items-center gap-2 md:gap-3">
+                <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-gradient-premium flex items-center justify-center flex-shrink-0">
+                  <Flame className="h-4 w-4 md:h-6 md:w-6 text-white" />
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Streak</p>
-                  <p className="text-2xl font-bold">{streak} days</p>
+                <div className="min-w-0">
+                  <p className="text-[10px] md:text-xs text-muted-foreground uppercase font-bold tracking-wider">Streak</p>
+                  <p className="text-lg md:text-2xl font-bold">{streak}</p>
                 </div>
               </CardContent>
             </Card>
 
             <Card className="glass-card">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-skill flex items-center justify-center">
-                  <Zap className="h-6 w-6 text-white" />
+              <CardContent className="p-3 md:p-4 flex items-center gap-2 md:gap-3">
+                <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-gradient-skill flex items-center justify-center flex-shrink-0">
+                  <Zap className="h-4 w-4 md:h-6 md:w-6 text-white" />
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">XP</p>
-                  <p className="text-2xl font-bold">{userXP}</p>
+                <div className="min-w-0">
+                  <p className="text-[10px] md:text-xs text-muted-foreground uppercase font-bold tracking-wider">XP</p>
+                  <p className="text-lg md:text-2xl font-bold">{userXP}</p>
                 </div>
               </CardContent>
             </Card>
@@ -570,7 +570,7 @@ const Training = () => {
                   <Loader2 className="h-10 w-10 animate-spin text-primary" />
                 </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
                   {skills.map((skill) => {
                     const unlocked = isSkillUnlocked(skill.order_index);
                     const progress = getSkillProgress(skill.id);
@@ -583,7 +583,7 @@ const Training = () => {
                         key={skill.id}
                         onClick={() => unlocked && setSelectedSkill(skill)}
                         disabled={!unlocked}
-                        className={`group relative p-8 rounded-3xl border-2 transition-all duration-300 text-center flex flex-col items-center gap-4 ${unlocked
+                        className={`group relative p-4 md:p-8 rounded-3xl border-2 transition-all duration-300 text-center flex flex-col items-center gap-2 md:gap-4 ${unlocked
                           ? 'bg-white border-slate-100 hover:border-primary hover:shadow-2xl hover:-translate-y-1'
                           : 'bg-slate-50 border-transparent opacity-60 cursor-not-allowed'
                           } ${isFullyCompleted ? 'ring-4 ring-primary/10 border-primary' : ''}`}
@@ -908,65 +908,67 @@ const Training = () => {
       </Tabs>
 
       {/* Video Modal UI */}
-      {selectedLevel && (
-        <Dialog open={showVideoModal} onOpenChange={setShowVideoModal}>
-          <DialogContent className="max-w-4xl p-0 overflow-hidden bg-slate-900 border-none shadow-2xl rounded-[2.5rem]">
-            <div className="aspect-video w-full">
-              {/* Replace URL with proper embed if needed */}
-              <iframe
-                src={selectedLevel.youtube_url.replace('watch?v=', 'embed/')}
-                className="w-full h-full"
-                allowFullScreen
-                title={selectedLevel.video_title}
-              />
-            </div>
-            <div className="p-8 bg-white space-y-6">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-900">{selectedLevel.video_title}</h2>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Badge className="bg-primary/10 text-primary border-none text-[10px] font-bold uppercase tracking-widest">
-                      {selectedLevel.level_name} tier
-                    </Badge>
-                    <span className="text-slate-300">•</span>
-                    <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">{selectedLevel.duration_minutes} Minutes</span>
+      {
+        selectedLevel && (
+          <Dialog open={showVideoModal} onOpenChange={setShowVideoModal}>
+            <DialogContent className="max-w-4xl p-0 overflow-hidden bg-slate-900 border-none shadow-2xl rounded-[2.5rem]">
+              <div className="aspect-video w-full">
+                {/* Replace URL with proper embed if needed */}
+                <iframe
+                  src={selectedLevel.youtube_url.replace('watch?v=', 'embed/')}
+                  className="w-full h-full"
+                  allowFullScreen
+                  title={selectedLevel.video_title}
+                />
+              </div>
+              <div className="p-8 bg-white space-y-6">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-900">{selectedLevel.video_title}</h2>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge className="bg-primary/10 text-primary border-none text-[10px] font-bold uppercase tracking-widest">
+                        {selectedLevel.level_name} tier
+                      </Badge>
+                      <span className="text-slate-300">•</span>
+                      <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">{selectedLevel.duration_minutes} Minutes</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-primary">REWARD</p>
+                    <p className="text-2xl font-bold">+{selectedLevel.xp_reward} XP</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold text-primary">REWARD</p>
-                  <p className="text-2xl font-bold">+{selectedLevel.xp_reward} XP</p>
+
+                <div className="h-px bg-slate-100" />
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-slate-500">
+                    <ExternalLink className="h-4 w-4" />
+                    <a href={selectedLevel.youtube_url} target="_blank" rel="noopener noreferrer" className="text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors">
+                      Watch on YouTube
+                    </a>
+                  </div>
+                  <div className="flex gap-3">
+                    <Button variant="outline" onClick={() => setShowVideoModal(false)} className="rounded-2xl px-8">
+                      Close
+                    </Button>
+                    <Button
+                      className="rounded-2xl px-12 shadow-xl shadow-primary/20"
+                      onClick={() => {
+                        completeLevel(selectedLevel.id, selectedLevel.skill_id, selectedLevel.level_name);
+                        setShowVideoModal(false);
+                      }}
+                    >
+                      Mark as Completed
+                    </Button>
+                  </div>
                 </div>
               </div>
-
-              <div className="h-px bg-slate-100" />
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-slate-500">
-                  <ExternalLink className="h-4 w-4" />
-                  <a href={selectedLevel.youtube_url} target="_blank" rel="noopener noreferrer" className="text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors">
-                    Watch on YouTube
-                  </a>
-                </div>
-                <div className="flex gap-3">
-                  <Button variant="outline" onClick={() => setShowVideoModal(false)} className="rounded-2xl px-8">
-                    Close
-                  </Button>
-                  <Button
-                    className="rounded-2xl px-12 shadow-xl shadow-primary/20"
-                    onClick={() => {
-                      completeLevel(selectedLevel.id, selectedLevel.skill_id, selectedLevel.level_name);
-                      setShowVideoModal(false);
-                    }}
-                  >
-                    Mark as Completed
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
-    </div>
+            </DialogContent>
+          </Dialog>
+        )
+      }
+    </div >
   );
 };
 

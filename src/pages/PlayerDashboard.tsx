@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Upload, Trophy, Loader2, Video, AlertCircle, Plus, X, Users, Check, XCircle, LogOut, ChevronRight } from "lucide-react";
+import { Upload, Trophy, Loader2, Video, AlertCircle, Plus, X, Users, Check, XCircle, LogOut, ChevronRight, ChevronUp, ChevronDown, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -52,6 +52,7 @@ export default function PlayerDashboard() {
   const [teamProfileOpen, setTeamProfileOpen] = useState(false);
   const [recommendedTraining, setRecommendedTraining] = useState<any[]>([]);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showAllVideos, setShowAllVideos] = useState(false);
 
 
   // 1. Sync & Fetch DB User
@@ -699,7 +700,7 @@ export default function PlayerDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-card p-8">
+    <div className="container px-4 md:px-6 py-6 md:py-8 space-y-8 max-w-7xl mx-auto">
       {/* Terms Acceptance Modal */}
       {dbUser && (
         <TermsAcceptanceModal
@@ -712,193 +713,193 @@ export default function PlayerDashboard() {
         />
       )}
 
-      <div className="container mx-auto max-w-6xl">
-        <header className="mb-10">
-          <h1 className="text-3xl font-bold mb-2">Welcome, {user?.firstName || 'Player'}!</h1>
-          <p className="text-muted-foreground">Your performance hub</p>
-        </header>
+      <header className="mb-6 md:mb-10">
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">Welcome, {user?.firstName || 'Player'}!</h1>
+        <p className="text-muted-foreground">Your performance hub</p>
+      </header>
 
-        {!dbUser && !loadingUser && (
-          <div className="mb-8">
-            <AlertCircle className="h-6 w-6 text-destructive inline mr-2" />
-            <span className="text-destructive font-bold">Failed to load profile. Please refresh.</span>
-          </div>
-        )}
+      {!dbUser && !loadingUser && (
+        <div className="mb-8">
+          <AlertCircle className="h-6 w-6 text-destructive inline mr-2" />
+          <span className="text-destructive font-bold">Failed to load profile. Please refresh.</span>
+        </div>
+      )}
 
-        <div className="grid md:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="md:col-span-2 space-y-8">
-            {/* Latest Analysis Card */}
-            {latestAnalysis && latestVideoUrl ? (
-              <Card className="border-2 border-primary/30">
-                <CardHeader>
-                  <div className="flex justify-between items-center">
-                    <CardTitle>Latest Analysis</CardTitle>
-                    <Button onClick={() => setUploadModalOpen(true)} size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      New Analysis
-                    </Button>
+      <div className="grid md:grid-cols-3 gap-8">
+        {/* Main Content */}
+        <div className="md:col-span-2 space-y-8">
+          {/* Latest Analysis Card */}
+          {latestAnalysis && latestVideoUrl ? (
+            <Card className="border-2 border-primary/30">
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Latest Analysis</CardTitle>
+                  <Button onClick={() => setUploadModalOpen(true)} size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Analysis
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Video */}
+                  <div className="aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center">
+                    <video
+                      controls
+                      playsInline
+                      preload="metadata"
+                      className="w-full h-full object-contain"
+                      src={latestVideoUrl}
+                    />
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid md:grid-cols-2 gap-6">
-                    {/* Video */}
-                    <div className="aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center">
-                      <video
-                        controls
-                        playsInline
-                        preload="metadata"
-                        className="w-full h-full object-contain"
-                        src={latestVideoUrl}
-                      />
+
+                  {/* Stats */}
+                  <div className="space-y-4">
+                    {/* Overall Score */}
+                    <div className="text-center p-4 bg-primary/5 rounded-lg">
+                      <p className="text-sm text-muted-foreground mb-2">Overall Score</p>
+                      <div className={`text-5xl font-bold ${getScoreColor(latestAnalysis.overall)}`}>
+                        {latestAnalysis.overall.toFixed(1)}
+                      </div>
                     </div>
 
-                    {/* Stats */}
-                    <div className="space-y-4">
-                      {/* Overall Score */}
-                      <div className="text-center p-4 bg-primary/5 rounded-lg">
-                        <p className="text-sm text-muted-foreground mb-2">Overall Score</p>
-                        <div className={`text-5xl font-bold ${getScoreColor(latestAnalysis.overall)}`}>
-                          {latestAnalysis.overall.toFixed(1)}
+                    {/* Individual Scores */}
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Stability</span>
+                          <span className={`font-bold ${getScoreColor(latestAnalysis.stability)}`}>
+                            {latestAnalysis.stability.toFixed(1)}
+                          </span>
                         </div>
+                        <Progress value={latestAnalysis.stability} className="h-2" />
                       </div>
 
-                      {/* Individual Scores */}
-                      <div className="space-y-3">
-                        <div>
-                          <div className="flex justify-between text-sm mb-1">
-                            <span>Stability</span>
-                            <span className={`font-bold ${getScoreColor(latestAnalysis.stability)}`}>
-                              {latestAnalysis.stability.toFixed(1)}
-                            </span>
-                          </div>
-                          <Progress value={latestAnalysis.stability} className="h-2" />
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Power</span>
+                          <span className={`font-bold ${getScoreColor(latestAnalysis.power)}`}>
+                            {latestAnalysis.power.toFixed(1)}
+                          </span>
                         </div>
+                        <Progress value={latestAnalysis.power} className="h-2" />
+                      </div>
 
-                        <div>
-                          <div className="flex justify-between text-sm mb-1">
-                            <span>Power</span>
-                            <span className={`font-bold ${getScoreColor(latestAnalysis.power)}`}>
-                              {latestAnalysis.power.toFixed(1)}
-                            </span>
-                          </div>
-                          <Progress value={latestAnalysis.power} className="h-2" />
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Technique</span>
+                          <span className={`font-bold ${getScoreColor(latestAnalysis.technique)}`}>
+                            {latestAnalysis.technique.toFixed(1)}
+                          </span>
                         </div>
+                        <Progress value={latestAnalysis.technique} className="h-2" />
+                      </div>
 
-                        <div>
-                          <div className="flex justify-between text-sm mb-1">
-                            <span>Technique</span>
-                            <span className={`font-bold ${getScoreColor(latestAnalysis.technique)}`}>
-                              {latestAnalysis.technique.toFixed(1)}
-                            </span>
-                          </div>
-                          <Progress value={latestAnalysis.technique} className="h-2" />
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Balance</span>
+                          <span className={`font-bold ${getScoreColor(latestAnalysis.balance)}`}>
+                            {latestAnalysis.balance.toFixed(1)}
+                          </span>
                         </div>
-
-                        <div>
-                          <div className="flex justify-between text-sm mb-1">
-                            <span>Balance</span>
-                            <span className={`font-bold ${getScoreColor(latestAnalysis.balance)}`}>
-                              {latestAnalysis.balance.toFixed(1)}
-                            </span>
-                          </div>
-                          <Progress value={latestAnalysis.balance} className="h-2" />
-                        </div>
+                        <Progress value={latestAnalysis.balance} className="h-2" />
                       </div>
                     </div>
                   </div>
+                </div>
 
-                  {/* AI Recommendations */}
-                  {latestRecommendations.length > 0 && (
-                    <div className="mt-6 pt-6 border-t">
-                      <div className="flex items-center gap-2 mb-4">
-                        <Trophy className="h-5 w-5 text-primary" />
-                        <h3 className="font-semibold">AI Recommendations</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Based on your analysis, we recommend these exercises:
-                      </p>
-                      <div className="grid gap-3">
-                        {latestRecommendations.map((level: any) => (
-                          <Card
-                            key={level.id}
-                            className="cursor-pointer hover:border-primary transition-all group bg-gradient-to-r from-white to-primary/5"
-                            onClick={() => {
-                              navigate(`/training?skill=${level.skill_id}&level=${level.level_name}`);
-                            }}
-                          >
-                            <CardContent className="p-4">
-                              <div className="flex items-center gap-4">
-                                <div className="text-3xl grayscale group-hover:grayscale-0 transition-all">
-                                  {level.skills?.icon}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="font-semibold text-sm">
-                                    {level.skills?.name}
-                                  </h4>
-                                  <p className="text-xs text-muted-foreground line-clamp-1">
-                                    {level.video_title}
-                                  </p>
-                                  <div className="flex items-center gap-3 mt-2 text-[10px] uppercase font-bold tracking-widest text-slate-400">
-                                    <Badge variant="outline" className="text-[9px] px-2 py-0">
-                                      {level.level_name}
-                                    </Badge>
-                                    <span>⏱️ {level.duration_minutes} min</span>
-                                    <span className="text-primary">+{level.xp_reward} XP</span>
-                                  </div>
-                                </div>
-                                <Button variant="outline" size="sm" className="rounded-xl">
-                                  Start →
-                                </Button>
+                {/* AI Recommendations */}
+                {latestRecommendations.length > 0 && (
+                  <div className="mt-6 pt-6 border-t">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Trophy className="h-5 w-5 text-primary" />
+                      <h3 className="font-semibold">AI Recommendations</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Based on your analysis, we recommend these exercises:
+                    </p>
+                    <div className="grid gap-3">
+                      {latestRecommendations.map((level: any) => (
+                        <Card
+                          key={level.id}
+                          className="cursor-pointer hover:border-primary transition-all group bg-gradient-to-r from-white to-primary/5"
+                          onClick={() => {
+                            navigate(`/training?skill=${level.skill_id}&level=${level.level_name}`);
+                          }}
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex items-center gap-4">
+                              <div className="text-3xl grayscale group-hover:grayscale-0 transition-all">
+                                {level.skills?.icon}
                               </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold text-sm">
+                                  {level.skills?.name}
+                                </h4>
+                                <p className="text-xs text-muted-foreground line-clamp-1">
+                                  {level.video_title}
+                                </p>
+                                <div className="flex items-center gap-3 mt-2 text-[10px] uppercase font-bold tracking-widest text-slate-400">
+                                  <Badge variant="outline" className="text-[9px] px-2 py-0">
+                                    {level.level_name}
+                                  </Badge>
+                                  <span>⏱️ {level.duration_minutes} min</span>
+                                  <span className="text-primary">+{level.xp_reward} XP</span>
+                                </div>
+                              </div>
+                              <Button variant="outline" size="sm" className="rounded-xl">
+                                Start →
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
                     </div>
-                  )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="border-2 border-dashed border-primary/20">
+              <CardContent className="pt-6 flex flex-col items-center justify-center min-h-[300px] text-center">
+                <Upload className="h-16 w-16 text-primary mb-4" />
+                <h3 className="text-xl font-semibold mb-2">No Analyses Yet</h3>
+                <p className="text-muted-foreground mb-6 max-w-sm">
+                  Upload your first kick video to get AI-powered analysis
+                </p>
+                <Button onClick={() => setUploadModalOpen(true)} size="lg">
+                  <Plus className="h-5 w-5 mr-2" />
+                  Upload First Video
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Recent Analysis */}
+          <div>
+            <h2 className="text-xl font-bold mb-4">All Analyses</h2>
+            {videos.length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center text-muted-foreground">
+                  <Video className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                  <p>No videos uploaded yet.</p>
                 </CardContent>
               </Card>
             ) : (
-              <Card className="border-2 border-dashed border-primary/20">
-                <CardContent className="pt-6 flex flex-col items-center justify-center min-h-[300px] text-center">
-                  <Upload className="h-16 w-16 text-primary mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">No Analyses Yet</h3>
-                  <p className="text-muted-foreground mb-6 max-w-sm">
-                    Upload your first kick video to get AI-powered analysis
-                  </p>
-                  <Button onClick={() => setUploadModalOpen(true)} size="lg">
-                    <Plus className="h-5 w-5 mr-2" />
-                    Upload First Video
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Recent Analysis */}
-            <div>
-              <h2 className="text-xl font-bold mb-4">All Analyses</h2>
-              {videos.length === 0 ? (
-                <Card>
-                  <CardContent className="p-8 text-center text-muted-foreground">
-                    <Video className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-                    <p>No videos uploaded yet.</p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="space-y-4">
-                  {videos.map((video) => (
+              <div className="space-y-4">
+                <div className="grid gap-4">
+                  {(showAllVideos ? videos : videos.slice(0, 3)).map((video) => (
                     <Card key={video.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                      <div className="flex items-center p-4 gap-4">
+                      <div className="flex flex-col md:flex-row items-start md:items-center p-4 gap-4">
                         <div className="h-16 w-24 bg-muted rounded flex items-center justify-center flex-shrink-0">
                           <Video className="h-8 w-8 text-muted-foreground" />
                         </div>
-                        <div className="flex-1">
-                          <h4 className="font-semibold">{video.filename}</h4>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold truncate">{video.filename}</h4>
+                          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mt-1">
                             <span>{new Date(video.uploaded_at).toLocaleDateString()}</span>
-                            <span>•</span>
-                            <Badge variant={video.status === 'completed' ? 'default' : video.status === 'processing' ? 'secondary' : 'destructive'}>
+                            <span className="hidden md:inline">•</span>
+                            <Badge variant={video.status === 'completed' ? 'default' : video.status === 'processing' ? 'secondary' : 'destructive'} className="whitespace-nowrap">
                               {video.status === 'processing' && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
                               {video.status}
                             </Badge>
@@ -909,6 +910,7 @@ export default function PlayerDashboard() {
                           size="sm"
                           disabled={video.status !== 'completed'}
                           onClick={() => openResultsModal(video.id)}
+                          className="w-full md:w-auto"
                         >
                           {video.status === 'completed' ? 'View Results' : 'Processing...'}
                         </Button>
@@ -916,284 +918,300 @@ export default function PlayerDashboard() {
                     </Card>
                   ))}
                 </div>
-              )}
-            </div>
-          </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>My Profile</CardTitle>
-                <CardDescription>Update your football details</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+                {videos.length > 3 && (
+                  <div className="flex justify-center pt-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowAllVideos(!showAllVideos)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      {showAllVideos ? (
+                        <>Show Less <ChevronUp className="ml-2 h-4 w-4" /></>
+                      ) : (
+                        <>Show More ({videos.length - 3} more) <ChevronDown className="ml-2 h-4 w-4" /></>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>My Profile</CardTitle>
+              <CardDescription>Update your football details</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Age</label>
+                <input
+                  type="number"
+                  min="0"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={localUser?.age || ''}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    setLocalUser({ ...localUser, age: isNaN(val) ? null : Math.max(0, val) });
+                  }}
+                  onBlur={() => updateProfile('age', localUser?.age)}
+                  placeholder="Age"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Position</label>
+                <Select
+                  value={localUser?.position || ''}
+                  onValueChange={(value) => {
+                    setLocalUser({ ...localUser, position: value });
+                    updateProfile('position', value);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select position" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Forward">Forward</SelectItem>
+                    <SelectItem value="Midfielder">Midfielder</SelectItem>
+                    <SelectItem value="Defender">Defender</SelectItem>
+                    <SelectItem value="Goalkeeper">Goalkeeper</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Club</label>
+                <input
+                  type="text"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={localUser?.club || ''}
+                  onChange={(e) => setLocalUser({ ...localUser, club: e.target.value })}
+                  onBlur={() => updateProfile('club', localUser?.club)}
+                  placeholder="Current Club"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Age</label>
+                  <label className="text-sm font-medium">Height (cm)</label>
                   <input
                     type="number"
                     min="0"
+                    step="0.1"
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    value={localUser?.age || ''}
+                    value={localUser?.height || ''}
                     onChange={(e) => {
-                      const val = parseInt(e.target.value);
-                      setLocalUser({ ...localUser, age: isNaN(val) ? null : Math.max(0, val) });
+                      const val = parseFloat(e.target.value);
+                      setLocalUser({ ...localUser, height: isNaN(val) ? null : Math.max(0, val) });
                     }}
-                    onBlur={() => updateProfile('age', localUser?.age)}
-                    placeholder="Age"
+                    onBlur={() => updateProfile('height', localUser?.height)}
+                    placeholder="180"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Position</label>
-                  <Select
-                    value={localUser?.position || ''}
-                    onValueChange={(value) => {
-                      setLocalUser({ ...localUser, position: value });
-                      updateProfile('position', value);
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select position" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Forward">Forward</SelectItem>
-                      <SelectItem value="Midfielder">Midfielder</SelectItem>
-                      <SelectItem value="Defender">Defender</SelectItem>
-                      <SelectItem value="Goalkeeper">Goalkeeper</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Club</label>
+                  <label className="text-sm font-medium">Weight (kg)</label>
                   <input
-                    type="text"
+                    type="number"
+                    min="0"
+                    step="0.1"
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    value={localUser?.club || ''}
-                    onChange={(e) => setLocalUser({ ...localUser, club: e.target.value })}
-                    onBlur={() => updateProfile('club', localUser?.club)}
-                    placeholder="Current Club"
+                    value={localUser?.weight || ''}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      setLocalUser({ ...localUser, weight: isNaN(val) ? null : Math.max(0, val) });
+                    }}
+                    onBlur={() => updateProfile('weight', localUser?.weight)}
+                    placeholder="75"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Height (cm)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.1"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      value={localUser?.height || ''}
-                      onChange={(e) => {
-                        const val = parseFloat(e.target.value);
-                        setLocalUser({ ...localUser, height: isNaN(val) ? null : Math.max(0, val) });
-                      }}
-                      onBlur={() => updateProfile('height', localUser?.height)}
-                      placeholder="180"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Weight (kg)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.1"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      value={localUser?.weight || ''}
-                      onChange={(e) => {
-                        const val = parseFloat(e.target.value);
-                        setLocalUser({ ...localUser, weight: isNaN(val) ? null : Math.max(0, val) });
-                      }}
-                      onBlur={() => updateProfile('weight', localUser?.weight)}
-                      placeholder="75"
-                    />
-                  </div>
-                </div>
+              </div>
 
-                <div className="pt-4 border-t space-y-3">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Legal & Privacy</p>
-                  <div className="flex gap-4">
-                    <button
-                      onClick={() => window.open('/terms', '_blank')}
-                      className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 group"
-                    >
-                      Terms of Service
-                      <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-all -translate-x-1 group-hover:translate-x-0" />
-                    </button>
-                    <button
-                      onClick={() => window.open('/privacy', '_blank')}
-                      className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 group"
-                    >
-                      Privacy Policy
-                      <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-all -translate-x-1 group-hover:translate-x-0" />
-                    </button>
-                  </div>
+              <div className="pt-4 border-t space-y-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Legal & Privacy</p>
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => window.open('/terms', '_blank')}
+                    className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 group"
+                  >
+                    Terms of Service
+                    <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-all -translate-x-1 group-hover:translate-x-0" />
+                  </button>
+                  <button
+                    onClick={() => window.open('/privacy', '_blank')}
+                    className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 group"
+                  >
+                    Privacy Policy
+                    <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-all -translate-x-1 group-hover:translate-x-0" />
+                  </button>
                 </div>
-              </CardContent>
-              <CardFooter>
-                <Button
-                  className="w-full"
-                  variant="outline"
-                  onClick={() => navigate('/join-team')}
-                >
-                  <Users className="h-4 w-4 mr-2" />
-                  Join a Team
-                </Button>
-              </CardFooter>
-            </Card>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button
+                className="w-full"
+                variant="outline"
+                onClick={() => navigate('/join-team')}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Join a Team
+              </Button>
+            </CardFooter>
+          </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Trophy className="h-5 w-5" />
-                  Profile Stats
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Videos Analyzed</span>
-                  <span className="font-bold text-lg">{videos.filter(v => v.status === 'completed').length}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Videos Processing</span>
-                  <span className="font-bold text-lg">{videos.filter(v => v.status === 'processing').length}</span>
-                </div>
-              </CardContent>
-            </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Trophy className="h-5 w-5" />
+                Profile Stats
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Videos Analyzed</span>
+                <span className="font-bold text-lg">{videos.filter(v => v.status === 'completed').length}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Videos Processing</span>
+                <span className="font-bold text-lg">{videos.filter(v => v.status === 'processing').length}</span>
+              </div>
+            </CardContent>
+          </Card>
 
-            {/* Training Progress Card */}
-            <Card className="border-2 border-primary/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <span className="text-xl">🎮</span>
-                  Training Progress
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Level & XP */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">Level {trainingStats?.progress?.level || 1}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {trainingStats?.progress?.total_xp || 0} XP
-                    </span>
-                  </div>
-                  <Progress
-                    value={((trainingStats?.progress?.total_xp || 0) % 100)}
-                    className="h-2"
-                  />
-                </div>
-
-                {/* Streak */}
-                <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">🔥</span>
-                    <div>
-                      <div className="font-bold text-orange-600 dark:text-orange-400">
-                        {trainingStats?.progress?.current_streak || 0} Day Streak
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Best: {trainingStats?.progress?.longest_streak || 0} days
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Skills Completed */}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Skills Completed</span>
-                  <span className="font-bold text-lg">
-                    {trainingStats?.skills?.filter((sp: any) => sp.is_completed).length || 0}/10
+          {/* Training Progress Card */}
+          <Card className="border-2 border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <span className="text-xl">🎮</span>
+                Training Progress
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Level & XP */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Level {trainingStats?.progress?.level || 1}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {trainingStats?.progress?.total_xp || 0} XP
                   </span>
                 </div>
+                <Progress
+                  value={((trainingStats?.progress?.total_xp || 0) % 100)}
+                  className="h-2"
+                />
+              </div>
 
-                {/* Button to Training */}
-                <Button
-                  className="w-full"
-                  onClick={() => navigate('/training')}
-                >
-                  Continue Training →
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-primary/5 border-primary/10">
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+              {/* Streak */}
+              <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🔥</span>
                   <div>
-                    <p className="font-medium text-primary">Pro Tip</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      For best results, film from the side (90° angle) with your whole body visible in frame.
-                    </p>
+                    <div className="font-bold text-orange-600 dark:text-orange-400">
+                      {trainingStats?.progress?.current_streak || 0} Day Streak
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Best: {trainingStats?.progress?.longest_streak || 0} days
+                    </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* My Teams Card - добавь ПОСЛЕ карточки Team Invitations */}
-            <Card>
-              <CardHeader>
-                <CardTitle>My Teams</CardTitle>
-                <CardDescription>Teams you're part of</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {loadingTeams ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                  </div>
-                ) : myTeams.length > 0 ? (
-                  myTeams.map((team) => (
-                    <div key={team.roster_id} className="border rounded-lg p-3 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium text-sm">{team.team_name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {team.club_name} • {team.age_group}
-                          </p>
-                        </div>
-                        <Badge variant={team.status === 'active' ? 'default' : 'secondary'}>
-                          {team.status}
-                        </Badge>
+              {/* Skills Completed */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Skills Completed</span>
+                <span className="font-bold text-lg">
+                  {trainingStats?.skills?.filter((sp: any) => sp.is_completed).length || 0}/10
+                </span>
+              </div>
+
+              {/* Button to Training */}
+              <Button
+                className="w-full"
+                onClick={() => navigate('/training')}
+              >
+                Continue Training →
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-primary/5 border-primary/10">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-primary">Pro Tip</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    For best results, film from the side (90° angle) with your whole body visible in frame.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* My Teams Card - добавь ПОСЛЕ карточки Team Invitations */}
+          <Card>
+            <CardHeader>
+              <CardTitle>My Teams</CardTitle>
+              <CardDescription>Teams you're part of</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {loadingTeams ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </div>
+              ) : myTeams.length > 0 ? (
+                myTeams.map((team) => (
+                  <div key={team.roster_id} className="border rounded-lg p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-sm">{team.team_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {team.club_name} • {team.age_group}
+                        </p>
                       </div>
-
-                      {team.status === 'active' && (
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => {
-                              setSelectedTeamProfileId(team.team_id);
-                              setTeamProfileOpen(true);
-                            }}
-                          >
-                            <Info className="h-4 w-4 mr-2" />
-                            View Team
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-red-600 hover:text-red-700"
-                            onClick={() => handleLeaveTeam(team.roster_id, team.team_name)}
-                          >
-                            <LogOut className="h-4 w-4 mr-2" />
-                          </Button>
-                        </div>
-                      )}
+                      <Badge variant={team.status === 'active' ? 'default' : 'secondary'}>
+                        {team.status}
+                      </Badge>
                     </div>
-                  ))
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">Not part of any team yet</p>
+
+                    {team.status === 'active' && (
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => {
+                            setSelectedTeamProfileId(team.team_id);
+                            setTeamProfileOpen(true);
+                          }}
+                        >
+                          <Info className="h-4 w-4 mr-2" />
+                          View Team
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
+                          onClick={() => handleLeaveTeam(team.roster_id, team.team_name)}
+                        >
+                          <LogOut className="h-4 w-4 mr-2" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Not part of any team yet</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
-
 
       {/* Upload Modal */}
       <Dialog open={uploadModalOpen} onOpenChange={setUploadModalOpen}>

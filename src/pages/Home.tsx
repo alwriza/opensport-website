@@ -1,140 +1,228 @@
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Trophy, Users, Target, Zap, Shield, Heart, Globe, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { SignInButton } from "@clerk/clerk-react";
+import { SignInButton, SignedIn, SignedOut } from "@clerk/clerk-react";
+import { ArrowRight, UserPlus, Video, TrendingUp, Sprout } from "lucide-react";
 
 export default function Home() {
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    setIsVisible(true);
-  }, []);
-
-  const features = [
-    {
-      icon: <Target className="h-5 w-5" />,
-      title: "AI Analysis",
-      description: "Machine learning algorithms analyze performance metrics.",
-    },
-    {
-      icon: <Users className="h-5 w-5" />,
-      title: "Community",
-      description: "Collaborate with players and coaches globally.",
-    },
-    {
-      icon: <Shield className="h-5 w-5" />,
-      title: "Objective",
-      description: "Unbiased evaluation based purely on data.",
-    },
-    {
-      icon: <Zap className="h-5 w-5" />,
-      title: "Direct Feedback",
-      description: "Real-time training recommendations.",
-    }
-  ];
-
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 px-6 overflow-hidden">
-        <div className="container mx-auto max-w-5xl text-center">
-          <Badge variant="outline" className={`mb-8 px-4 py-1.5 rounded-full text-base font-normal tracking-wide animate-fade-in opacity-0`}>
-            The Future of Scouting
-          </Badge>
+    <div className="min-h-screen bg-background">
+      {/* Hero Section - Stadium Background */}
+      <section className="relative min-h-[90vh] flex items-center justify-start px-6 md:px-12">
+        {/* Background Image - YOU ADD THIS */}
+        <div className="absolute inset-0 bg-black">
+          <img src="public/stadium-bg.png" alt="" className="w-full h-full object-cover opacity-60" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
+        </div>
 
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-8 leading-[1.1]">
-            <span className="block animate-fade-in opacity-0" style={{ animationDelay: '0.1s' }}>Discover Talent.</span>
-            <span className="block text-muted-foreground animate-fade-in opacity-0" style={{ animationDelay: '0.3s' }}>Unlock Potential.</span>
+        {/* Content */}
+        <div className="relative z-10 max-w-4xl">
+          <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[1.1] mb-8">
+            <span className="block text-white">DISCOVER{" "}</span>
+            <span className="block text-[#9FE870]">TALENT</span>
+            <span className="block text-white mt-2">UNLOCK POTENTIAL</span>
           </h1>
 
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-12 animate-fade-in opacity-0" style={{ animationDelay: '0.5s' }}>
+          <p className="text-xl md:text-2xl text-gray-300 max-w-2xl mb-12 leading-relaxed">
             We use advanced AI to evaluate football talent objectively, breaking geographic barriers and creating equal opportunities for all.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in opacity-0" style={{ animationDelay: '0.7s' }}>
-            <SignInButton mode="modal" forceRedirectUrl="/player-dashboard">
-              <Button size="lg" className="rounded-full px-8 h-12 text-base">
-                Start Your Journey <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </SignInButton>
-            <SignInButton mode="modal" forceRedirectUrl="/coach-dashboard">
-              <Button variant="outline" size="lg" className="rounded-full px-8 h-12 text-base">
-                For Coaches
-              </Button>
-            </SignInButton>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <SignedOut>
+              <SignInButton mode="modal" forceRedirectUrl="/player-dashboard">
+                <Button size="lg" className="bg-[#9FE870] hover:bg-[#8DD760] text-black font-semibold px-8 h-14 text-lg rounded-full">
+                  Start Your Journey
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </SignInButton>
+              <SignInButton mode="modal" forceRedirectUrl="/coach-dashboard">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="border-2 border-[#9FE870] text-[#9FE870] hover:bg-[#9FE870] hover:text-black font-semibold px-8 h-14 text-lg rounded-full"
+                >
+                  For Coaches
+                </Button>
+              </SignInButton>
+            </SignedOut>
+
+            <SignedIn>
+              <Link to="/player-dashboard">
+                <Button size="lg" className="bg-[#9FE870] hover:bg-[#8DD760] text-black font-semibold px-8 h-14 text-lg rounded-full">
+                  Go to Dashboard
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </SignedIn>
           </div>
         </div>
-
-        {/* Abstract Background Element */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl opacity-50 pointer-events-none" />
       </section>
 
-      {/* Features Grid */}
-      <section className="py-24 bg-secondary/30">
-        <div className="container mx-auto px-6">
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <div
-                key={index}
-                className="group p-8 bg-background rounded-2xl border border-border/50 hover:border-primary/20 transition-all duration-500 hover:shadow-lg hover:-translate-y-1"
-              >
-                <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center mb-6 text-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-500">
-                  {feature.icon}
-                </div>
-                <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  {feature.description}
+      {/* Community Impact Section */}
+      <section className="bg-black py-24 px-6">
+        <div className="container mx-auto max-w-7xl">
+          <h2 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight">
+            <span className="text-[#9FE870]">COMMUNITY IMPACT</span>
+          </h2>
+
+          <p className="text-gray-400 text-xl leading-relaxed mb-16 max-w-3xl">
+            From grassroots football to elite academies, OPENsport's AI-powered platform helps you
+            evaluate talent, unlock potential, and make smarter development decisions.
+          </p>
+
+          {/* Cards Grid */}
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Card 1 - Global Reach */}
+            <div className="group relative rounded-3xl overflow-hidden border-2 border-[#9FE870]/20 hover:border-[#9FE870] transition-all duration-300">
+              {/* Image Background - YOU ADD THIS */}
+              <div className="relative h-80 bg-gradient-to-br from-gray-900 to-gray-800">
+                <img src="public/global-reach.png" alt="" className="w-full h-full object-fit" />
+                <div className="absolute inset-0 bg-black/60 group-hover:bg-black/40 transition-all" />
+              </div>
+
+              {/* Content */}
+              <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black via-black/90 to-transparent">
+                <h3 className="text-3xl font-bold text-white mb-3">GLOBAL REACH</h3>
+                <p className="text-gray-300 leading-relaxed mb-4">
+                  Connecting football talent from every corner of the world.
+                </p>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  No borders, no limits — players can be seen, evaluated, and discovered globally.
                 </p>
               </div>
-            ))}
+            </div>
+
+            {/* Card 2 - Fair Play */}
+            <div className="group relative rounded-3xl overflow-hidden border-2 border-[#9FE870]/20 hover:border-[#9FE870] transition-all duration-300">
+              <div className="relative h-80 bg-gradient-to-br from-gray-900 to-gray-800">
+                <img src="public/fair-play.png" alt="" className="w-full h-full object-fit" />
+                <div className="absolute inset-0 bg-black/60 group-hover:bg-black/40 transition-all" />
+              </div>
+
+              <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black via-black/90 to-transparent">
+                <h3 className="text-3xl font-bold text-white mb-3">FAIR PLAY</h3>
+                <p className="text-gray-300 leading-relaxed mb-4">
+                  Objective, AI-driven analysis for every player.
+                </p>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  Performance is measured by data, not reputation, location, or background.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 3 - Equal Access */}
+            <div className="group relative rounded-3xl overflow-hidden border-2 border-[#9FE870]/20 hover:border-[#9FE870] transition-all duration-300">
+              <div className="relative h-80 bg-gradient-to-br from-gray-900 to-gray-800">
+                <img src="public/equal-access.png" alt="" className="w-full h-full object-fit" />
+                <div className="absolute inset-0 bg-black/60 group-hover:bg-black/40 transition-all" />
+              </div>
+
+              <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black via-black/90 to-transparent">
+                <h3 className="text-3xl font-bold text-white mb-3">EQUAL ACCESS</h3>
+                <p className="text-gray-300 leading-relaxed mb-4">
+                  Equal opportunities for every football player.
+                </p>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  Upload a video, get professional analysis, and receive feedback regardless of resources or connections.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Mission Section */}
-      <section className="py-32 px-6">
-        <div className="container mx-auto max-w-4xl text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-16 tracking-tight">Our Mission</h2>
-          <div className="grid md:grid-cols-3 gap-12">
-            <div className="space-y-4">
-              <div className="mx-auto w-16 h-16 rounded-full bg-secondary flex items-center justify-center text-foreground">
-                <Globe className="h-6 w-6" />
+      {/* How It Works Section */}
+      <section className="relative bg-[#0A1628] py-24 md:py-32 px-6">
+        <div className="container mx-auto max-w-7xl">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            {/* Left Content */}
+            <div>
+              <h2 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight">
+                <span className="text-white">HOW IT</span>
+                <br />
+                <span className="text-[#9FE870]">WORKS?</span>
+              </h2>
+
+              <p className="text-gray-400 text-lg leading-relaxed mb-12 max-w-xl">
+                OPENsport products are designed to improve how football talent is discovered and developed.
+                From player profiling and performance insights to talent visibility and structured development
+                pathways, each product is built to bring clarity, objectivity, and structure into the football
+                ecosystem — helping players get noticed, academies evaluate potential, and clubs make better decisions.
+              </p>
+
+              {/* Steps Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Step 1 */}
+                <div className="space-y-3">
+                  <div className="w-14 h-14 rounded-xl bg-gray-800/50 flex items-center justify-center">
+                    <UserPlus className="h-7 w-7 text-[#9FE870]" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-white">Sign Up</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">
+                    Create an account and get instant access to the platform.
+                  </p>
+                </div>
+
+                {/* Step 2 */}
+                <div className="space-y-3">
+                  <div className="w-14 h-14 rounded-xl bg-gray-800/50 flex items-center justify-center">
+                    <Video className="h-7 w-7 text-[#9FE870]" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-white">Create Profile & Upload your video</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">
+                    Upload a match or training video directly from your phone or computer.
+                  </p>
+                </div>
+
+                {/* Step 3 */}
+                <div className="space-y-3">
+                  <div className="w-14 h-14 rounded-xl bg-gray-800/50 flex items-center justify-center">
+                    <TrendingUp className="h-7 w-7 text-[#9FE870]" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-white">Get Analyzed</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">
+                    Receive AI-powered performance analysis, insights, and personalized feedback.
+                  </p>
+                </div>
+
+                {/* Step 4 */}
+                <div className="space-y-3">
+                  <div className="w-14 h-14 rounded-xl bg-gray-800/50 flex items-center justify-center">
+                    <Sprout className="h-7 w-7 text-[#9FE870]" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-white">Improve & Connect</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">
+                    Track progress, improve performance, and connect with opportunities.
+                  </p>
+                </div>
               </div>
-              <h3 className="font-semibold text-lg">Global Reach</h3>
-              <p className="text-muted-foreground">Connecting players from every corner of the world.</p>
             </div>
-            <div className="space-y-4">
-              <div className="mx-auto w-16 h-16 rounded-full bg-secondary flex items-center justify-center text-foreground">
-                <Shield className="h-6 w-6" />
+
+            {/* Right - Placeholder for 3D Graphic */}
+            <div className="relative hidden lg:block">
+              {/* YOU ADD 3D GRAPHIC HERE LATER */}
+              <div className="w-full h-[600px] rounded-2xl bg-gradient-to-br from-[#9FE870]/10 to-transparent border border-[#9FE870]/20 flex items-center justify-center">
+                <p className="text-gray-600 text-sm">[3D Graphic Placeholder]</p>
               </div>
-              <h3 className="font-semibold text-lg">Fair Play</h3>
-              <p className="text-muted-foreground">Removing bias through data-driven evaluation.</p>
-            </div>
-            <div className="space-y-4">
-              <div className="mx-auto w-16 h-16 rounded-full bg-secondary flex items-center justify-center text-foreground">
-                <Heart className="h-6 w-6" />
-              </div>
-              <h3 className="font-semibold text-lg">Equal Access</h3>
-              <p className="text-muted-foreground">Opportunity for talent, regardless of background.</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-32 px-6 bg-primary text-primary-foreground">
-        <div className="container mx-auto max-w-4xl text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-8 tracking-tight">Ready to prove your potential?</h2>
-          <p className="text-primary-foreground/80 text-xl mb-12 max-w-2xl mx-auto">
-            Join the platform that is revolutionizing how football talent is discovered.
-          </p>
-          <SignInButton mode="modal" forceRedirectUrl="/player-dashboard">
-            <Button size="lg" variant="secondary" className="rounded-full px-10 h-14 text-lg font-medium">
-              Get Started Now
-            </Button>
-          </SignInButton>
+      {/* Quote Section - Arsene Wenger */}
+      <section className="relative bg-[#0A1628] py-24 px-6">
+        <div className="container mx-auto max-w-5xl text-center">
+          {/* Quote Marks */}
+          <div className="text-[#9FE870] text-8xl font-serif mb-8">"</div>
+
+          <blockquote className="text-2xl md:text-3xl text-white font-normal leading-relaxed mb-8 max-w-4xl mx-auto">
+            Talent can be wasted if it is not guided properly. Development is about education,
+            patience, and creating the right environment for young players to express themselves.
+          </blockquote>
+
+          <div className="text-gray-400">
+            <p className="font-semibold text-lg text-white mb-1">Arsene Wenger</p>
+            <p className="text-sm">Head Coach & Football Thinker</p>
+          </div>
         </div>
       </section>
     </div>
