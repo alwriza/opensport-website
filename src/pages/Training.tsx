@@ -108,7 +108,14 @@ const Training = () => {
   // Auto-scroll when skill is selected
   useEffect(() => {
     if (selectedSkill && skillDetailsRef.current) {
-      skillDetailsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const navbarOffset = 300; // Account for sticky navbar + extra breathing room
+      const elementPosition = skillDetailsRef.current.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - navbarOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
     }
   }, [selectedSkill]);
 
@@ -624,8 +631,8 @@ const Training = () => {
 
           {/* Detailed Skill View Modal/Section could go here */}
           {selectedSkill && (
-            <div ref={skillDetailsRef}>
-              <Card className="mt-8 border-2 border-primary/20 bg-white p-8 rounded-[2rem] shadow-xl animate-in fade-in slide-in-from-bottom-4">
+            <div ref={skillDetailsRef} className="pb-36">
+              <Card className="mt-8 mb-12 border-2 border-primary/20 bg-white p-8 rounded-[2rem] shadow-xl animate-in fade-in slide-in-from-bottom-4">
                 <div className="flex flex-col md:flex-row gap-8">
                   <div className="md:w-1/3 space-y-4">
                     <div className="text-7xl mb-4">{selectedSkill.icon}</div>

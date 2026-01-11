@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
 import Navbar from "@/components/ui/navbar";
+import ScrollToTop from "@/components/ScrollToTop";
 import Home from "./pages/Home";
 import PlayerDashboard from "./pages/PlayerDashboard";
 import CoachDashboard from "./pages/CoachDashboard";
@@ -28,6 +29,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <ScrollToTop />
         <div className="min-h-screen bg-background">
           <Navbar />
           <Routes>

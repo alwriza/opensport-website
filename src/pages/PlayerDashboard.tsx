@@ -1069,6 +1069,16 @@ export default function PlayerDashboard() {
                 </div>
               </div>
             </CardContent>
+            <CardFooter className="pt-0 pb-6 px-6">
+              <Button
+                variant="outline"
+                className="w-full rounded-xl border-primary/20 hover:bg-primary/5 hover:text-primary transition-all font-bold"
+                onClick={() => navigate('/join-team')}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Join a Team
+              </Button>
+            </CardFooter>
           </Card>
 
 
