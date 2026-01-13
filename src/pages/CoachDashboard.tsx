@@ -37,6 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TermsAcceptanceModal } from "@/components/ui/TermsAcceptanceModal";
+import { NumberInput } from "@/components/ui/NumberInput";
 import { useTranslation } from "react-i18next";
 
 
@@ -641,19 +642,21 @@ export default function CoachDashboard() {
                   <div className="space-y-2">
                     <label className="text-xs font-medium uppercase text-muted-foreground">{t("coach.filters.ageRange")}</label>
                     <div className="flex gap-2">
-                      <input
-                        type="number"
+                      <NumberInput
                         placeholder={t("coach.filters.min")}
-                        className="w-1/2 px-3 py-2 rounded-lg border bg-background text-white"
+                        className="w-1/2 bg-background text-white"
                         value={filterAgeRange[0]}
-                        onChange={(e) => setFilterAgeRange([parseInt(e.target.value) || 0, filterAgeRange[1]])}
+                        onChange={(val) => setFilterAgeRange([val, filterAgeRange[1]])}
+                        min={0}
+                        max={100}
                       />
-                      <input
-                        type="number"
+                      <NumberInput
                         placeholder={t("coach.filters.max")}
-                        className="w-1/2 px-3 py-2 rounded-lg border bg-background text-white"
+                        className="w-1/2 bg-background text-white"
                         value={filterAgeRange[1]}
-                        onChange={(e) => setFilterAgeRange([filterAgeRange[0], parseInt(e.target.value) || 120])}
+                        onChange={(val) => setFilterAgeRange([filterAgeRange[0], val])}
+                        min={0}
+                        max={120}
                       />
                     </div>
                   </div>
@@ -661,19 +664,21 @@ export default function CoachDashboard() {
                   <div className="space-y-2">
                     <label className="text-xs font-medium uppercase text-muted-foreground">{t("coach.filters.performance")}</label>
                     <div className="flex gap-2">
-                      <input
-                        type="number"
+                      <NumberInput
                         placeholder={t("coach.filters.minScore")}
-                        className="w-1/2 px-3 py-2 rounded-lg border bg-background text-white"
+                        className="w-1/2 bg-background text-white"
                         value={filterScoreRange[0]}
-                        onChange={(e) => setFilterScoreRange([parseInt(e.target.value) || 0, filterScoreRange[1]])}
+                        onChange={(val) => setFilterScoreRange([val, filterScoreRange[1]])}
+                        min={0}
+                        max={100}
                       />
-                      <input
-                        type="number"
+                      <NumberInput
                         placeholder={t("coach.filters.maxScore")}
-                        className="w-1/2 px-3 py-2 rounded-lg border bg-background text-white"
+                        className="w-1/2 bg-background text-white"
                         value={filterScoreRange[1]}
-                        onChange={(e) => setFilterScoreRange([filterScoreRange[0], parseInt(e.target.value) || 100])}
+                        onChange={(val) => setFilterScoreRange([filterScoreRange[0], val])}
+                        min={0}
+                        max={100}
                       />
                     </div>
                   </div>
@@ -725,14 +730,14 @@ export default function CoachDashboard() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-white/5 bg-white/[0.02]">
-                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">{t("coach.rosterTable.num")}</th>
-                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">{t("coach.rosterTable.name")}</th>
-                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">{t("coach.rosterTable.age")}</th>
-                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">{t("coach.rosterTable.pos")}</th>
-                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">{t("coach.rosterTable.performance")}</th>
-                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">{t("coach.rosterTable.history")}</th>
-                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">{t("coach.rosterTable.actions")}</th>
-                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">{t("coach.rosterTable.flagsTitle")}</th>
+                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-gray-300 whitespace-nowrap">{t("coach.rosterTable.num")}</th>
+                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-gray-300 whitespace-nowrap">{t("coach.rosterTable.name")}</th>
+                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-gray-300 whitespace-nowrap">{t("coach.rosterTable.age")}</th>
+                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-gray-300 whitespace-nowrap">{t("coach.rosterTable.pos")}</th>
+                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-gray-300 whitespace-nowrap">{t("coach.rosterTable.performance")}</th>
+                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-gray-300 whitespace-nowrap">{t("coach.rosterTable.history")}</th>
+                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-gray-300 whitespace-nowrap">{t("coach.rosterTable.actions")}</th>
+                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-gray-300 whitespace-nowrap">{t("coach.rosterTable.flagsTitle")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">

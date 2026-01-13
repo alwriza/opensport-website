@@ -62,7 +62,7 @@ export default function Home() {
       </section>
 
       {/* Community Impact Section */}
-      <section className="bg-black py-24 px-6">
+      <section id="mission" className="bg-black py-24 px-6">
         <div className="container mx-auto max-w-7xl">
           <h2 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight">
             <span className="text-[#9FE870]">{t("impact.title")}</span>
@@ -134,7 +134,7 @@ export default function Home() {
       </section>
 
       {/* How It Works Section */}
-      <section className="relative bg-[#0A1628] py-24 md:py-32 px-6">
+      <section id="how-it-works" className="relative bg-[#0A1628] py-24 md:py-32 px-6">
         <div className="container mx-auto max-w-7xl">
           <div className="grid lg:grid-cols-2 gap-16 items-start">
             {/* Left - Text Content (Fixed) */}

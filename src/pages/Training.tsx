@@ -608,8 +608,8 @@ const Training = () => {
                           {skill.icon}
                         </div>
                         <div>
-                          <h3 className="font-bold text-slate-900 group-hover:text-primary transition-colors">{skill.name}</h3>
-                          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mt-1">{skill.category}</p>
+                          <h3 className="font-bold text-white group-hover:text-primary transition-colors">{skill.name}</h3>
+                          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-300 mt-1">{skill.category}</p>
                         </div>
 
                         {unlocked ? (
@@ -672,8 +672,8 @@ const Training = () => {
                                 {isCompleted ? <CheckCircle className="h-6 w-6" /> : level.level_order}
                               </div>
                               <div>
-                                <p className="font-bold text-slate-900 capitalize">{t("skillTree.tier", { name: level.level_name })}</p>
-                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">{level.video_title}</p>
+                                <p className="font-bold text-white capitalize">{t("skillTree.tier", { name: level.level_name })}</p>
+                                <p className="text-xs font-semibold text-gray-300 uppercase tracking-widest">{level.video_title}</p>
                               </div>
                             </div>
                             <div className="flex items-center gap-3">
@@ -773,7 +773,7 @@ const Training = () => {
                         </CardHeader>
                         <CardContent className="px-5 pb-5 pt-0">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-900">+{level.xp_reward} XP</span>
+                            <span className="text-xs font-bold text-black">+{level.xp_reward} XP</span>
                             <ChevronRight className="h-4 w-4 text-slate-300 group-hover:translate-x-1 transition-transform" />
                           </div>
                         </CardContent>

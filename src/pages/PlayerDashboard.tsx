@@ -955,9 +955,9 @@ export default function PlayerDashboard() {
                   <AlertCircle className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-lg text-primary italic uppercase tracking-tighter">{t("tips.title")}</h4>
+                  <h4 className="font-bold text-lg text-primary italic uppercase tracking-tighter">{t("player.tips.title")}</h4>
                   <p className="text-muted-foreground mt-2 leading-relaxed">
-                    {t("tips.description")}
+                    {t("player.tips.description")}
                   </p>
                 </div>
               </div>
@@ -1173,7 +1173,7 @@ export default function PlayerDashboard() {
                       <div className="flex items-center justify-between mb-3">
                         <div className="min-w-0">
                           <p className="font-bold text-sm truncate">{team.team_name}</p>
-                          <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                          <p className="text-[10px] text-gray-300 font-medium uppercase tracking-wider">
                             {team.club_name} • {team.age_group}
                           </p>
                         </div>
@@ -1348,11 +1348,11 @@ export default function PlayerDashboard() {
                 </div>
                 <div className="flex flex-col justify-center">
                   <div className="text-center p-6 bg-primary/5 rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-2">{t("player.results.overall")}</p>
+                    <p className="text-sm text-gray-300 mb-2">{t("player.results.overall")}</p>
                     <div className={`text-6xl font-bold ${getScoreColor(selectedAnalysis.overall)}`}>
                       {selectedAnalysis.overall.toFixed(1)}
                     </div>
-                    <p className="text-sm text-muted-foreground mt-2">{t("player.results.outOf")}</p>
+                    <p className="text-sm text-gray-300 mt-2">{t("player.results.outOf")}</p>
                   </div>
                 </div>
               </div>

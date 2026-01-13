@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     PlayCircle,
@@ -191,7 +191,7 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
                     </div>
                 </DialogHeader>
 
-                <ScrollArea className="flex-1">
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
                     <Tabs defaultValue="overview" className="w-full">
                         <div className="px-4 md:px-8 pt-4 md:pt-6 bg-card border-b border-white/5 sticky top-0 z-20">
                             <TabsList className="flex w-full max-w-md bg-transparent h-12 gap-6">
@@ -410,7 +410,7 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
                             </div>
                         </TabsContent>
                     </Tabs>
-                </ScrollArea>
+                </div>
             </DialogContent>
         </Dialog>
     );
