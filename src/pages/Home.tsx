@@ -14,7 +14,7 @@ export default function Home() {
       <section className="relative min-h-[90vh] flex items-center justify-start px-6 md:px-12">
         {/* Background Image - YOU ADD THIS */}
         <div className="absolute inset-0 bg-black">
-          <img src="public/stadium-bg.png" alt="" className="w-full h-full object-cover opacity-60" />
+          <img src="/stadium-bg.png" alt="" className="w-full h-full object-cover opacity-60" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
         </div>
 
@@ -78,7 +78,7 @@ export default function Home() {
             <div className="group relative rounded-3xl overflow-hidden border-2 border-[#9FE870]/20 hover:border-[#9FE870] transition-all duration-300">
               {/* Image Background - YOU ADD THIS */}
               <div className="relative h-80 bg-gradient-to-br from-gray-900 to-gray-800">
-                <img src="public/global-reach.png" alt="" className="w-full h-full object-fit" />
+                <img src="/global-reach.png" alt="" className="w-full h-full object-fit" />
                 <div className="absolute inset-0 bg-black/60 group-hover:bg-black/40 transition-all" />
               </div>
 
@@ -97,7 +97,7 @@ export default function Home() {
             {/* Card 2 - Fair Play */}
             <div className="group relative rounded-3xl overflow-hidden border-2 border-[#9FE870]/20 hover:border-[#9FE870] transition-all duration-300">
               <div className="relative h-80 bg-gradient-to-br from-gray-900 to-gray-800">
-                <img src="public/fair-play.png" alt="" className="w-full h-full object-fit" />
+                <img src="/fair-play.png" alt="" className="w-full h-full object-fit" />
                 <div className="absolute inset-0 bg-black/60 group-hover:bg-black/40 transition-all" />
               </div>
 
@@ -115,7 +115,7 @@ export default function Home() {
             {/* Card 3 - Equal Access */}
             <div className="group relative rounded-3xl overflow-hidden border-2 border-[#9FE870]/20 hover:border-[#9FE870] transition-all duration-300">
               <div className="relative h-80 bg-gradient-to-br from-gray-900 to-gray-800">
-                <img src="public/equal-access.png" alt="" className="w-full h-full object-fit" />
+                <img src="/equal-access.png" alt="" className="w-full h-full object-fit" />
                 <div className="absolute inset-0 bg-black/60 group-hover:bg-black/40 transition-all" />
               </div>
 
