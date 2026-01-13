@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Upload, Trophy, Loader2, Video, AlertCircle, Plus, X, Users, Check, XCircle, LogOut, ChevronRight, ChevronUp, ChevronDown, Play } from "lucide-react";
+import { Upload, Trophy, Loader2, Video, AlertCircle, Plus, X, Users, Check, XCircle, LogOut, ChevronRight, ChevronUp, ChevronDown, Play, Activity, TrendingUp, Award } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { TeamProfileOverlay } from "@/components/ui/TeamProfileOverlay";
 import { Info } from "lucide-react";
 import { TermsAcceptanceModal } from "@/components/ui/TermsAcceptanceModal";
+import { useTranslation } from "react-i18next";
 
 interface VideoRecord {
   id: string;
@@ -35,6 +36,7 @@ interface Analysis {
 }
 
 export default function PlayerDashboard() {
+  const { t } = useTranslation("dashboard");
   const { user, isLoaded } = useUser();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -53,6 +55,7 @@ export default function PlayerDashboard() {
   const [recommendedTraining, setRecommendedTraining] = useState<any[]>([]);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showAllVideos, setShowAllVideos] = useState(false);
+
 
 
   // 1. Sync & Fetch DB User
@@ -150,6 +153,8 @@ export default function PlayerDashboard() {
     },
     enabled: !!dbUser?.id
   });
+
+  const analyses = useMemo(() => videos.filter((v: any) => v.status === 'completed'), [videos]);
 
   // 5. Fetch AI Recommendations based on latest analysis
   const { data: latestRecommendations = [] } = useQuery({
@@ -674,7 +679,7 @@ export default function PlayerDashboard() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-card">
         <div className="text-center space-y-4">
           <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-          <p className="text-muted-foreground">Loading your dashboard...</p>
+          <p className="text-muted-foreground">{t("status.loading", { ns: "common" })}</p>
         </div>
       </div>
     );
@@ -682,7 +687,7 @@ export default function PlayerDashboard() {
 
   if (!dbUser) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-card p-4">
+      <div className="min-h-screen flex items-center justify-center bg-black p-4">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center space-y-4">
             <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
@@ -713,102 +718,101 @@ export default function PlayerDashboard() {
         />
       )}
 
-      <header className="mb-6 md:mb-10">
-        <h1 className="text-2xl md:text-3xl font-bold mb-2">Welcome, {user?.firstName || 'Player'}!</h1>
-        <p className="text-muted-foreground">Your performance hub</p>
-      </header>
-
-      {!dbUser && !loadingUser && (
-        <div className="mb-8">
-          <AlertCircle className="h-6 w-6 text-destructive inline mr-2" />
-          <span className="text-destructive font-bold">Failed to load profile. Please refresh.</span>
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-5xl font-black tracking-tighter text-gradient">
+            {t("overview.title")}
+          </h1>
+          <p className="text-muted-foreground font-medium">
+            {t("overview.welcome", { name: user?.firstName || user?.username || t("player.defaultName") })}
+          </p>
         </div>
-      )}
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={() => setUploadModalOpen(true)}
+            className="bg-primary hover:bg-primary/90 text-black font-bold h-11 px-6 rounded-xl hover:scale-105 transition-transform"
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            {t("player.uploadVideo")}
+          </Button>
+        </div>
+      </div>
 
-      <div className="grid lg:grid-cols-[minmax(300px,1fr)_2.5fr_minmax(320px,1fr)] gap-8">
-        {/* Column 1: History (Narrow) */}
-        <div className="space-y-8 lg:order-1 order-2">
-          <div>
-            <h2 className="text-xl font-bold mb-4">All Analyses</h2>
-            {videos.length === 0 ? (
-              <Card>
-                <CardContent className="p-8 text-center text-muted-foreground">
-                  <Video className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-                  <p>No videos uploaded yet.</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                <div className="grid gap-4">
-                  {(showAllVideos ? videos : videos.slice(0, 3)).map((video) => (
-                    <Card key={video.id} className="overflow-hidden hover:shadow-lg transition-shadow border-primary/10">
-                      <div className="flex flex-col items-start p-4 gap-4">
-                        <div className="h-16 w-full bg-muted rounded flex items-center justify-center flex-shrink-0">
-                          <Video className="h-8 w-8 text-muted-foreground" />
-                        </div>
-                        <div className="flex-1 min-w-0 w-full">
-                          <h4 className="font-semibold truncate text-sm">{video.filename}</h4>
-                          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mt-1">
-                            <span>{new Date(video.uploaded_at).toLocaleDateString()}</span>
-                            <Badge variant={video.status === 'completed' ? 'default' : video.status === 'processing' ? 'secondary' : 'destructive'} className="whitespace-nowrap scale-90 origin-left">
-                              {video.status === 'processing' && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
-                              {video.status}
-                            </Badge>
-                          </div>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={video.status !== 'completed'}
-                          onClick={() => openResultsModal(video.id)}
-                          className="w-full text-xs"
-                        >
-                          {video.status === 'completed' ? 'View Results' : 'Processing...'}
-                        </Button>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-
-                {videos.length > 3 && (
-                  <div className="flex justify-center pt-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowAllVideos(!showAllVideos)}
-                      className="text-muted-foreground hover:text-foreground text-xs"
-                    >
-                      {showAllVideos ? (
-                        <>Show Less <ChevronUp className="ml-2 h-4 w-4" /></>
-                      ) : (
-                        <>Show More ({videos.length - 3} more) <ChevronDown className="ml-2 h-4 w-4" /></>
-                      )}
-                    </Button>
-                  </div>
-                )}
+      {/* Stats Hub */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <Card className="bg-card border-white/5 shadow-xl shadow-black/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">{t("stats.level")}</p>
+                <p className="text-2xl font-bold">12</p>
               </div>
-            )}
-          </div>
-        </div>
+              <Trophy className="h-8 w-8 text-primary" />
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Column 2: Active Analysis (Wide) */}
-        <div className="space-y-8 lg:order-2 order-1">
-          {/* Latest Analysis Card */}
-          {latestAnalysis && latestVideoUrl ? (
+        <Card className="bg-card border-white/5 shadow-xl shadow-black/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">{t("stats.streak")}</p>
+                <p className="text-2xl font-bold">5 Days</p>
+              </div>
+              <Activity className="h-8 w-8 text-primary" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-white/5 shadow-xl shadow-black/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">{t("stats.xp")}</p>
+                <p className="text-2xl font-bold">2,450</p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-primary" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-white/5 shadow-xl shadow-black/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">{t("stats.avgScore")}</p>
+                <p className="text-2xl font-bold">
+                  {analyses.length > 0
+                    ? (analyses.reduce((acc, a) => acc + (a.overall || 0), 0) / analyses.length).toFixed(1)
+                    : '0.0'}
+                </p>
+              </div>
+              <Award className="h-8 w-8 text-primary" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Column 1 & 2: Main Content */}
+        <div className="lg:col-span-2 space-y-8 lg:order-1 order-2">
+          {latestAnalysis ? (
             <Card className="border-2 border-primary/30 shadow-xl shadow-primary/5">
               <CardHeader>
                 <div className="flex justify-between items-center">
-                  <CardTitle>Latest Analysis</CardTitle>
+                  <CardTitle>{t("player.latestAnalysis.title")}</CardTitle>
                   <Button onClick={() => setUploadModalOpen(true)} size="sm" className="rounded-full px-6">
                     <Plus className="h-4 w-4 mr-2" />
-                    New Analysis
+                    {t("player.latestAnalysis.newAnalysis")}
                   </Button>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="grid xl:grid-cols-2 gap-8">
                   {/* Video */}
-                  <div className="aspect-video bg-black rounded-xl overflow-hidden shadow-inner flex items-center justify-center border border-gray-800">
+                  <div className="aspect-video bg-black rounded-xl overflow-hidden shadow-inner flex items-center justify-center border border-gray-800 text-white">
                     <video
                       controls
                       playsInline
@@ -822,7 +826,7 @@ export default function PlayerDashboard() {
                   <div className="space-y-6">
                     {/* Overall Score */}
                     <div className="text-center p-6 bg-primary/5 rounded-2xl border border-primary/10">
-                      <p className="text-sm text-muted-foreground mb-1">Overall Score</p>
+                      <p className="text-sm text-muted-foreground mb-1">{t("player.latestAnalysis.overallScore")}</p>
                       <div className={`text-6xl font-black ${getScoreColor(latestAnalysis.overall)}`}>
                         {latestAnalysis.overall.toFixed(1)}
                       </div>
@@ -832,7 +836,7 @@ export default function PlayerDashboard() {
                     <div className="space-y-4">
                       <div>
                         <div className="flex justify-between text-sm mb-2 font-medium">
-                          <span className="text-muted-foreground">Stability</span>
+                          <span className="text-muted-foreground">{t("player.latestAnalysis.metrics.stability")}</span>
                           <span className={getScoreColor(latestAnalysis.stability)}>
                             {latestAnalysis.stability.toFixed(1)}%
                           </span>
@@ -842,7 +846,7 @@ export default function PlayerDashboard() {
 
                       <div>
                         <div className="flex justify-between text-sm mb-2 font-medium">
-                          <span className="text-muted-foreground">Power</span>
+                          <span className="text-muted-foreground">{t("player.latestAnalysis.metrics.power")}</span>
                           <span className={getScoreColor(latestAnalysis.power)}>
                             {latestAnalysis.power.toFixed(1)}%
                           </span>
@@ -852,7 +856,7 @@ export default function PlayerDashboard() {
 
                       <div>
                         <div className="flex justify-between text-sm mb-2 font-medium">
-                          <span className="text-muted-foreground">Technique</span>
+                          <span className="text-muted-foreground">{t("player.latestAnalysis.metrics.technique")}</span>
                           <span className={getScoreColor(latestAnalysis.technique)}>
                             {latestAnalysis.technique.toFixed(1)}%
                           </span>
@@ -862,7 +866,7 @@ export default function PlayerDashboard() {
 
                       <div>
                         <div className="flex justify-between text-sm mb-2 font-medium">
-                          <span className="text-muted-foreground">Balance</span>
+                          <span className="text-muted-foreground">{t("player.latestAnalysis.metrics.balance")}</span>
                           <span className={getScoreColor(latestAnalysis.balance)}>
                             {latestAnalysis.balance.toFixed(1)}%
                           </span>
@@ -881,8 +885,8 @@ export default function PlayerDashboard() {
                         <Trophy className="h-6 w-6 text-primary" />
                       </div>
                       <div>
-                        <h3 className="font-bold">AI Recommendations</h3>
-                        <p className="text-xs text-muted-foreground">Tailored exercises specifically for you</p>
+                        <h3 className="font-bold">{t("player.latestAnalysis.recommendations.title")}</h3>
+                        <p className="text-xs text-muted-foreground">{t("player.latestAnalysis.recommendations.description")}</p>
                       </div>
                     </div>
                     <div className="grid sm:grid-cols-2 gap-4">
@@ -894,7 +898,7 @@ export default function PlayerDashboard() {
                             navigate(`/training?tab=exercises&skill=${level.skill_id}&level=${level.level_name}`);
                           }}
                         >
-                          <CardContent className="p-4">
+                          <CardContent className="p-4 text-white">
                             <div className="flex items-center gap-4">
                               <div className="text-4xl grayscale group-hover:grayscale-0 transition-all duration-500 transform group-hover:scale-110">
                                 {level.skills?.icon}
@@ -928,14 +932,17 @@ export default function PlayerDashboard() {
                 <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-6">
                   <Upload className="h-12 w-12 text-primary" />
                 </div>
-                <h3 className="text-2xl font-bold mb-3 italic tracking-tight">ELEVATE YOUR GAME</h3>
+                <h3 className="text-2xl font-bold mb-3 italic tracking-tight">{t("player.latestAnalysis.empty.title")}</h3>
                 <p className="text-muted-foreground mb-10 max-w-sm text-lg leading-relaxed">
-                  Upload your training footage and get professional-grade AI analysis in seconds.
+                  {t("player.latestAnalysis.empty.description")}
                 </p>
-                <Button onClick={() => setUploadModalOpen(true)} size="lg" className="rounded-full px-12 h-14 text-lg font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-transform">
+                <button
+                  onClick={() => setUploadModalOpen(true)}
+                  className="rounded-full px-12 h-14 text-lg font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-transform bg-primary text-black flex items-center justify-center"
+                >
                   <Plus className="h-6 w-6 mr-3" />
-                  Analyze Video
-                </Button>
+                  {t("player.latestAnalysis.empty.button")}
+                </button>
               </CardContent>
             </Card>
           )}
@@ -948,15 +955,80 @@ export default function PlayerDashboard() {
                   <AlertCircle className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-lg text-primary italic">PRO TIP: PERFECT ANGLE</h4>
+                  <h4 className="font-bold text-lg text-primary italic uppercase tracking-tighter">{t("tips.title")}</h4>
                   <p className="text-muted-foreground mt-2 leading-relaxed">
-                    For the most accurate precision and power metrics, film from the side (90° angle)
-                    ensuring your entire silhouette (from head to toe) is visible throughout the action.
+                    {t("tips.description")}
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
+
+          {/* History Section moved here or stays in 3rd col? The design had it in Column 1 (Narrow) before. Let's stick to the 3-col grid requested logic if any. */}
+          {/* Previous design had History in Column 1, so let's put it back if needed. */}
+          <div>
+            <h2 className="text-xl font-bold mb-4">{t("player.allAnalyses")}</h2>
+            {videos.length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center text-muted-foreground">
+                  <Video className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                  <p>{t("player.noVideos")}</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {(showAllVideos ? videos : videos.slice(0, 4)).map((video: any) => (
+                    <Card key={video.id} className="overflow-hidden hover:shadow-lg transition-shadow border-primary/10 bg-card/50">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 bg-muted rounded-xl flex items-center justify-center flex-shrink-0">
+                            <Video className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold truncate text-sm">{video.filename}</h4>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                              <span>{new Date(video.uploaded_at).toLocaleDateString()}</span>
+                              <Badge variant={video.status === 'completed' ? 'default' : video.status === 'processing' ? 'secondary' : 'destructive'} className="scale-75 origin-left">
+                                {video.status === 'processing' && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
+                                {video.status}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={video.status !== 'completed'}
+                          onClick={() => openResultsModal(video.id)}
+                          className="w-full mt-4 text-xs font-bold rounded-lg border-primary/20 hover:bg-primary/5 transition-colors"
+                        >
+                          {video.status === 'completed' ? t("player.viewResults") : t("player.processing")}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {videos.length > 4 && (
+                  <div className="flex justify-center pt-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowAllVideos(!showAllVideos)}
+                      className="text-muted-foreground hover:text-foreground text-xs font-bold"
+                    >
+                      {showAllVideos ? (
+                        <>{t("player.showLess")} <ChevronUp className="ml-2 h-4 w-4" /></>
+                      ) : (
+                        <>{t("player.showMore", { count: videos.length - 4 })} <ChevronDown className="ml-2 h-4 w-4" /></>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Column 3: Sidebar (Standard) */}
@@ -966,13 +1038,13 @@ export default function PlayerDashboard() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-bold flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                PROFILE DETAILS
+                {t("player.profile.title")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">Age</label>
+                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">{t("player.profile.age")}</label>
                   <input
                     type="number"
                     min="0"
@@ -986,7 +1058,7 @@ export default function PlayerDashboard() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">Position</label>
+                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">{t("player.profile.position")}</label>
                   <Select
                     value={localUser?.position || ''}
                     onValueChange={(value) => {
@@ -995,19 +1067,19 @@ export default function PlayerDashboard() {
                     }}
                   >
                     <SelectTrigger className="h-9 rounded-xl bg-background/50 text-xs">
-                      <SelectValue placeholder="Position" />
+                      <SelectValue placeholder={t("player.profile.position")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Forward">Forward</SelectItem>
-                      <SelectItem value="Midfielder">Midfielder</SelectItem>
-                      <SelectItem value="Defender">Defender</SelectItem>
-                      <SelectItem value="Goalkeeper">Goalkeeper</SelectItem>
+                      <SelectItem value="Forward">{t("player.profile.positions.forward")}</SelectItem>
+                      <SelectItem value="Midfielder">{t("player.profile.positions.midfielder")}</SelectItem>
+                      <SelectItem value="Defender">{t("player.profile.positions.defender")}</SelectItem>
+                      <SelectItem value="Goalkeeper">{t("player.profile.positions.goalkeeper")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">Club</label>
+                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">{t("player.profile.club")}</label>
                 <input
                   type="text"
                   className="flex h-9 w-full rounded-xl border border-input bg-background/50 px-3 py-1 text-sm focus:border-primary/50 transition-colors"
@@ -1018,7 +1090,7 @@ export default function PlayerDashboard() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">Height (cm)</label>
+                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">{t("player.profile.height")}</label>
                   <input
                     type="number"
                     min="0"
@@ -1033,7 +1105,7 @@ export default function PlayerDashboard() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">Weight (kg)</label>
+                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">{t("player.profile.weight")}</label>
                   <input
                     type="number"
                     min="0"
@@ -1050,20 +1122,20 @@ export default function PlayerDashboard() {
               </div>
 
               <div className="pt-4 border-t space-y-3">
-                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">LEGAL & PRIVACY</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">{t("player.profile.legal")}</p>
                 <div className="flex flex-col gap-2">
                   <button
                     onClick={() => window.open('/terms', '_blank')}
                     className="text-[11px] font-bold text-muted-foreground hover:text-primary transition-colors flex items-center justify-between group"
                   >
-                    Terms of Service
+                    {t("player.profile.terms")}
                     <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-all -translate-x-1 group-hover:translate-x-0" />
                   </button>
                   <button
                     onClick={() => window.open('/privacy', '_blank')}
                     className="text-[11px] font-bold text-muted-foreground hover:text-primary transition-colors flex items-center justify-between group"
                   >
-                    Privacy Policy
+                    {t("player.profile.privacy")}
                     <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-all -translate-x-1 group-hover:translate-x-0" />
                   </button>
                 </div>
@@ -1076,7 +1148,7 @@ export default function PlayerDashboard() {
                 onClick={() => navigate('/join-team')}
               >
                 <Users className="h-4 w-4 mr-2" />
-                Join a Team
+                {t("player.teams.join")}
               </Button>
             </CardFooter>
           </Card>
@@ -1086,7 +1158,7 @@ export default function PlayerDashboard() {
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-primary" />
-                My Teams
+                {t("player.teams.title")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -1121,7 +1193,7 @@ export default function PlayerDashboard() {
                               setTeamProfileOpen(true);
                             }}
                           >
-                            Team Page
+                            {t("player.teams.teamPage")}
                           </Button>
                           <Button
                             variant="ghost"
@@ -1139,9 +1211,9 @@ export default function PlayerDashboard() {
               ) : (
                 <div className="text-center py-10 bg-muted/20 rounded-2xl border border-dashed">
                   <Users className="h-10 w-10 mx-auto mb-3 opacity-20" />
-                  <p className="text-xs font-medium text-muted-foreground">Not joined any teams</p>
+                  <p className="text-xs font-medium text-muted-foreground">{t("player.teams.notJoined")}</p>
                   <Button variant="link" size="sm" className="mt-1 text-primary text-xs" onClick={() => navigate('/join-team')}>
-                    Find a club →
+                    {t("player.teams.findClub")}
                   </Button>
                 </div>
               )}
@@ -1156,7 +1228,7 @@ export default function PlayerDashboard() {
                 <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center text-lg">
                   🎯
                 </div>
-                Training Progress
+                {t("player.training.title")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -1164,14 +1236,14 @@ export default function PlayerDashboard() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <div className="px-3 py-1 bg-primary/10 rounded-full border border-primary/20">
-                    <span className="text-xs font-black text-primary">LEVEL {trainingStats?.progress?.level || 1}</span>
+                    <span className="text-xs font-black text-primary">{t("player.training.level", { level: trainingStats?.progress?.level ?? 1 })}</span>
                   </div>
                   <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                    {trainingStats?.progress?.total_xp || 0} TOTAL XP
+                    {t("player.training.totalXp", { total: trainingStats?.progress?.total_xp ?? 0 })}
                   </span>
                 </div>
                 <Progress
-                  value={((trainingStats?.progress?.total_xp || 0) % 100)}
+                  value={((trainingStats?.progress?.total_xp ?? 0) % 100)}
                   className="h-3"
                 />
               </div>
@@ -1185,19 +1257,19 @@ export default function PlayerDashboard() {
                       {trainingStats?.progress?.current_streak || 0}
                     </div>
                     <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
-                      Day Streak
+                      {t("player.training.dayStreak")}
                     </div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs font-bold text-muted-foreground">BEST</div>
+                  <div className="text-xs font-bold text-muted-foreground">{t("player.training.best")}</div>
                   <div className="font-black text-sm">{trainingStats?.progress?.longest_streak || 0}</div>
                 </div>
               </div>
 
               {/* Skills Completed */}
               <div className="flex items-center justify-between px-2">
-                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Skill Mastery</span>
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t("player.training.skillMastery")}</span>
                 <span className="font-black text-lg text-primary">
                   {trainingStats?.skills?.filter((sp: any) => sp.is_completed).length || 0}/10
                 </span>
@@ -1208,7 +1280,7 @@ export default function PlayerDashboard() {
                 className="w-full rounded-2xl h-12 font-bold group shadow-md hover:shadow-primary/20"
                 onClick={() => navigate('/training')}
               >
-                Go to Training Center
+                {t("player.training.goToCenter")}
                 <ChevronRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Button>
             </CardContent>
@@ -1220,19 +1292,19 @@ export default function PlayerDashboard() {
       <Dialog open={uploadModalOpen} onOpenChange={setUploadModalOpen}>
         <DialogContent className="sm:max-w-md bg-background text-white border-white/5 shadow-2xl">
           <DialogHeader>
-            <DialogTitle>Upload New Video</DialogTitle>
+            <DialogTitle>{t("modals.upload.title")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             {uploading ? (
               <div className="flex flex-col items-center justify-center py-8 space-y-4">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">Uploading and analyzing...</p>
+                <p className="text-sm text-muted-foreground">{t("modals.upload.uploading")}</p>
               </div>
             ) : (
               <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
                 <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-sm text-muted-foreground mb-4">
-                  Supported formats: MP4, MOV, AVI, MKV (max 100MB)
+                  {t("modals.upload.dropzone")}
                 </p>
                 <input
                   type="file"
@@ -1244,7 +1316,7 @@ export default function PlayerDashboard() {
                 />
                 <Button asChild>
                   <label htmlFor="video-upload-modal" className="cursor-pointer">
-                    Choose Video File
+                    {t("modals.upload.button")}
                   </label>
                 </Button>
               </div>
@@ -1257,7 +1329,7 @@ export default function PlayerDashboard() {
       <Dialog open={resultsModalOpen} onOpenChange={setResultsModalOpen}>
         <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto bg-background text-white border-white/5 shadow-2xl custom-scrollbar">
           <DialogHeader>
-            <DialogTitle>Analysis Results</DialogTitle>
+            <DialogTitle>{t("player.results.title")}</DialogTitle>
           </DialogHeader>
           {selectedAnalysis && (
             <div className="space-y-6">
@@ -1276,21 +1348,21 @@ export default function PlayerDashboard() {
                 </div>
                 <div className="flex flex-col justify-center">
                   <div className="text-center p-6 bg-primary/5 rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-2">Overall Score</p>
+                    <p className="text-sm text-muted-foreground mb-2">{t("player.results.overall")}</p>
                     <div className={`text-6xl font-bold ${getScoreColor(selectedAnalysis.overall)}`}>
                       {selectedAnalysis.overall.toFixed(1)}
                     </div>
-                    <p className="text-sm text-muted-foreground mt-2">out of 100</p>
+                    <p className="text-sm text-muted-foreground mt-2">{t("player.results.outOf")}</p>
                   </div>
                 </div>
               </div>
 
               {/* Detailed Metrics */}
               <div className="space-y-3">
-                <h3 className="font-semibold">Detailed Metrics</h3>
+                <h3 className="font-semibold">{t("player.results.detailed")}</h3>
                 <div>
                   <div className="flex justify-between text-sm mb-1">
-                    <span>Stability</span>
+                    <span>{t("player.latestAnalysis.metrics.stability")}</span>
                     <span className={`font-bold ${getScoreColor(selectedAnalysis.stability)}`}>
                       {selectedAnalysis.stability.toFixed(1)}
                     </span>
@@ -1299,7 +1371,7 @@ export default function PlayerDashboard() {
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-1">
-                    <span>Power</span>
+                    <span>{t("player.latestAnalysis.metrics.power")}</span>
                     <span className={`font-bold ${getScoreColor(selectedAnalysis.power)}`}>
                       {selectedAnalysis.power.toFixed(1)}
                     </span>
@@ -1308,7 +1380,7 @@ export default function PlayerDashboard() {
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-1">
-                    <span>Technique</span>
+                    <span>{t("player.latestAnalysis.metrics.technique")}</span>
                     <span className={`font-bold ${getScoreColor(selectedAnalysis.technique)}`}>
                       {selectedAnalysis.technique.toFixed(1)}
                     </span>
@@ -1317,7 +1389,7 @@ export default function PlayerDashboard() {
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-1">
-                    <span>Balance</span>
+                    <span>{t("player.latestAnalysis.metrics.balance")}</span>
                     <span className={`font-bold ${getScoreColor(selectedAnalysis.balance)}`}>
                       {selectedAnalysis.balance.toFixed(1)}
                     </span>
@@ -1328,7 +1400,7 @@ export default function PlayerDashboard() {
 
               {/* Feedback */}
               <div>
-                <h3 className="font-semibold mb-2">AI Feedback</h3>
+                <h3 className="font-semibold mb-2">{t("player.results.feedback")}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {selectedAnalysis.feedback}
                 </p>
@@ -1337,7 +1409,7 @@ export default function PlayerDashboard() {
               {/* Tags */}
               {selectedAnalysis.tags && selectedAnalysis.tags.length > 0 && (
                 <div>
-                  <h3 className="font-semibold mb-2">Tags</h3>
+                  <h3 className="font-semibold mb-2">{t("player.results.tags")}</h3>
                   <div className="flex flex-wrap gap-2">
                     {selectedAnalysis.tags.map((tag, index) => (
                       <Badge key={index} variant="secondary">
@@ -1353,10 +1425,10 @@ export default function PlayerDashboard() {
                 <div className="pt-4 border-t">
                   <h3 className="font-semibold mb-3 flex items-center gap-2">
                     <Trophy className="h-5 w-5 text-primary" />
-                    Recommended Training
+                    {t("player.results.recommended")}
                   </h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Based on your analysis, these exercises will help improve your weak areas:
+                    {t("player.results.recommendedDesc")}
                   </p>
                   <div className="space-y-3">
                     {recommendedTraining.map((level) => (
@@ -1384,7 +1456,7 @@ export default function PlayerDashboard() {
                               </div>
                             </div>
                             <Button variant="outline" size="sm" className="rounded-xl px-4">
-                              Start Training
+                              {t("player.results.startTraining")}
                             </Button>
                           </div>
                         </CardContent>

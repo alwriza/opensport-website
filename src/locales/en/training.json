@@ -1,0 +1,82 @@
+{
+    "header": {
+        "title": "Training Center",
+        "subtitle": "Master your skills with AI-powered training programs"
+    },
+    "stats": {
+        "level": "Level",
+        "streak": "Streak",
+        "xp": "XP"
+    },
+    "progress": {
+        "levelProgress": "Level {{level}} Progress",
+        "xpToNext": "{{current}}/{{total}} XP to next level"
+    },
+    "tabs": {
+        "skillTree": "Skill Tree",
+        "library": "Exercise Library"
+    },
+    "skillTree": {
+        "title": "Your Potential Skill Tree",
+        "description": "Master fundamental nodes to unlock elite training programs",
+        "progress": "PROGRESS",
+        "back": "Back to Tree",
+        "availableTiers": "Available Training Tiers",
+        "tier": "{{name}} Tier",
+        "review": "Review",
+        "train": "Train"
+    },
+    "library": {
+        "categories": "Categories",
+        "min": "MIN",
+        "cat": {
+            "all": "All",
+            "passing": "Passing",
+            "technical": "Technical",
+            "dribbling": "Dribbling",
+            "shooting": "Shooting",
+            "defensive": "Defensive",
+            "physical": "Physical",
+            "mental": "Mental"
+        }
+    },
+    "toasts": {
+        "levelCompleted": {
+            "title": "Level Completed! 🎉",
+            "description": "+{{xp}} XP earned!"
+        },
+        "error": {
+            "completeLevel": "Could not complete level"
+        },
+        "analysisComplete": {
+            "title": "Analysis Complete",
+            "description": "Exercise analyzed successfully!"
+        }
+    },
+    "feedback": {
+        "title": "Feedback",
+        "performanceScores": "Performance Scores",
+        "technique": "Technique",
+        "speed": "Speed",
+        "control": "Control",
+        "overallScore": "Overall Score",
+        "coachingFeedback": "Coaching Feedback",
+        "strengths": "Strengths",
+        "improvements": "Areas for Improvement",
+        "tips": "Coaching Tips",
+        "empty": "Select an exercise from the library to view AI analysis and feedback"
+    },
+    "recommendations": {
+        "title": "Recommendations",
+        "header": "Personalized AI Recommendations",
+        "subtitle": "Based on your training data and performance",
+        "generate": "Generate Recommendations",
+        "priority": "Priority: "
+    },
+    "modal": {
+        "reward": "REWARD",
+        "watchOnYoutube": "Watch on YouTube",
+        "close": "Close",
+        "markCompleted": "Mark as Completed"
+    }
+}

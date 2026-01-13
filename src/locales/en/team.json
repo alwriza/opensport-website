@@ -1,0 +1,160 @@
+{
+    "title": "Team Management",
+    "createTeam": "Create New Team",
+    "teamName": "Team Name",
+    "teamDesc": "Team Description",
+    "members": "Members",
+    "invite": "Invite Members",
+    "noMembers": "No members in this team yet.",
+    "deleteConfirm": "Are you sure you want to delete this team?",
+    "deleteTeam": "Delete Team",
+    "profileOverlay": {
+        "independent": "Independent",
+        "coach": "Coach",
+        "loading": "Loading team intelligence...",
+        "stats": {
+            "totalPlayers": "Total Players",
+            "avgScore": "Avg Score",
+            "elitePerformers": "Elite Performers",
+            "activeToday": "Active Today"
+        },
+        "roster": {
+            "title": "Team Roster",
+            "lastUpload": "Last Upload",
+            "num": "#",
+            "name": "Name",
+            "age": "Age",
+            "pos": "Pos",
+            "performance": "Performance",
+            "history": "History",
+            "na": "N/A"
+        }
+    },
+    "inviteModal": {
+        "title": "Invite to {{teamName}}",
+        "description": "Invite players to join your team. They can use the invite code or the direct link.",
+        "tabs": {
+            "code": "Invite Code",
+            "email": "Email",
+            "link": "Direct Link",
+            "phone": "Phone (SMS)"
+        },
+        "codeTab": {
+            "label": "Share this code with players",
+            "description": "Players can enter this code in their dashboard to join the team.",
+            "copyToast": {
+                "title": "Code Copied! 📋",
+                "description": "Invite code copied to clipboard"
+            }
+        },
+        "emailTab": {
+            "label": "Email Address",
+            "placeholder": "player@example.com",
+            "description": "We will send an email with the invite code and instructions.",
+            "button": "Send Invitation",
+            "loading": "Sending...",
+            "toasts": {
+                "success": {
+                    "title": "Invitation Sent! 📧",
+                    "description": "Invitation sent to {{email}}"
+                },
+                "userNotFound": {
+                    "title": "User Not Found",
+                    "description": "We couldn't find a registered user with that email, but we've sent them an invite link."
+                },
+                "error": {
+                    "title": "Error",
+                    "description": "Could not send invitation"
+                }
+            }
+        },
+        "linkTab": {
+            "label": "Invite Link",
+            "description": "Anyone with this link can apply to join the team.",
+            "button": "Copy Invite Link",
+            "copyToast": {
+                "title": "Link Copied! 🔗",
+                "description": "Invite link copied to clipboard"
+            }
+        },
+        "phoneTab": {
+            "label": "Phone Number",
+            "placeholder": "+1234567890",
+            "button": "Send SMS Invite",
+            "toast": {
+                "success": "Invitation sent to {{phone}}"
+            }
+        },
+        "close": "Close"
+    },
+    "join": {
+        "title": "Join Team",
+        "description": "Enter the invite code provided by your coach",
+        "label": "Team Invite Code",
+        "placeholder": "ABC123",
+        "button": "Verify Code",
+        "joining": "You're joining",
+        "cancel": "Cancel",
+        "confirm": "Join Team",
+        "toasts": {
+            "signIn": {
+                "title": "Please sign in",
+                "description": "You need to be signed in to join a team"
+            },
+            "enterCode": {
+                "title": "Enter invite code",
+                "description": "Please enter a team invite code"
+            },
+            "invalidCode": {
+                "title": "Invalid code",
+                "description": "Team not found with this invite code"
+            },
+            "error": {
+                "title": "Error",
+                "description": "Could not verify invite code"
+            },
+            "restricted": {
+                "title": "Action restricted",
+                "description": "You are a coach for this team and cannot join as a player."
+            },
+            "alreadyIn": {
+                "title": "Already in team",
+                "description": "You are already a member of this team"
+            },
+            "declined": {
+                "title": "Previously declined",
+                "description": "You previously declined this team invitation"
+            },
+            "success": {
+                "title": "Joined Team! 🎉",
+                "description": "You are now a member of {{teamName}}"
+            },
+            "genericError": {
+                "title": "Error",
+                "description": "Could not join team"
+            },
+            "errorTitle": "Error",
+            "sendInviteError": "Could not send invitation"
+        }
+    },
+    "createTeamModal": {
+        "title": "Create New Team",
+        "clubName": "Club / Academy Name *",
+        "clubPlaceholder": "e.g., FC Barcelona Academy",
+        "teamName": "Team Name *",
+        "teamPlaceholder": "e.g., U16 Elite Squad",
+        "ageGroup": "Age Group *",
+        "selectAge": "Select age group",
+        "season": "Season",
+        "cancel": "Cancel",
+        "submit": "Create Team",
+        "success": {
+            "title": "Team Created! 🎉",
+            "description": "{{teamName}} has been created with invite code: {{code}}"
+        },
+        "errors": {
+            "title": "Error",
+            "createFailed": "Could not create team"
+        }
+    }
+}

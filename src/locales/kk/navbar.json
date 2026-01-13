@@ -1,0 +1,11 @@
+{
+    "nav": {
+        "home": "Басты бет",
+        "playerDashboard": "Ойыншы",
+        "coachDashboard": "Жаттықтырушы",
+        "training": "Жаттығу"
+    },
+    "buttons": {
+        "getStarted": "Бастау"
+    }
+}

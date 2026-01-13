@@ -1,0 +1,11 @@
+{
+    "nav": {
+        "home": "Главная",
+        "playerDashboard": "Игрок",
+        "coachDashboard": "Тренер",
+        "training": "Тренировки"
+    },
+    "buttons": {
+        "getStarted": "Начать"
+    }
+}

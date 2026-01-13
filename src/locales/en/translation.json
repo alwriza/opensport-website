@@ -1,0 +1,50 @@
+{
+    "inviteModal": {
+        "title": "Invite Players to {{teamName}}",
+        "description": "Choose how you want to invite players to your team",
+        "tabs": {
+            "code": "Code",
+            "email": "Email",
+            "link": "Link"
+        },
+        "codeTab": {
+            "label": "Team Invite Code",
+            "copyToast": {
+                "title": "Copied!",
+                "description": "Invite code copied to clipboard"
+            },
+            "description": "Share this code with players. They can enter it in their player dashboard to join the team."
+        },
+        "emailTab": {
+            "label": "Player Email",
+            "placeholder": "player@example.com",
+            "description": "An invitation email will be sent to this address",
+            "button": "Send Email Invitation",
+            "loading": "Sending...",
+            "toasts": {
+                "userNotFound": {
+                    "title": "User not found",
+                    "description": "This player is not registered in OpenSport. Ask them to sign up first."
+                },
+                "success": {
+                    "title": "Invitation Sent! 📧",
+                    "description": "Invite sent successfully to {{email}}"
+                },
+                "error": {
+                    "title": "Error",
+                    "description": "Could not send invitation"
+                }
+            }
+        },
+        "linkTab": {
+            "label": "Shareable Link",
+            "copyToast": {
+                "title": "Copied!",
+                "description": "Invite link copied to clipboard"
+            },
+            "description": "Share this link with players via WhatsApp, Telegram, or any messaging app",
+            "button": "Copy Invite Link"
+        },
+        "close": "Close"
+    }
+}

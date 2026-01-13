@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
+import { useTranslation } from "react-i18next";
 
 interface PlayerProfileOverlayProps {
     player: any;
@@ -41,6 +42,7 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
     onClose,
     teamName
 }) => {
+    const { t } = useTranslation("player");
     const playerId = player?.player_id || player?.id;
     const [selectedVideoIndex, setSelectedVideoIndex] = React.useState<number>(0);
     const [selectedVideoUrl, setSelectedVideoUrl] = React.useState<string | null>(null);
@@ -174,10 +176,10 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
                             <DialogTitle className="text-xl md:text-3xl font-black tracking-tight text-white mb-1">{player.name}</DialogTitle>
                             <div className="flex flex-wrap items-center gap-2 md:gap-3">
                                 <Badge className="bg-primary text-black border-none font-black uppercase tracking-widest text-[9px] px-2 py-0.5">
-                                    {player.position || 'Prospect'}
+                                    {player.position || t("player.prospect")}
                                 </Badge>
                                 <span className="text-white/20 font-bold">•</span>
-                                <span className="text-muted-foreground text-[10px] md:text-xs font-bold uppercase tracking-widest">{player.age || '?'} Years Old</span>
+                                <span className="text-muted-foreground text-[10px] md:text-xs font-bold uppercase tracking-widest">{t("metrics.yearsOld", { count: player.age || 0 })}</span>
                                 {teamName && (
                                     <>
                                         <span className="text-white/20 font-bold">•</span>
@@ -194,10 +196,10 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
                         <div className="px-4 md:px-8 pt-4 md:pt-6 bg-card border-b border-white/5 sticky top-0 z-20">
                             <TabsList className="flex w-full max-w-md bg-transparent h-12 gap-6">
                                 <TabsTrigger value="overview" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none px-0 font-bold text-muted-foreground data-[state=active]:text-white transition-all">
-                                    Overview & Analysis
+                                    {t("tabs.overview")}
                                 </TabsTrigger>
                                 <TabsTrigger value="training" className="bg-transparent border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none px-0 font-bold text-muted-foreground data-[state=active]:text-white transition-all">
-                                    Training Progress
+                                    {t("tabs.training")}
                                 </TabsTrigger>
                             </TabsList>
                         </div>
@@ -219,7 +221,7 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
                                         ) : (
                                             <div className="w-full h-full flex flex-col items-center justify-center text-white/20 gap-4">
                                                 <PlayCircle className="h-20 w-20 opacity-10" />
-                                                <p className="font-black uppercase tracking-[0.2em] text-[10px]">Select a session to view analysis</p>
+                                                <p className="font-black uppercase tracking-[0.2em] text-[10px]">{t("sessions.select")}</p>
                                             </div>
                                         )}
                                     </div>
@@ -228,7 +230,7 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
                                     <div className="space-y-3">
                                         <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2 mb-4">
                                             <History className="h-4 w-4 text-primary" />
-                                            Recent Sessions
+                                            {t("sessions.title")}
                                         </h3>
                                         <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
                                             {recentVideos.length > 0 ? (
@@ -249,13 +251,13 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
                                                                 {format(new Date(video.uploaded_at), 'MMM dd')}
                                                             </p>
                                                             <p className="text-[9px] uppercase font-black opacity-60">
-                                                                Score: {video.analyses?.[0]?.overall?.toFixed(0) || '-'}
+                                                                {t("sessions.score", { score: video.analyses?.[0]?.overall?.toFixed(0) || '-' })}
                                                             </p>
                                                         </div>
                                                     </button>
                                                 ))
                                             ) : (
-                                                <p className="text-xs text-muted-foreground italic py-2">No video sessions found for this player.</p>
+                                                <p className="text-xs text-muted-foreground italic py-2">{t("sessions.noSessions")}</p>
                                             )}
                                         </div>
                                     </div>
@@ -264,7 +266,7 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
                                     <Card className="bg-card border border-white/5 rounded-3xl p-6 shadow-xl shadow-black/20 space-y-4">
                                         <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                                             <Activity className="h-4 w-4 text-primary" />
-                                            AI Analysis & Feedback
+                                            {t("analysis.title")}
                                         </h3>
                                         {selectedAnalysis ? (
                                             <div className="space-y-4">
@@ -280,7 +282,7 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
                                                 </div>
                                             </div>
                                         ) : (
-                                            <p className="text-muted-foreground text-sm italic">Select a session above to view detailed AI feedback.</p>
+                                            <p className="text-muted-foreground text-sm italic">{t("analysis.placeholder")}</p>
                                         )}
                                     </Card>
                                 </div>
@@ -292,21 +294,21 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-16 translate-x-16 blur-2xl group-hover:bg-primary/10 transition-colors" />
 
                                         <div className="relative z-10 text-center mb-8">
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-4">Overall Performance</p>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-4">{t("metrics.overall")}</p>
                                             <div className="inline-flex flex-col items-center">
                                                 <div className={`text-7xl font-black leading-none tracking-tighter ${getScoreColor(displayScore)}`}>
                                                     {displayScore.toFixed(0)}
                                                 </div>
-                                                <div className="text-[10px] font-black text-muted-foreground uppercase mt-2 tracking-widest">Score / 100</div>
+                                                <div className="text-[10px] font-black text-muted-foreground uppercase mt-2 tracking-widest">{t("metrics.scoreLimit")}</div>
                                             </div>
                                         </div>
 
                                         <div className="space-y-6 relative z-10">
                                             {[
-                                                { label: "Stability", value: displayMetrics.stability, icon: TrendingUp },
-                                                { label: "Power", value: displayMetrics.power, icon: Zap },
-                                                { label: "Technique", value: displayMetrics.technique, icon: Activity },
-                                                { label: "Balance", value: displayMetrics.balance, icon: User }
+                                                { label: t("metrics.stability"), value: displayMetrics.stability, icon: TrendingUp },
+                                                { label: t("metrics.power"), value: displayMetrics.power, icon: Zap },
+                                                { label: t("metrics.technique"), value: displayMetrics.technique, icon: Activity },
+                                                { label: t("metrics.balance"), value: displayMetrics.balance, icon: User }
                                             ].map((m) => (
                                                 <div key={m.label} className="space-y-2">
                                                     <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
@@ -330,11 +332,11 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
                                     {/* Quick Stats Grid */}
                                     <div className="grid grid-cols-2 gap-4">
                                         <Card className="bg-card border border-white/5 rounded-2xl p-4 shadow-lg shadow-black/20">
-                                            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">Weight</p>
+                                            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">{t("metrics.weight")}</p>
                                             <p className="text-xl font-bold text-white">{player.weight || '-'} <span className="text-[10px] font-medium text-muted-foreground">kg</span></p>
                                         </Card>
                                         <Card className="bg-card border border-white/5 rounded-2xl p-4 shadow-lg shadow-black/20">
-                                            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">Height</p>
+                                            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1">{t("metrics.height")}</p>
                                             <p className="text-xl font-bold text-white">{player.height || '-'} <span className="text-[10px] font-medium text-muted-foreground">cm</span></p>
                                         </Card>
                                     </div>
@@ -350,28 +352,28 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
                                     <Card className="bg-card border border-white/5 rounded-3xl p-6 shadow-xl shadow-black/20">
                                         <div className="flex items-center gap-3 mb-3">
                                             <Zap className="h-4 w-4 text-primary" />
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total XP</p>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t("training.totalXp")}</p>
                                         </div>
                                         <p className="text-3xl font-black text-white">{(trainingProgress as any)?.progress?.total_xp || 0}</p>
                                     </Card>
                                     <Card className="bg-card border border-white/5 rounded-3xl p-6 shadow-xl shadow-black/20">
                                         <div className="flex items-center gap-3 mb-3">
                                             <Trophy className="h-4 w-4 text-primary" />
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Level</p>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t("training.level")}</p>
                                         </div>
                                         <p className="text-3xl font-black text-white">{(trainingProgress as any)?.progress?.level || 1}</p>
                                     </Card>
                                     <Card className="bg-card border border-white/5 rounded-3xl p-6 shadow-xl shadow-black/20">
                                         <div className="flex items-center gap-3 mb-3">
                                             <span className="text-lg">🔥</span>
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Streak</p>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t("training.streak")}</p>
                                         </div>
                                         <p className="text-3xl font-black text-orange-500">{(trainingProgress as any)?.progress?.current_streak || 0}</p>
                                     </Card>
                                     <Card className="bg-card border border-white/5 rounded-3xl p-6 shadow-xl shadow-black/20">
                                         <div className="flex items-center gap-3 mb-3">
                                             <CheckCircle className="h-4 w-4 text-green-400" />
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Skills</p>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t("training.skills")}</p>
                                         </div>
                                         <p className="text-3xl font-black text-white">
                                             {trainingProgress?.skillProgress?.filter((sp: any) => sp.is_completed).length || 0}/10
@@ -383,7 +385,7 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
                                 <div className="space-y-6">
                                     <h3 className="text-xl font-bold flex items-center gap-3">
                                         <Activity className="h-5 w-5 text-primary" />
-                                        Technical Mastery
+                                        {t("tabs.technical")}
                                     </h3>
                                     <div className="grid md:grid-cols-2 gap-6">
                                         {trainingProgress?.skillProgress?.map((sp: any) => (
@@ -394,7 +396,7 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
                                                 <div className="flex-1">
                                                     <div className="flex items-center justify-between mb-3">
                                                         <h4 className="font-bold text-lg text-white">{sp.skills?.name}</h4>
-                                                        {sp.is_completed && <Badge className="bg-primary/20 text-primary border-none font-black text-[9px] px-2 py-0.5 uppercase tracking-widest">MASTERED</Badge>}
+                                                        {sp.is_completed && <Badge className="bg-primary/20 text-primary border-none font-black text-[9px] px-2 py-0.5 uppercase tracking-widest">{t("analysis.mastered")}</Badge>}
                                                     </div>
                                                     <div className="flex items-center gap-4">
                                                         <Progress value={(sp.completed_levels?.length || 0) / 3 * 100} className="h-2 flex-1 shadow-inner h-2.5" />

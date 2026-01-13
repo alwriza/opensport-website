@@ -1,0 +1,33 @@
+{
+    "description": "OPENsport – бұл таланттарды анықтауға, дамуды бақылауға және футболда ақылды шешімдер қабылдауға арналған жасанды интеллектке негізделген футбол платформасы.",
+    "platform": {
+        "title": "Платформа",
+        "playerProfiles": "Ойыншы профильдері",
+        "performanceTracking": "Нәтижелерді бақылау",
+        "aiAnalysis": "ЖИ талдауы",
+        "talentDiscovery": "Таланттарды іздеу",
+        "developmentInsights": "Даму инсайттары"
+    },
+    "for": {
+        "title": "Кімге",
+        "players": "Ойыншыларға",
+        "coaches": "Жаттықтырушыларға",
+        "scouts": "Скауттарға",
+        "academies": "Академияларға",
+        "clubs": "Клубтарға"
+    },
+    "about": {
+        "title": "Біз туралы",
+        "mission": "Миссия",
+        "howItWorks": "Бұл қалай жұмыс істейді",
+        "methodology": "Әдістеме",
+        "partners": "Серіктестер",
+        "contact": "Байланыс"
+    },
+    "copyright": "© 2026 OPENsport, Inc. Барлық құқықтар қорғалған.",
+    "links": {
+        "terms": "Қызмет көрсету шарттары",
+        "privacy": "Құпиялылық саясаты"
+    },
+    "trademarks": "OPENsport™, OPENsport Platform™, OPENsport AI™, Deep Profiles™, Performance Analysis™, Talent Scout™ және басқа өнім атаулары OPENsport, Inc. компаниясының сауда белгілері немесе тіркелген сауда белгілері болып табылады. Барлық басқа сауда белгілері тиісті иелерінің меншігі болып табылады."
+}

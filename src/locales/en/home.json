@@ -1,0 +1,66 @@
+{
+    "hero": {
+        "title": {
+            "line1": "DISCOVER",
+            "line2": "TALENT",
+            "line3": "UNLOCK POTENTIAL"
+        },
+        "subtitle": "We use advanced AI to evaluate football talent objectively, breaking geographic barriers and creating equal opportunities for all.",
+        "cta": {
+            "start": "Start Your Journey",
+            "coaches": "For Coaches",
+            "dashboard": "Go to Dashboard"
+        }
+    },
+    "impact": {
+        "title": "COMMUNITY IMPACT",
+        "description": "From grassroots football to elite academies, OPENsport's AI-powered platform helps you evaluate talent, unlock potential, and make smarter development decisions.",
+        "cards": {
+            "global": {
+                "title": "GLOBAL REACH",
+                "subtitle": "Connecting football talent from every corner of the world.",
+                "description": "No borders, no limits — players can be seen, evaluated, and discovered globally."
+            },
+            "fairPlay": {
+                "title": "FAIR PLAY",
+                "subtitle": "Objective, AI-driven analysis for every player.",
+                "description": "Performance is measured by data, not reputation, location, or background."
+            },
+            "equalAccess": {
+                "title": "EQUAL ACCESS",
+                "subtitle": "Equal opportunities for every football player.",
+                "description": "Upload a video, get professional analysis, and receive feedback regardless of resources or connections."
+            }
+        }
+    },
+    "howItWorks": {
+        "title": {
+            "line1": "HOW IT",
+            "line2": "WORKS?"
+        },
+        "description": "OPENsport products are designed to improve how football talent is discovered and developed. From player profiling and performance insights to talent visibility and structured development pathways, each product is built to bring clarity, objectivity, and structure into the football ecosystem.",
+        "steps": {
+            "step1": {
+                "title": "Sign Up",
+                "description": "Create an account and get instant access to the platform. Join thousands of players already improving their skills."
+            },
+            "step2": {
+                "title": "Upload Your Video",
+                "description": "Upload a match or training video directly from your phone or computer. Our AI handles the rest."
+            },
+            "step3": {
+                "title": "Get Analyzed",
+                "description": "Receive AI-powered performance analysis with detailed metrics, insights, and personalized feedback within 60 seconds."
+            },
+            "step4": {
+                "title": "Improve & Connect",
+                "description": "Track your progress over time, follow personalized training plans, and connect with coaches and opportunities."
+            }
+        }
+    },
+    "quote": {
+        "text": "Talent can be wasted if it is not guided properly. Development is about education, patience, and creating the right environment for young players to express themselves.",
+        "author": "Arsene Wenger",
+        "role": "Head Coach & Football Thinker"
+    }
+}

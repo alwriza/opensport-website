@@ -1,11 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { SignInButton, SignedIn, SignedOut } from "@clerk/clerk-react";
 import { ArrowRight, UserPlus, Video, TrendingUp, Sprout } from "lucide-react";
 import AutoScroll from "embla-carousel-auto-scroll";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 
 export default function Home() {
+  const { t } = useTranslation(["home", "navbar", "buttons"]);
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section - Stadium Background */}
@@ -19,20 +21,20 @@ export default function Home() {
         {/* Content */}
         <div className="relative z-10 max-w-4xl">
           <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-[1.1] mb-8">
-            <span className="block text-white">DISCOVER{" "}</span>
-            <span className="block text-[#9FE870]">TALENT</span>
-            <span className="block text-white mt-2">UNLOCK POTENTIAL</span>
+            <span className="block text-white">{t("hero.title.line1")}{" "}</span>
+            <span className="block text-[#9FE870]">{t("hero.title.line2")}</span>
+            <span className="block text-white mt-2">{t("hero.title.line3")}</span>
           </h1>
 
           <p className="text-xl md:text-2xl text-gray-300 max-w-2xl mb-12 leading-relaxed">
-            We use advanced AI to evaluate football talent objectively, breaking geographic barriers and creating equal opportunities for all.
+            {t("hero.subtitle")}
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4">
             <SignedOut>
               <SignInButton mode="modal" forceRedirectUrl="/player-dashboard">
                 <Button size="lg" className="bg-[#9FE870] hover:bg-[#8DD760] text-black font-semibold px-8 h-14 text-lg rounded-full">
-                  Start Your Journey
+                  {t("hero.cta.start")}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </SignInButton>
@@ -42,7 +44,7 @@ export default function Home() {
                   size="lg"
                   className="border-2 border-[#9FE870] text-[#9FE870] hover:bg-[#9FE870] hover:text-black font-semibold px-8 h-14 text-lg rounded-full"
                 >
-                  For Coaches
+                  {t("hero.cta.coaches")}
                 </Button>
               </SignInButton>
             </SignedOut>
@@ -50,7 +52,7 @@ export default function Home() {
             <SignedIn>
               <Link to="/player-dashboard">
                 <Button size="lg" className="bg-[#9FE870] hover:bg-[#8DD760] text-black font-semibold px-8 h-14 text-lg rounded-full">
-                  Go to Dashboard
+                  {t("hero.cta.dashboard")}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
@@ -63,12 +65,11 @@ export default function Home() {
       <section className="bg-black py-24 px-6">
         <div className="container mx-auto max-w-7xl">
           <h2 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight">
-            <span className="text-[#9FE870]">COMMUNITY IMPACT</span>
+            <span className="text-[#9FE870]">{t("impact.title")}</span>
           </h2>
 
           <p className="text-gray-400 text-xl leading-relaxed mb-16 max-w-3xl">
-            From grassroots football to elite academies, OPENsport's AI-powered platform helps you
-            evaluate talent, unlock potential, and make smarter development decisions.
+            {t("impact.description")}
           </p>
 
           {/* Cards Grid */}
@@ -83,12 +84,12 @@ export default function Home() {
 
               {/* Content */}
               <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black via-black/90 to-transparent">
-                <h3 className="text-3xl font-bold text-white mb-3">GLOBAL REACH</h3>
+                <h3 className="text-3xl font-bold text-white mb-3">{t("impact.cards.global.title")}</h3>
                 <p className="text-gray-300 leading-relaxed mb-4">
-                  Connecting football talent from every corner of the world.
+                  {t("impact.cards.global.subtitle")}
                 </p>
                 <p className="text-gray-400 text-sm leading-relaxed">
-                  No borders, no limits — players can be seen, evaluated, and discovered globally.
+                  {t("impact.cards.global.description")}
                 </p>
               </div>
             </div>
@@ -101,12 +102,12 @@ export default function Home() {
               </div>
 
               <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black via-black/90 to-transparent">
-                <h3 className="text-3xl font-bold text-white mb-3">FAIR PLAY</h3>
+                <h3 className="text-3xl font-bold text-white mb-3">{t("impact.cards.fairPlay.title")}</h3>
                 <p className="text-gray-300 leading-relaxed mb-4">
-                  Objective, AI-driven analysis for every player.
+                  {t("impact.cards.fairPlay.subtitle")}
                 </p>
                 <p className="text-gray-400 text-sm leading-relaxed">
-                  Performance is measured by data, not reputation, location, or background.
+                  {t("impact.cards.fairPlay.description")}
                 </p>
               </div>
             </div>
@@ -119,12 +120,12 @@ export default function Home() {
               </div>
 
               <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black via-black/90 to-transparent">
-                <h3 className="text-3xl font-bold text-white mb-3">EQUAL ACCESS</h3>
+                <h3 className="text-3xl font-bold text-white mb-3">{t("impact.cards.equalAccess.title")}</h3>
                 <p className="text-gray-300 leading-relaxed mb-4">
-                  Equal opportunities for every football player.
+                  {t("impact.cards.equalAccess.subtitle")}
                 </p>
                 <p className="text-gray-400 text-sm leading-relaxed">
-                  Upload a video, get professional analysis, and receive feedback regardless of resources or connections.
+                  {t("impact.cards.equalAccess.description")}
                 </p>
               </div>
             </div>
@@ -139,16 +140,13 @@ export default function Home() {
             {/* Left - Text Content (Fixed) */}
             <div className="lg:sticky lg:top-32">
               <h2 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight">
-                <span className="text-white">HOW IT</span>
+                <span className="text-white">{t("howItWorks.title.line1")}</span>
                 <br />
-                <span className="text-[#9FE870]">WORKS?</span>
+                <span className="text-[#9FE870]">{t("howItWorks.title.line2")}</span>
               </h2>
 
               <p className="text-gray-400 text-lg leading-relaxed max-w-xl">
-                OPENsport products are designed to improve how football talent is discovered and developed.
-                From player profiling and performance insights to talent visibility and structured development
-                pathways, each product is built to bring clarity, objectivity, and structure into the football
-                ecosystem.
+                {t("howItWorks.description")}
               </p>
             </div>
 
@@ -165,7 +163,7 @@ export default function Home() {
                     playOnInit: true,
                     speed: 0.5,
                     stopOnInteraction: false,
-                    stopOnMouseEnter: true,
+                    stopOnMouseEnter: false,
                   })
                 ]}
                 className="h-full"
@@ -177,10 +175,9 @@ export default function Home() {
                       <div className="w-14 h-14 rounded-xl bg-[#9FE870]/10 flex items-center justify-center mb-6">
                         <UserPlus className="h-7 w-7 text-[#9FE870]" />
                       </div>
-                      <h3 className="text-2xl font-semibold text-white mb-3">Sign Up</h3>
+                      <h3 className="text-2xl font-semibold text-white mb-3">{t("howItWorks.steps.step1.title")}</h3>
                       <p className="text-gray-400 leading-relaxed">
-                        Create an account and get instant access to the platform. Join thousands of players
-                        already improving their skills.
+                        {t("howItWorks.steps.step1.description")}
                       </p>
                     </div>
                   </CarouselItem>
@@ -191,10 +188,9 @@ export default function Home() {
                       <div className="w-14 h-14 rounded-xl bg-[#9FE870]/10 flex items-center justify-center mb-6">
                         <Video className="h-7 w-7 text-[#9FE870]" />
                       </div>
-                      <h3 className="text-2xl font-semibold text-white mb-3">Upload Your Video</h3>
+                      <h3 className="text-2xl font-semibold text-white mb-3">{t("howItWorks.steps.step2.title")}</h3>
                       <p className="text-gray-400 leading-relaxed">
-                        Upload a match or training video directly from your phone or computer. Our AI handles
-                        the rest.
+                        {t("howItWorks.steps.step2.description")}
                       </p>
                     </div>
                   </CarouselItem>
@@ -205,10 +201,9 @@ export default function Home() {
                       <div className="w-14 h-14 rounded-xl bg-[#9FE870]/10 flex items-center justify-center mb-6">
                         <TrendingUp className="h-7 w-7 text-[#9FE870]" />
                       </div>
-                      <h3 className="text-2xl font-semibold text-white mb-3">Get Analyzed</h3>
+                      <h3 className="text-2xl font-semibold text-white mb-3">{t("howItWorks.steps.step3.title")}</h3>
                       <p className="text-gray-400 leading-relaxed">
-                        Receive AI-powered performance analysis with detailed metrics, insights, and personalized
-                        feedback within 60 seconds.
+                        {t("howItWorks.steps.step3.description")}
                       </p>
                     </div>
                   </CarouselItem>
@@ -219,10 +214,9 @@ export default function Home() {
                       <div className="w-14 h-14 rounded-xl bg-[#9FE870]/10 flex items-center justify-center mb-6">
                         <Sprout className="h-7 w-7 text-[#9FE870]" />
                       </div>
-                      <h3 className="text-2xl font-semibold text-white mb-3">Improve & Connect</h3>
+                      <h3 className="text-2xl font-semibold text-white mb-3">{t("howItWorks.steps.step4.title")}</h3>
                       <p className="text-gray-400 leading-relaxed">
-                        Track your progress over time, follow personalized training plans, and connect with
-                        coaches and opportunities.
+                        {t("howItWorks.steps.step4.description")}
                       </p>
                     </div>
                   </CarouselItem>
@@ -235,25 +229,24 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </section>
+      </section >
 
       {/* Quote Section - Arsene Wenger */}
-      <section className="relative bg-[#0A1628] py-24 px-6">
+      < section className="relative bg-[#0A1628] py-24 px-6" >
         <div className="container mx-auto max-w-5xl text-center">
           {/* Quote Marks */}
           <div className="text-[#9FE870] text-8xl font-serif mb-8">"</div>
 
           <blockquote className="text-2xl md:text-3xl text-white font-normal leading-relaxed mb-8 max-w-4xl mx-auto">
-            Talent can be wasted if it is not guided properly. Development is about education,
-            patience, and creating the right environment for young players to express themselves.
+            {t("quote.text")}
           </blockquote>
 
           <div className="text-gray-400">
-            <p className="font-semibold text-lg text-white mb-1">Arsene Wenger</p>
-            <p className="text-sm">Head Coach & Football Thinker</p>
+            <p className="font-semibold text-lg text-white mb-1">{t("quote.author")}</p>
+            <p className="text-sm">{t("quote.role")}</p>
           </div>
         </div>
-      </section>
-    </div>
+      </section >
+    </div >
   );
 }

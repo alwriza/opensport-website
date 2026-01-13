@@ -1,0 +1,33 @@
+{
+    "description": "OPENsport is an AI-driven football platform designed to identify talent, track development, and support smarter decisions in football.",
+    "platform": {
+        "title": "Platform",
+        "playerProfiles": "Player Profiles",
+        "performanceTracking": "Performance Tracking",
+        "aiAnalysis": "AI Analysis",
+        "talentDiscovery": "Talent Discovery",
+        "developmentInsights": "Development Insights"
+    },
+    "for": {
+        "title": "For",
+        "players": "Players",
+        "coaches": "Coaches",
+        "scouts": "Scouts",
+        "academies": "Academies",
+        "clubs": "Clubs"
+    },
+    "about": {
+        "title": "About",
+        "mission": "Mission",
+        "howItWorks": "How It Works",
+        "methodology": "Methodology",
+        "partners": "Partners",
+        "contact": "Contact"
+    },
+    "copyright": "© 2026 OPENsport, Inc. All rights reserved.",
+    "links": {
+        "terms": "Terms of Service",
+        "privacy": "Privacy Policy"
+    },
+    "trademarks": "OPENsport™, OPENsport Platform™, OPENsport AI™, Deep Profiles™, Performance Analysis™, Talent Scout™, and other product names are trademarks or registered trademarks of OPENsport, Inc. All other trademarks are the property of their respective owners."
+}

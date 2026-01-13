@@ -1,0 +1,27 @@
+{
+    "buttons": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "close": "Close",
+        "back": "Back",
+        "next": "Next",
+        "submit": "Submit",
+        "confirm": "Confirm",
+        "delete": "Delete",
+        "edit": "Edit",
+        "view": "View"
+    },
+    "errors": {
+        "generic": "Something went wrong",
+        "network": "Network error, please try again",
+        "required": "This field is required",
+        "invalidEmail": "Invalid email address"
+    },
+    "status": {
+        "loading": "Loading...",
+        "success": "Success",
+        "error": "Error",
+        "pending": "Pending",
+        "completed": "Completed"
+    }
+}

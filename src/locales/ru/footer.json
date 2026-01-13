@@ -1,0 +1,33 @@
+{
+    "description": "OPENsport - это платформа на базе ИИ для футбола, разработанная для выявления талантов, отслеживания развития и поддержки более разумных решений в футболе.",
+    "platform": {
+        "title": "Платформа",
+        "playerProfiles": "Профили игроков",
+        "performanceTracking": "Отслеживание результатов",
+        "aiAnalysis": "ИИ-анализ",
+        "talentDiscovery": "Поиск талантов",
+        "developmentInsights": "Инсайты развития"
+    },
+    "for": {
+        "title": "Для",
+        "players": "Игроков",
+        "coaches": "Тренеров",
+        "scouts": "Скаутов",
+        "academies": "Академий",
+        "clubs": "Клубов"
+    },
+    "about": {
+        "title": "О нас",
+        "mission": "Миссия",
+        "howItWorks": "Как это работает",
+        "methodology": "Методология",
+        "partners": "Партнеры",
+        "contact": "Контакты"
+    },
+    "copyright": "© 2026 OPENsport, Inc. Все права защищены.",
+    "links": {
+        "terms": "Условия использования",
+        "privacy": "Политика конфиденциальности"
+    },
+    "trademarks": "OPENsport™, OPENsport Platform™, OPENsport AI™, Deep Profiles™, Performance Analysis™, Talent Scout™ и другие названия продуктов являются товарными знаками или зарегистрированными товарными знаками OPENsport, Inc. Все остальные товарные знаки являются собственностью их соответствующих владельцев."
+}

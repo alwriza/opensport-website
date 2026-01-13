@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ interface InvitePlayersModalProps {
 }
 
 export function InvitePlayersModal({ open, onClose, team, onSuccess }: InvitePlayersModalProps) {
+    const { t } = useTranslation("team");
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState("");
@@ -29,8 +31,8 @@ export function InvitePlayersModal({ open, onClose, team, onSuccess }: InvitePla
     const copyInviteCode = () => {
         navigator.clipboard.writeText(team.invite_code);
         toast({
-            title: "Copied!",
-            description: "Invite code copied to clipboard",
+            title: t("inviteModal.codeTab.copyToast.title"),
+            description: t("inviteModal.codeTab.copyToast.description"),
         });
     };
 
@@ -39,20 +41,53 @@ export function InvitePlayersModal({ open, onClose, team, onSuccess }: InvitePla
         const link = `${window.location.origin}/join-team?code=${team.invite_code}`;
         navigator.clipboard.writeText(link);
         toast({
-            title: "Copied!",
-            description: "Invite link copied to clipboard",
+            title: t("inviteModal.linkTab.copyToast.title"),
+            description: t("inviteModal.linkTab.copyToast.description"),
         });
     };
 
     // Send email invitation
-    const handleEmailInvite = async (e: React.FormEvent) => {
+    const handleSendEmail = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!email) return;
 
         setLoading(true);
         try {
-            const { error } = await supabase
-                .from('team_invitations')
+            const { error } = await supabase.functions.invoke('send-team-invite', {
+                body: {
+                    email,
+                    team_name: team.name,
+                    invite_code: team.invite_code,
+                    origin: window.location.origin,
+                },
+            });
+
+            if (error) {
+                if (error.status === 404) {
+                    toast({
+                        title: t("inviteModal.emailTab.toasts.userNotFound.title"),
+                        description: t("inviteModal.emailTab.toasts.userNotFound.description"),
+                        variant: "default"
+                    });
+                } else {
+                    toast({
+                        title: t("inviteModal.emailTab.toasts.error.title"),
+                        description: error.message || t("inviteModal.emailTab.toasts.error.description"),
+                        variant: "destructive"
+                    });
+                }
+                return;
+            }
+
+            toast({
+                title: t("inviteModal.emailTab.toasts.success.title"),
+                description: t("inviteModal.emailTab.toasts.success.description", { email }),
+            });
+
+            // Also record the invitation in the database for tracking
+            // @ts-ignore
+            await (supabase
+                .from('team_invitations') as any)
                 .insert({
                     team_id: team.id,
                     email: email,
@@ -60,21 +95,14 @@ export function InvitePlayersModal({ open, onClose, team, onSuccess }: InvitePla
                     status: 'pending'
                 });
 
-            if (error) throw error;
-
-            toast({
-                title: "Invitation Sent! 📧",
-                description: `Invitation sent to ${email}`,
-            });
-
             setEmail("");
             onSuccess();
 
         } catch (error: any) {
             console.error('Error sending invitation:', error);
             toast({
-                title: "Error",
-                description: error.message || "Could not send invitation",
+                title: t("createTeamModal.errors.title"),
+                description: error.message || t("join.toasts.genericError.description"),
                 variant: "destructive"
             });
         } finally {
@@ -89,8 +117,9 @@ export function InvitePlayersModal({ open, onClose, team, onSuccess }: InvitePla
 
         setLoading(true);
         try {
-            const { error } = await supabase
-                .from('team_invitations')
+            // @ts-ignore
+            const { error } = await (supabase
+                .from('team_invitations') as any)
                 .insert({
                     team_id: team.id,
                     phone: phone,
@@ -101,8 +130,8 @@ export function InvitePlayersModal({ open, onClose, team, onSuccess }: InvitePla
             if (error) throw error;
 
             toast({
-                title: "Invitation Sent! 📱",
-                description: `Invitation sent to ${phone}`,
+                title: t("inviteModal.emailTab.toasts.success.title"),
+                description: t("inviteModal.phoneTab.toast.success", { phone }),
             });
 
             setPhone("");
@@ -111,8 +140,8 @@ export function InvitePlayersModal({ open, onClose, team, onSuccess }: InvitePla
         } catch (error: any) {
             console.error('Error sending invitation:', error);
             toast({
-                title: "Error",
-                description: error.message || "Could not send invitation",
+                title: t("createTeamModal.errors.title"),
+                description: error.message || t("join.toasts.genericError.description"),
                 variant: "destructive"
             });
         } finally {
@@ -124,23 +153,23 @@ export function InvitePlayersModal({ open, onClose, team, onSuccess }: InvitePla
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Invite Players to {team.name}</DialogTitle>
+                    <DialogTitle>{t("inviteModal.title", { teamName: team.name })}</DialogTitle>
                     <DialogDescription>
-                        Choose how you want to invite players to your team
+                        {t("inviteModal.description")}
                     </DialogDescription>
                 </DialogHeader>
 
                 <Tabs defaultValue="code" className="w-full">
                     <TabsList className="grid w-full grid-cols-3">
-                        <TabsTrigger value="code">Code</TabsTrigger>
-                        <TabsTrigger value="email">Email</TabsTrigger>
-                        <TabsTrigger value="link">Link</TabsTrigger>
+                        <TabsTrigger value="code">{t("inviteModal.tabs.code")}</TabsTrigger>
+                        <TabsTrigger value="email">{t("inviteModal.tabs.email")}</TabsTrigger>
+                        <TabsTrigger value="link">{t("inviteModal.tabs.link")}</TabsTrigger>
                     </TabsList>
 
                     {/* Invite Code Tab */}
                     <TabsContent value="code" className="space-y-4">
                         <div className="space-y-2">
-                            <Label>Team Invite Code</Label>
+                            <Label>{t("inviteModal.codeTab.label")}</Label>
                             <div className="flex items-center gap-2">
                                 <Input
                                     value={team.invite_code}
@@ -156,33 +185,33 @@ export function InvitePlayersModal({ open, onClose, team, onSuccess }: InvitePla
                                 </Button>
                             </div>
                             <p className="text-sm text-muted-foreground">
-                                Share this code with players. They can enter it in their player dashboard to join the team.
+                                {t("inviteModal.codeTab.description")}
                             </p>
                         </div>
                     </TabsContent>
 
                     {/* Email Invite Tab */}
                     <TabsContent value="email">
-                        <form onSubmit={handleEmailInvite} className="space-y-4">
+                        <form onSubmit={handleSendEmail} className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="email">Player Email</Label>
+                                <Label htmlFor="email">{t("inviteModal.emailTab.label")}</Label>
                                 <Input
                                     id="email"
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="player@example.com"
+                                    placeholder={t("inviteModal.emailTab.placeholder")}
                                     required
                                 />
                                 <p className="text-sm text-muted-foreground">
-                                    An invitation email will be sent to this address
+                                    {t("inviteModal.emailTab.description")}
                                 </p>
                             </div>
 
                             <Button type="submit" className="w-full" disabled={loading}>
                                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 <Mail className="mr-2 h-4 w-4" />
-                                Send Email Invitation
+                                {loading ? t("inviteModal.emailTab.loading") : t("inviteModal.emailTab.button")}
                             </Button>
                         </form>
                     </TabsContent>
@@ -190,7 +219,7 @@ export function InvitePlayersModal({ open, onClose, team, onSuccess }: InvitePla
                     {/* Link Invite Tab */}
                     <TabsContent value="link" className="space-y-4">
                         <div className="space-y-2">
-                            <Label>Shareable Link</Label>
+                            <Label>{t("inviteModal.linkTab.label")}</Label>
                             <div className="flex items-center gap-2">
                                 <Input
                                     value={`${window.location.origin}/join-team?code=${team.invite_code}`}
@@ -206,20 +235,20 @@ export function InvitePlayersModal({ open, onClose, team, onSuccess }: InvitePla
                                 </Button>
                             </div>
                             <p className="text-sm text-muted-foreground">
-                                Share this link with players via WhatsApp, Telegram, or any messaging app
+                                {t("inviteModal.linkTab.description")}
                             </p>
                         </div>
 
                         <Button className="w-full" onClick={copyInviteLink}>
                             <LinkIcon className="mr-2 h-4 w-4" />
-                            Copy Invite Link
+                            {t("inviteModal.linkTab.button")}
                         </Button>
                     </TabsContent>
                 </Tabs>
 
                 <DialogFooter>
                     <Button variant="outline" onClick={onClose}>
-                        Close
+                        {t("inviteModal.close")}
                     </Button>
                 </DialogFooter>
             </DialogContent>

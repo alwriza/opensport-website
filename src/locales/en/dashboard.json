@@ -1,0 +1,258 @@
+{
+    "title": "Dashboard",
+    "overview": {
+        "title": "Overview",
+        "welcome": "Welcome back, {{name}}!",
+        "stats": "Quick Stats",
+        "performanceHub": "Your performance hub"
+    },
+    "stats": {
+        "activePlayers": "Active Players",
+        "totalTeams": "Total Teams",
+        "pendingInvites": "Pending Invites",
+        "totalPlayers": "Total Players",
+        "avgScore": "Avg Score",
+        "activeThisWeek": "Active This Week",
+        "topPerformer": "Top Performer",
+        "level": "Level",
+        "streak": "Streak",
+        "xp": "XP"
+    },
+    "recentActivity": "Recent Activity",
+    "noActivity": "No recent activity found.",
+    "tabs": {
+        "skillTree": "Skill Tree",
+        "exercises": "Exercises",
+        "teams": "My Teams",
+        "roster": "Team Roster",
+        "history": "History"
+    },
+    "coach": {
+        "title": "Coach Dashboard",
+        "welcome": "Welcome back, {{name}}",
+        "selectTeam": "Select a team",
+        "createTeam": "Create Team",
+        "deleteTeam": "Delete Team",
+        "invitePlayers": "Invite Players",
+        "searchPlayers": "Search players...",
+        "filters": {
+            "title": "Filters",
+            "position": "Position",
+            "allPositions": "All Positions",
+            "ageRange": "Age Range",
+            "min": "Min",
+            "max": "Max",
+            "performance": "Performance",
+            "minScore": "Min Score",
+            "maxScore": "Max Score",
+            "lastUpload": "Last Upload",
+            "recency": {
+                "all": "All Time",
+                "today": "Today",
+                "thisWeek": "This Week",
+                "thisMonth": "This Month"
+            },
+            "sortBy": "Sort By",
+            "sorting": {
+                "name": "Name",
+                "age": "Age",
+                "overall": "Overall Score",
+                "stability": "Stability",
+                "power": "Power",
+                "technique": "Technique",
+                "balance": "Balance"
+            },
+            "order": "Order",
+            "ascending": "Ascending",
+            "descending": "Descending",
+            "status": "Status",
+            "allStatuses": "All Statuses",
+            "active": "Active",
+            "pending": "Pending",
+            "rejected": "Rejected",
+            "reset": "Reset Filters"
+        },
+        "approve": "Approve",
+        "decline": "Decline",
+        "remove": "Remove",
+        "rosterTable": {
+            "num": "#",
+            "name": "Name",
+            "age": "Age",
+            "pos": "Pos",
+            "performance": "Performance",
+            "history": "History",
+            "actions": "Actions",
+            "flags": {
+                "needsReview": "Needs Review",
+                "topProspect": "Top Prospect",
+                "injuryNote": "Injury Note"
+            },
+            "flagsTitle": "Flags",
+            "noData": "No Data",
+            "pending": "Pending",
+            "noPlayers": "No Players Found",
+            "clearFilters": "Clear all filters"
+        },
+        "toasts": {
+            "approveSuccess": {
+                "title": "Player Approved",
+                "description": "The player has been added to the team roster."
+            },
+            "approveError": {
+                "title": "Error",
+                "description": "Could not approve player"
+            },
+            "declineSuccess": {
+                "title": "Request Declined",
+                "description": "The player's request has been removed."
+            },
+            "declineError": {
+                "title": "Error",
+                "description": "Could not decline player"
+            },
+            "removeSuccess": {
+                "title": "Player Removed",
+                "description": "{{name}} has been removed from the team"
+            },
+            "removeError": {
+                "title": "Error",
+                "description": "Could not remove player"
+            },
+            "deleteTeamSuccess": {
+                "title": "Team Deleted",
+                "description": "{{name}} has been deleted"
+            },
+            "deleteTeamError": {
+                "title": "Error",
+                "description": "Could not delete team"
+            }
+        },
+        "confirms": {
+            "declinePlayer": "Are you sure you want to decline this player's request?",
+            "removePlayer": "Are you sure you want to remove {{name}} from the team?",
+            "deleteTeam": "Are you sure you want to delete \"{{name}}\"?\n\nThis will:\n- Remove all players from the team\n- Delete all team data\n- This action cannot be undone!"
+        },
+        "loading": "Loading dashboard..."
+    },
+    "player": {
+        "welcome": "Welcome, {{name}}!",
+        "allAnalyses": "All Analyses",
+        "noVideos": "No videos uploaded yet.",
+        "viewResults": "View Results",
+        "processing": "Processing...",
+        "showMore": "Show More ({{count}} more)",
+        "showLess": "Show Less",
+        "uploadVideo": "Upload Video",
+        "defaultName": "Player",
+        "latestAnalysis": {
+            "title": "Latest Analysis",
+            "newAnalysis": "New Analysis",
+            "overallScore": "Overall Score",
+            "metrics": {
+                "stability": "Stability",
+                "power": "Power",
+                "technique": "Technique",
+                "balance": "Balance"
+            },
+            "recommendations": {
+                "title": "AI Recommendations",
+                "description": "Tailored exercises specifically for you"
+            },
+            "empty": {
+                "title": "ELEVATE YOUR GAME",
+                "description": "Upload your training footage and get professional-grade AI analysis in seconds.",
+                "button": "Analyze Video"
+            }
+        },
+        "tips": {
+            "title": "PRO TIP: PERFECT ANGLE",
+            "description": "For the most accurate precision and power metrics, film from the side (90° angle) ensuring your entire silhouette (from head to toe) is visible throughout the action."
+        },
+        "profile": {
+            "title": "PROFILE DETAILS",
+            "age": "Age",
+            "position": "Position",
+            "club": "Club",
+            "height": "Height (cm)",
+            "weight": "Weight (kg)",
+            "positions": {
+                "forward": "Forward",
+                "midfielder": "Midfielder",
+                "defender": "Defender",
+                "goalkeeper": "Goalkeeper"
+            },
+            "legal": "LEGAL & PRIVACY",
+            "terms": "Terms of Service",
+            "privacy": "Privacy Policy"
+        },
+        "teams": {
+            "title": "My Teams",
+            "join": "Join a Team",
+            "teamPage": "Team Page",
+            "notJoined": "Not joined any teams",
+            "findClub": "Find a club →"
+        },
+        "training": {
+            "title": "Training Progress",
+            "level": "LEVEL {{level}}",
+            "totalXp": "{{total}} TOTAL XP",
+            "dayStreak": "Day Streak",
+            "best": "BEST",
+            "skillMastery": "Skill Mastery",
+            "goToCenter": "Go to Training Center"
+        },
+        "results": {
+            "title": "Analysis Results",
+            "overall": "Overall Score",
+            "outOf": "out of 100",
+            "detailed": "Detailed Metrics",
+            "feedback": "AI Feedback",
+            "tags": "Tags",
+            "recommended": "Recommended Training",
+            "recommendedDesc": "Based on your analysis, these exercises will help improve your weak areas:",
+            "startTraining": "Start Training"
+        },
+        "toasts": {
+            "complete": {
+                "title": "Analysis Complete! 🎉",
+                "description": "Your kick has been analyzed successfully."
+            },
+            "failed": {
+                "title": "Analysis Failed",
+                "description": "Could not analyze video. The video has been saved but analysis failed."
+            },
+            "uploadFailed": {
+                "title": "Upload Failed",
+                "description": "Could not upload video. Please try again."
+            }
+        }
+    },
+    "modals": {
+        "upload": {
+            "title": "Upload New Video",
+            "uploading": "Uploading and analyzing...",
+            "dropzone": "Supported formats: MP4, MOV, AVI, MKV (max 100MB)",
+            "button": "Choose Video File"
+        }
+    },
+    "legal": {
+        "title": "Welcome to OpenSport!",
+        "description": "Before you start your football journey, please review and accept our terms:",
+        "readMore": "I have read and agree to the",
+        "collect": "What we collect:",
+        "collectDescription": "Videos you upload, analysis results, and training progress. Your data is encrypted and never sold to third parties.",
+        "saving": "Saving...",
+        "accept": "Accept and Continue",
+        "toasts": {
+            "error": {
+                "title": "Error",
+                "description": "Could not save acceptance. Please try again."
+            },
+            "incomplete": {
+                "title": "Please accept both agreements",
+                "description": "You must accept Terms of Service and Privacy Policy to continue"
+            }
+        }
+    }
+}

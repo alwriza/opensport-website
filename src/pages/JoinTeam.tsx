@@ -8,8 +8,10 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Users, CheckCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function JoinTeam() {
+    const { t } = useTranslation("team");
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { user, isLoaded } = useUser();
@@ -25,8 +27,8 @@ export default function JoinTeam() {
 
         if (!user) {
             toast({
-                title: "Please sign in",
-                description: "You need to be signed in to join a team",
+                title: t("join.toasts.signIn.title"),
+                description: t("join.toasts.signIn.description"),
                 variant: "destructive"
             });
             navigate('/sign-in');
@@ -45,14 +47,14 @@ export default function JoinTeam() {
             .eq('clerk_id', user.id)
             .single();
 
-        setDbUserId(data?.id || null);
+        setDbUserId(data ? (data as any).id : null);
     };
 
     const verifyInviteCode = async () => {
         if (!inviteCode) {
             toast({
-                title: "Enter invite code",
-                description: "Please enter a team invite code",
+                title: t("join.toasts.enterCode.title"),
+                description: t("join.toasts.enterCode.description"),
                 variant: "destructive"
             });
             return;
@@ -74,8 +76,8 @@ export default function JoinTeam() {
 
             if (teamError || !team) {
                 toast({
-                    title: "Invalid code",
-                    description: "Team not found with this invite code",
+                    title: t("join.toasts.invalidCode.title"),
+                    description: t("join.toasts.invalidCode.description"),
                     variant: "destructive"
                 });
                 return;
@@ -86,8 +88,8 @@ export default function JoinTeam() {
         } catch (error: any) {
             console.error('Error verifying code:', error);
             toast({
-                title: "Error",
-                description: "Could not verify invite code",
+                title: t("join.toasts.error.title"),
+                description: t("join.toasts.error.description"),
                 variant: "destructive"
             });
         } finally {
@@ -110,8 +112,8 @@ export default function JoinTeam() {
 
             if (isCoach) {
                 toast({
-                    title: "Action restricted",
-                    description: "You are a coach for this team and cannot join as a player.",
+                    title: t("join.toasts.restricted.title"),
+                    description: t("join.toasts.restricted.description"),
                     variant: "destructive"
                 });
                 setLoading(false);
@@ -127,23 +129,26 @@ export default function JoinTeam() {
                 .single();
 
             if (existing) {
+                // @ts-ignore
                 if (existing.status === 'active') {
                     toast({
-                        title: "Already in team",
-                        description: "You are already a member of this team",
+                        title: t("join.toasts.alreadyIn.title"),
+                        description: t("join.toasts.alreadyIn.description"),
                     });
+                    // @ts-ignore
                 } else if (existing.status === 'declined') {
                     toast({
-                        title: "Previously declined",
-                        description: "You previously declined this team invitation",
+                        title: t("join.toasts.declined.title"),
+                        description: t("join.toasts.declined.description"),
                     });
                 }
                 return;
             }
 
             // ✅ СРАЗУ ДОБАВЛЯЕМ КАК ACTIVE (код = автоматический approve)
-            const { error: rosterError } = await supabase
-                .from('team_rosters')
+            // @ts-ignore
+            const { error: rosterError } = await (supabase
+                .from('team_rosters') as any)
                 .insert({
                     team_id: teamInfo.id,
                     player_id: dbUserId,
@@ -153,8 +158,8 @@ export default function JoinTeam() {
             if (rosterError) throw rosterError;
 
             toast({
-                title: "Joined Team! 🎉",
-                description: `You are now a member of ${teamInfo.name}`,
+                title: t("join.toasts.success.title"),
+                description: t("join.toasts.success.description", { teamName: teamInfo.name }),
             });
 
             // Redirect to player dashboard
@@ -165,8 +170,8 @@ export default function JoinTeam() {
         } catch (error: any) {
             console.error('Error joining team:', error);
             toast({
-                title: "Error",
-                description: error.message || "Could not join team",
+                title: t("join.toasts.genericError.title"),
+                description: error.message || t("join.toasts.genericError.description"),
                 variant: "destructive"
             });
         } finally {
@@ -180,10 +185,10 @@ export default function JoinTeam() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Users className="h-6 w-6" />
-                        Join Team
+                        {t("join.title")}
                     </CardTitle>
                     <CardDescription>
-                        Enter the invite code provided by your coach
+                        {t("join.description")}
                     </CardDescription>
                 </CardHeader>
 
@@ -192,12 +197,12 @@ export default function JoinTeam() {
                         <>
                             {/* Enter Code Form */}
                             <div className="space-y-2">
-                                <Label htmlFor="inviteCode">Team Invite Code</Label>
+                                <Label htmlFor="inviteCode">{t("join.label")}</Label>
                                 <Input
                                     id="inviteCode"
                                     value={inviteCode}
                                     onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                                    placeholder="ABC123"
+                                    placeholder={t("join.placeholder")}
                                     className="text-2xl font-bold text-center tracking-wider"
                                     maxLength={6}
                                 />
@@ -209,7 +214,7 @@ export default function JoinTeam() {
                                 disabled={loading || !inviteCode}
                             >
                                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Verify Code
+                                {t("join.button")}
                             </Button>
                         </>
                     ) : (
@@ -220,7 +225,7 @@ export default function JoinTeam() {
                                     <CheckCircle className="h-12 w-12 text-green-600" />
                                 </div>
                                 <div className="text-center">
-                                    <p className="text-sm text-muted-foreground">You're joining</p>
+                                    <p className="text-sm text-muted-foreground">{t("join.joining")}</p>
                                     <h3 className="text-xl font-bold">{teamInfo.name}</h3>
                                     <p className="text-sm text-muted-foreground">
                                         {teamInfo.clubs?.name} • {teamInfo.age_group}
@@ -234,7 +239,7 @@ export default function JoinTeam() {
                                     className="flex-1"
                                     onClick={() => setTeamInfo(null)}
                                 >
-                                    Cancel
+                                    {t("join.cancel")}
                                 </Button>
                                 <Button
                                     className="flex-1"
@@ -242,7 +247,7 @@ export default function JoinTeam() {
                                     disabled={loading}
                                 >
                                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    Join Team
+                                    {t("join.confirm")}
                                 </Button>
                             </div>
                         </>

@@ -1,0 +1,11 @@
+{
+    "nav": {
+        "home": "Home",
+        "playerDashboard": "Player",
+        "coachDashboard": "Coach",
+        "training": "Training"
+    },
+    "buttons": {
+        "getStarted": "Get Started"
+    }
+}

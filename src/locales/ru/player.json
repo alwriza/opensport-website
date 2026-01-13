@@ -1,0 +1,45 @@
+{
+    "profile": "Профиль игрока",
+    "stats": "Статистика",
+    "metrics": {
+        "pace": "Скорость",
+        "shooting": "Удары",
+        "passing": "Пасы",
+        "dribbling": "Дриблинг",
+        "defending": "Защита",
+        "physical": "Физика",
+        "stability": "Стабильность",
+        "power": "Сила",
+        "technique": "Техника",
+        "balance": "Баланс",
+        "overall": "Общая производительность",
+        "scoreLimit": "Балл / 100",
+        "weight": "Вес",
+        "height": "Рост",
+        "yearsOld": "{{count}} лет"
+    },
+    "tabs": {
+        "overview": "Обзор и анализ",
+        "training": "Прогресс тренировок",
+        "technical": "Техническое мастерство"
+    },
+    "sessions": {
+        "title": "Последние сессии",
+        "select": "Выберите сессию для просмотра анализа",
+        "noSessions": "Видеосессии для этого игрока не найдены.",
+        "score": "Балл: {{score}}"
+    },
+    "analysis": {
+        "title": "ИИ анализ и отзывы",
+        "placeholder": "Выберите сессию выше, чтобы просмотреть подробный отзыв ИИ.",
+        "mastered": "ОСВОЕНО"
+    },
+    "training": {
+        "totalXp": "Всего XP",
+        "level": "Уровень",
+        "streak": "Серия",
+        "skills": "Навыки"
+    },
+    "editProfile": "Редактировать профиль",
+    "viewPublicProfile": "Публичный профиль"
+}

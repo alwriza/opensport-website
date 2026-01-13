@@ -1,0 +1,45 @@
+{
+    "profile": "Player Profile",
+    "stats": "Statistics",
+    "metrics": {
+        "pace": "Pace",
+        "shooting": "Shooting",
+        "passing": "Passing",
+        "dribbling": "Dribbling",
+        "defending": "Defending",
+        "physical": "Physical",
+        "stability": "Stability",
+        "power": "Power",
+        "technique": "Technique",
+        "balance": "Balance",
+        "overall": "Overall Performance",
+        "scoreLimit": "Score / 100",
+        "weight": "Weight",
+        "height": "Height",
+        "yearsOld": "{{count}} Years Old"
+    },
+    "tabs": {
+        "overview": "Overview & Analysis",
+        "training": "Training Progress",
+        "technical": "Technical Mastery"
+    },
+    "sessions": {
+        "title": "Recent Sessions",
+        "select": "Select a session to view analysis",
+        "noSessions": "No video sessions found for this player.",
+        "score": "Score: {{score}}"
+    },
+    "analysis": {
+        "title": "AI Analysis & Feedback",
+        "placeholder": "Select a session above to view detailed AI feedback.",
+        "mastered": "MASTERED"
+    },
+    "training": {
+        "totalXp": "Total XP",
+        "level": "Level",
+        "streak": "Streak",
+        "skills": "Skills"
+    },
+    "editProfile": "Edit Profile",
+    "viewPublicProfile": "View Public Profile"
+}

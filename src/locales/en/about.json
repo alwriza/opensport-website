@@ -1,0 +1,89 @@
+{
+    "title": "Democratizing Football Talent Discovery",
+    "subtitle": "AI Scout is revolutionizing how football talent is discovered and developed, creating equal opportunities for all players regardless of their background or location.",
+    "mission": {
+        "title": "Our Mission",
+        "content": "To create a world where every talented young footballer has an equal opportunity to be discovered, evaluated, and developed, regardless of their economic background, geographic location, or social connections."
+    },
+    "impact": {
+        "title": "Community Impact",
+        "items": {
+            "equalAccess": {
+                "title": "Equal Access for All",
+                "description": "Providing opportunities for talented young players from low-income families who might otherwise be overlooked.",
+                "stats": "500+ underprivileged players evaluated"
+            },
+            "transparent": {
+                "title": "Transparent & Objective",
+                "description": "Our AI eliminates human bias and corruption, ensuring fair evaluation based purely on performance data.",
+                "stats": "95% accuracy in skill assessment"
+            },
+            "global": {
+                "title": "Global Talent Discovery",
+                "description": "Connecting talented players from around the world with scouts and academies, breaking geographical barriers.",
+                "stats": "Active in 25+ countries"
+            }
+        }
+    },
+    "features": {
+        "title": "How AI Scout Works",
+        "items": {
+            "aiAnalysis": {
+                "title": "AI-Powered Analysis",
+                "description": "Advanced machine learning algorithms analyze player performance across multiple dimensions including speed, stamina, ball control, tactical vision, and teamwork.",
+                "badge": "Core Technology"
+            },
+            "community": {
+                "title": "Community-Driven Platform",
+                "description": "Built for players, coaches, and academies to collaborate and grow together in a supportive ecosystem.",
+                "badge": "Collaboration"
+            },
+            "feedback": {
+                "title": "Instant Feedback & Tips",
+                "description": "Personalized training recommendations generated in real-time based on individual performance analysis.",
+                "badge": "Performance"
+            }
+        }
+    },
+    "problem": {
+        "title": "The Problem We're Solving",
+        "challenges": {
+            "title": "Traditional Scouting Challenges:",
+            "items": [
+                "Subjective evaluation prone to bias",
+                "Limited geographical reach",
+                "Expensive and time-consuming",
+                "Inconsistent evaluation criteria",
+                "Corruption and favoritism"
+            ]
+        },
+        "solution": {
+            "title": "Our AI-Powered Solution:",
+            "items": [
+                "Objective, data-driven analysis",
+                "Global accessibility via web platform",
+                "Cost-effective and scalable",
+                "Standardized evaluation metrics",
+                "Transparent scoring system"
+            ]
+        }
+    },
+    "vision": {
+        "title": "Long-term Vision",
+        "content": "We envision a future where national teams and professional clubs discover their next superstars through AI Scout, creating a truly meritocratic system in football.",
+        "goals": {
+            "2025": {
+                "title": "2025 Goal",
+                "content": "10,000+ players evaluated across 50 countries"
+            },
+            "2026": {
+                "title": "2026 Goal",
+                "content": "Partnership with FIFA and UEFA for talent identification"
+            },
+            "2027": {
+                "title": "2027 Goal",
+                "content": "First AI Scout discovery to play in a World Cup"
+            }
+        }
+    }
+}

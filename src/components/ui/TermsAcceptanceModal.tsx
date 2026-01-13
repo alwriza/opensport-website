@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ExternalLink } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface TermsAcceptanceModalProps {
     open: boolean;
@@ -14,6 +15,7 @@ interface TermsAcceptanceModalProps {
 }
 
 export function TermsAcceptanceModal({ open, userId, onAccept }: TermsAcceptanceModalProps) {
+    const { t } = useTranslation("dashboard");
     const [termsAccepted, setTermsAccepted] = useState(false);
     const [privacyAccepted, setPrivacyAccepted] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -22,8 +24,8 @@ export function TermsAcceptanceModal({ open, userId, onAccept }: TermsAcceptance
     const handleAccept = async () => {
         if (!termsAccepted || !privacyAccepted) {
             toast({
-                title: "Please accept both agreements",
-                description: "You must accept Terms of Service and Privacy Policy to continue",
+                title: t("legal.toasts.incomplete.title"),
+                description: t("legal.toasts.incomplete.description"),
                 variant: "destructive"
             });
             return;
@@ -33,6 +35,7 @@ export function TermsAcceptanceModal({ open, userId, onAccept }: TermsAcceptance
         try {
             const now = new Date().toISOString();
 
+            // @ts-ignore - Supabase type inference issue
             const { error } = await supabase
                 .from('users')
                 .update({
@@ -47,8 +50,8 @@ export function TermsAcceptanceModal({ open, userId, onAccept }: TermsAcceptance
         } catch (error) {
             console.error('Error accepting terms:', error);
             toast({
-                title: "Error",
-                description: "Could not save acceptance. Please try again.",
+                title: t("legal.toasts.error.title"),
+                description: t("legal.toasts.error.description"),
                 variant: "destructive"
             });
         } finally {
@@ -64,12 +67,12 @@ export function TermsAcceptanceModal({ open, userId, onAccept }: TermsAcceptance
                 onEscapeKeyDown={(e) => e.preventDefault()}
             >
                 <DialogHeader>
-                    <DialogTitle className="text-2xl">Welcome to OpenSport!</DialogTitle>
+                    <DialogTitle className="text-2xl">{t("legal.title")}</DialogTitle>
                 </DialogHeader>
 
                 <div className="space-y-6">
                     <p className="text-muted-foreground">
-                        Before you start your football journey, please review and accept our terms:
+                        {t("legal.description")}
                     </p>
 
                     {/* Terms Checkbox */}
@@ -82,7 +85,7 @@ export function TermsAcceptanceModal({ open, userId, onAccept }: TermsAcceptance
                         />
                         <div className="flex-1">
                             <label htmlFor="terms" className="text-sm font-medium cursor-pointer leading-relaxed">
-                                I have read and agree to the{" "}
+                                {t("legal.readMore")}{" "}
                             </label>
                             <button
                                 type="button"
@@ -92,7 +95,7 @@ export function TermsAcceptanceModal({ open, userId, onAccept }: TermsAcceptance
                                 }}
                                 className="text-primary hover:underline inline-flex items-center gap-1 font-bold bg-transparent border-none p-0 cursor-pointer text-sm"
                             >
-                                Terms of Service
+                                {t("player.profile.terms")}
                                 <ExternalLink className="h-3 w-3" />
                             </button>
                         </div>
@@ -108,7 +111,7 @@ export function TermsAcceptanceModal({ open, userId, onAccept }: TermsAcceptance
                         />
                         <div className="flex-1">
                             <label htmlFor="privacy" className="text-sm font-medium cursor-pointer leading-relaxed">
-                                I have read and agree to the{" "}
+                                {t("legal.readMore")}{" "}
                             </label>
                             <button
                                 type="button"
@@ -118,7 +121,7 @@ export function TermsAcceptanceModal({ open, userId, onAccept }: TermsAcceptance
                                 }}
                                 className="text-primary hover:underline inline-flex items-center gap-1 font-bold bg-transparent border-none p-0 cursor-pointer text-sm"
                             >
-                                Privacy Policy
+                                {t("player.profile.privacy")}
                                 <ExternalLink className="h-3 w-3" />
                             </button>
                         </div>
@@ -126,8 +129,7 @@ export function TermsAcceptanceModal({ open, userId, onAccept }: TermsAcceptance
 
                     <div className="bg-muted/50 p-4 rounded-lg">
                         <p className="text-xs text-muted-foreground">
-                            <strong>What we collect:</strong> Videos you upload, analysis results, and training progress.
-                            Your data is encrypted and never sold to third parties.
+                            <strong>{t("legal.collect")}</strong> {t("legal.collectDescription")}
                         </p>
                     </div>
                 </div>
@@ -139,7 +141,7 @@ export function TermsAcceptanceModal({ open, userId, onAccept }: TermsAcceptance
                         className="w-full"
                         size="lg"
                     >
-                        {loading ? "Saving..." : "Accept and Continue"}
+                        {loading ? t("legal.saving") : t("legal.accept")}
                     </Button>
                 </DialogFooter>
             </DialogContent >

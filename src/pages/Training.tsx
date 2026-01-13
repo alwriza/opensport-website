@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@clerk/clerk-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useSearchParams } from "react-router-dom";
-import { Play, TrendingUp, Target, Brain, Loader2, Filter, Lock, CheckCircle, Circle, Trophy, Flame, Star, Zap, ChevronRight, ExternalLink } from "lucide-react";
+import { Play, Target, Loader2, Filter, Lock, CheckCircle, Circle, Trophy, Flame, Star, Zap, ChevronRight, ExternalLink } from "lucide-react";
 
 interface Exercise {
   id: string;
@@ -77,6 +78,7 @@ interface SkillProgress {
 }
 
 const Training = () => {
+  const { t } = useTranslation(["training", "common"]);
   const { user, isLoaded } = useUser();
   const { toast } = useToast();
 
@@ -166,7 +168,7 @@ const Training = () => {
           .single();
 
         if (error) throw error;
-        if (data) setDbUserId(data.id);
+        if (data) setDbUserId((data as any).id);
       } catch (error) {
         console.error("Error fetching db user id:", error);
       }
@@ -319,8 +321,9 @@ const Training = () => {
       const allLevelsCompleted = completedLevels.length === 3;
 
       if (currentProgress) {
-        await supabase
-          .from('player_skill_progress' as any)
+        // @ts-ignore
+        await (supabase
+          .from('player_skill_progress' as any) as any)
           .update({
             completed_levels: completedLevels,
             is_completed: allLevelsCompleted,
@@ -363,8 +366,9 @@ const Training = () => {
 
       const longestStreak = Math.max(newStreak, playerProgress?.longest_streak || 0);
 
-      await supabase
-        .from('player_progress' as any)
+      // @ts-ignore
+      await (supabase
+        .from('player_progress' as any) as any)
         .update({
           total_xp: newXP,
           level: newLevel,
@@ -403,15 +407,15 @@ const Training = () => {
       });
 
       toast({
-        title: "Level Completed! 🎉",
-        description: `+${level.xp_reward} XP earned!`,
+        title: t("toasts.levelCompleted.title"),
+        description: t("toasts.levelCompleted.description", { xp: level.xp_reward }),
       });
 
     } catch (error) {
       console.error('Error completing level:', error);
       toast({
-        title: "Error",
-        description: "Could not complete level",
+        title: t("common:errors.generic"),
+        description: t("toasts.error.completeLevel"),
         variant: "destructive"
       });
     }
@@ -435,8 +439,8 @@ const Training = () => {
 
       setAnalysisResult(data.analysis);
       toast({
-        title: "Analysis Complete",
-        description: "Exercise analyzed successfully!",
+        title: t("toasts.analysisComplete.title"),
+        description: t("toasts.analysisComplete.description"),
       });
     } catch (error: any) {
       toast({
@@ -500,9 +504,9 @@ const Training = () => {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-gradient mb-2">Training Center</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-gradient mb-2">{t("header.title")}</h1>
             <p className="text-muted-foreground text-sm md:text-base">
-              Master your skills with AI-powered training programs
+              {t("header.subtitle")}
             </p>
           </div>
 
@@ -514,7 +518,7 @@ const Training = () => {
                   <Star className="h-4 w-4 md:h-6 md:w-6 text-white" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] md:text-xs text-muted-foreground uppercase font-bold tracking-wider">Level</p>
+                  <p className="text-[10px] md:text-xs text-muted-foreground uppercase font-bold tracking-wider">{t("stats.level")}</p>
                   <p className="text-lg md:text-2xl font-bold">{userLevel}</p>
                 </div>
               </CardContent>
@@ -526,7 +530,7 @@ const Training = () => {
                   <Flame className="h-4 w-4 md:h-6 md:w-6 text-white" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] md:text-xs text-muted-foreground uppercase font-bold tracking-wider">Streak</p>
+                  <p className="text-[10px] md:text-xs text-muted-foreground uppercase font-bold tracking-wider">{t("stats.streak")}</p>
                   <p className="text-lg md:text-2xl font-bold">{streak}</p>
                 </div>
               </CardContent>
@@ -538,7 +542,7 @@ const Training = () => {
                   <Zap className="h-4 w-4 md:h-6 md:w-6 text-white" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] md:text-xs text-muted-foreground uppercase font-bold tracking-wider">XP</p>
+                  <p className="text-[10px] md:text-xs text-muted-foreground uppercase font-bold tracking-wider">{t("stats.xp")}</p>
                   <p className="text-lg md:text-2xl font-bold">{userXP}</p>
                 </div>
               </CardContent>
@@ -550,8 +554,8 @@ const Training = () => {
         <Card className="bg-gradient-card border-2 border-primary/20">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-bold">Level {userLevel} Progress</span>
-              <span className="text-sm text-muted-foreground">{userXP % 500}/500 XP to next level</span>
+              <span className="text-sm font-bold">{t("progress.levelProgress", { level: userLevel })}</span>
+              <span className="text-sm text-muted-foreground">{t("progress.xpToNext", { current: userXP % 500, total: 500 })}</span>
             </div>
             <Progress value={xpProgress} className="h-3 bg-muted" />
           </CardContent>
@@ -562,19 +566,19 @@ const Training = () => {
         <TabsList className="grid w-full grid-cols-2 h-14 p-1 bg-card border border-white/5 rounded-xl">
           <TabsTrigger value="interactive" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-black text-muted-foreground font-bold">
             <Trophy className="h-4 w-4 mr-2" />
-            Skill Tree
+            {t("tabs.skillTree")}
           </TabsTrigger>
           <TabsTrigger value="exercises" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-black text-muted-foreground font-bold">
             <Target className="h-4 w-4 mr-2" />
-            Exercise Library
+            {t("tabs.library")}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="interactive" className="space-y-6">
           <Card className="border-none shadow-none bg-transparent">
             <CardHeader className="px-0">
-              <CardTitle className="text-2xl font-bold">Your Potential Skill Tree</CardTitle>
-              <CardDescription>Master fundamental nodes to unlock elite training programs</CardDescription>
+              <CardTitle className="text-2xl font-bold">{t("skillTree.title")}</CardTitle>
+              <CardDescription>{t("skillTree.description")}</CardDescription>
             </CardHeader>
             <CardContent className="px-0">
               {isLoadingTraining ? (
@@ -611,7 +615,7 @@ const Training = () => {
                         {unlocked ? (
                           <div className="w-full mt-2">
                             <div className="flex justify-between text-[10px] font-bold text-slate-500 mb-1.5 px-1">
-                              <span>PROGRESS</span>
+                              <span>{t("skillTree.progress")}</span>
                               <span>{Math.round((completedCount / (levels.length || 1)) * 100)}%</span>
                             </div>
                             <Progress value={(completedCount / (levels.length || 1)) * 100} className="h-1.5" />
@@ -644,11 +648,11 @@ const Training = () => {
                     <h2 className="text-3xl font-bold">{selectedSkill.name}</h2>
                     <p className="text-slate-600 leading-relaxed font-medium">{selectedSkill.description}</p>
                     <Button variant="outline" onClick={() => setSelectedSkill(null)} className="w-full rounded-2xl">
-                      Back to Tree
+                      {t("skillTree.back")}
                     </Button>
                   </div>
                   <div className="md:w-2/3 space-y-4">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">Available Training Tiers</h3>
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">{t("skillTree.availableTiers")}</h3>
                     <div className="grid gap-3">
                       {getLevelsForSkill(selectedSkill.id).map((level) => {
                         const unlocked = isLevelUnlocked(selectedSkill.id, level.level_order);
@@ -668,7 +672,7 @@ const Training = () => {
                                 {isCompleted ? <CheckCircle className="h-6 w-6" /> : level.level_order}
                               </div>
                               <div>
-                                <p className="font-bold text-slate-900 capitalize">{level.level_name} Tier</p>
+                                <p className="font-bold text-slate-900 capitalize">{t("skillTree.tier", { name: level.level_name })}</p>
                                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">{level.video_title}</p>
                               </div>
                             </div>
@@ -683,7 +687,7 @@ const Training = () => {
                                   setShowVideoModal(true);
                                 }}
                               >
-                                {isCompleted ? 'Review' : 'Train'}
+                                {isCompleted ? t("skillTree.review") : t("skillTree.train")}
                               </Button>
                             </div>
                           </div>
@@ -702,7 +706,7 @@ const Training = () => {
             <div className="md:col-span-1 space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-sm font-bold uppercase tracking-widest text-slate-400">Categories</CardTitle>
+                  <CardTitle className="text-sm font-bold uppercase tracking-widest text-slate-400">{t("library.categories")}</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-2">
                   {['all', 'passing', 'technical', 'dribbling', 'shooting', 'defensive', 'physical', 'mental'].map(cat => (
@@ -712,7 +716,7 @@ const Training = () => {
                       onClick={() => setCategoryFilter(cat)}
                       className="justify-start text-xs font-bold uppercase tracking-widest px-4 h-10 rounded-xl"
                     >
-                      {cat}
+                      {t(`library.cat.${cat}`)}
                     </Button>
                   ))}
                 </CardContent>
@@ -750,7 +754,7 @@ const Training = () => {
                             </div>
                           )}
                           <Badge className="absolute bottom-3 left-3 bg-black/50 backdrop-blur-md border-none text-[10px] font-bold uppercase">
-                            {level.duration_minutes} MIN
+                            {level.duration_minutes} {t("library.min")}
                           </Badge>
                         </div>
                         <CardHeader className="p-5">
@@ -781,143 +785,7 @@ const Training = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="feedback" className="space-y-4">
-          {analysisResult ? (
-            <>
-              {selectedExercise && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="capitalize">Analyzing: {selectedExercise.exercise_type}</CardTitle>
-                    <CardDescription>Difficulty: {selectedExercise.difficulty}</CardDescription>
-                  </CardHeader>
-                </Card>
-              )}
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5" />
-                    Performance Scores
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Technique</span>
-                      <span className="font-medium">{analysisResult.technique_score}/100</span>
-                    </div>
-                    <Progress value={analysisResult.technique_score} />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Speed</span>
-                      <span className="font-medium">{analysisResult.speed_score}/100</span>
-                    </div>
-                    <Progress value={analysisResult.speed_score} />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Control</span>
-                      <span className="font-medium">{analysisResult.control_score}/100</span>
-                    </div>
-                    <Progress value={analysisResult.control_score} />
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm font-medium">
-                      <span>Overall Score</span>
-                      <span>{analysisResult.overall_score}/100</span>
-                    </div>
-                    <Progress value={analysisResult.overall_score} className="h-3" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Target className="h-5 w-5" />
-                    Coaching Feedback
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <h4 className="font-semibold mb-2 text-green-600">Strengths</h4>
-                    <ul className="list-disc list-inside space-y-1">
-                      {analysisResult.feedback.strengths.map((strength: string, idx: number) => (
-                        <li key={idx} className="text-sm">{strength}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold mb-2 text-amber-600">Areas for Improvement</h4>
-                    <ul className="list-disc list-inside space-y-1">
-                      {analysisResult.feedback.improvements.map((improvement: string, idx: number) => (
-                        <li key={idx} className="text-sm">{improvement}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold mb-2 text-blue-600">Coaching Tips</h4>
-                    <ul className="list-disc list-inside space-y-1">
-                      {analysisResult.feedback.coaching_tips.map((tip: string, idx: number) => (
-                        <li key={idx} className="text-sm">{tip}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </CardContent>
-              </Card>
-            </>
-          ) : (
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                Select an exercise from the library to view AI analysis and feedback
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="recommendations" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Brain className="h-5 w-5" />
-                Personalized AI Recommendations
-              </CardTitle>
-              <CardDescription>
-                Based on your training data and performance
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button onClick={fetchRecommendations} className="w-full">
-                Generate Recommendations
-              </Button>
-            </CardContent>
-          </Card>
-
-          {recommendations.length > 0 && (
-            <div className="grid gap-4">
-              {recommendations.map((rec, idx) => (
-                <Card key={idx}>
-                  <CardHeader>
-                    <CardTitle className="text-lg">{rec.title}</CardTitle>
-                    <CardDescription className="capitalize">
-                      {rec.recommendation_type} • Priority: {rec.priority}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm">{rec.description}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+      </Tabs >
 
       {/* Video Modal UI */}
       {
@@ -939,14 +807,14 @@ const Training = () => {
                     <h2 className="text-2xl font-bold text-slate-900">{selectedLevel.video_title}</h2>
                     <div className="flex items-center gap-2 mt-2">
                       <Badge className="bg-primary/10 text-primary border-none text-[10px] font-bold uppercase tracking-widest">
-                        {selectedLevel.level_name} tier
+                        {t("skillTree.tier", { name: selectedLevel.level_name })}
                       </Badge>
                       <span className="text-slate-300">•</span>
-                      <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">{selectedLevel.duration_minutes} Minutes</span>
+                      <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">{selectedLevel.duration_minutes} {t("library.min")}</span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold text-primary">REWARD</p>
+                    <p className="text-sm font-bold text-primary">{t("modal.reward")}</p>
                     <p className="text-2xl font-bold">+{selectedLevel.xp_reward} XP</p>
                   </div>
                 </div>
@@ -957,12 +825,12 @@ const Training = () => {
                   <div className="flex items-center gap-2 text-slate-500">
                     <ExternalLink className="h-4 w-4" />
                     <a href={selectedLevel.youtube_url} target="_blank" rel="noopener noreferrer" className="text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors">
-                      Watch on YouTube
+                      {t("modal.watchOnYoutube")}
                     </a>
                   </div>
                   <div className="flex gap-3">
                     <Button variant="outline" onClick={() => setShowVideoModal(false)} className="rounded-2xl px-8">
-                      Close
+                      {t("modal.close")}
                     </Button>
                     <Button
                       className="rounded-2xl px-12 shadow-xl shadow-primary/20"
@@ -971,7 +839,7 @@ const Training = () => {
                         setShowVideoModal(false);
                       }}
                     >
-                      Mark as Completed
+                      {t("modal.markCompleted")}
                     </Button>
                   </div>
                 </div>

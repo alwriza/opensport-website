@@ -1,0 +1,50 @@
+{
+    "inviteModal": {
+        "title": "",
+        "description": "",
+        "tabs": {
+            "code": "",
+            "email": "",
+            "link": ""
+        },
+        "codeTab": {
+            "label": "",
+            "copyToast": {
+                "title": "",
+                "description": ""
+            },
+            "description": ""
+        },
+        "emailTab": {
+            "label": "",
+            "placeholder": "",
+            "description": "",
+            "button": "",
+            "loading": "",
+            "toasts": {
+                "userNotFound": {
+                    "title": "",
+                    "description": ""
+                },
+                "success": {
+                    "title": "",
+                    "description": ""
+                },
+                "error": {
+                    "title": "",
+                    "description": ""
+                }
+            }
+        },
+        "linkTab": {
+            "label": "",
+            "copyToast": {
+                "title": "",
+                "description": ""
+            },
+            "description": "",
+            "button": ""
+        },
+        "close": ""
+    }
+}

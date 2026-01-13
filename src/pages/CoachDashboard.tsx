@@ -24,6 +24,7 @@ import {
   AlertCircle,
   ChevronDown,
   Trophy,
+  Loader2,
 } from "lucide-react";
 import { CreateTeamModal } from "@/components/ui/CreateTeamModal";
 import { InvitePlayersModal } from "@/components/ui/InvitePlayersModal";
@@ -36,10 +37,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TermsAcceptanceModal } from "@/components/ui/TermsAcceptanceModal";
+import { useTranslation } from "react-i18next";
 
 
 
 export default function CoachDashboard() {
+  const { t } = useTranslation("dashboard");
   const { user, isLoaded } = useUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -147,6 +150,7 @@ export default function CoachDashboard() {
   // Derived state to handle auto-selection of the first team
   const activeTeamId = selectedTeamId || teams[0]?.id;
 
+
   const selectedTeam = useMemo(() =>
     teams.find(t => t.id === activeTeamId) || null,
     [teams, activeTeamId]);
@@ -226,6 +230,8 @@ export default function CoachDashboard() {
     enabled: !!activeTeamId,
     refetchInterval: 7000,
   });
+
+  const isLoading = !isLoaded || loadingTeams || loadingRoster;
 
   const filteredRoster = useMemo(() => {
     const filtered = roster.filter(player => {
@@ -313,10 +319,9 @@ export default function CoachDashboard() {
         .eq('id', rosterId);
 
       if (error) throw error;
-
       toast({
-        title: "Player Approved",
-        description: "The player has been added to the team roster.",
+        title: t("coach.toasts.approveSuccess.title"),
+        description: t("coach.toasts.approveSuccess.description"),
       });
 
       if (activeTeamId) {
@@ -325,15 +330,15 @@ export default function CoachDashboard() {
     } catch (error: any) {
       console.error('Error approving player:', error);
       toast({
-        title: "Error",
-        description: "Could not approve player",
+        title: t("coach.toasts.approveError.title"),
+        description: error.message || t("coach.toasts.approveError.description"),
         variant: "destructive"
       });
     }
   };
 
   const handleDeclinePlayer = async (rosterId: string) => {
-    if (!confirm("Are you sure you want to decline this player's request?")) {
+    if (!confirm(t("coach.confirms.declinePlayer"))) {
       return;
     }
 
@@ -346,8 +351,8 @@ export default function CoachDashboard() {
       if (error) throw error;
 
       toast({
-        title: "Request Declined",
-        description: "The player's request has been removed.",
+        title: t("coach.toasts.declineSuccess.title"),
+        description: t("coach.toasts.declineSuccess.description"),
       });
 
       if (activeTeamId) {
@@ -356,15 +361,15 @@ export default function CoachDashboard() {
     } catch (error: any) {
       console.error('Error declining player:', error);
       toast({
-        title: "Error",
-        description: "Could not decline player",
+        title: t("coach.toasts.declineError.title"),
+        description: error.message || t("coach.toasts.declineError.description"),
         variant: "destructive"
       });
     }
   };
 
   const handleRemovePlayer = async (rosterId: string, playerName: string) => {
-    if (!confirm(`Are you sure you want to remove ${playerName} from the team?`)) {
+    if (!confirm(t("coach.confirms.removePlayer", { name: playerName }))) {
       return;
     }
 
@@ -377,8 +382,8 @@ export default function CoachDashboard() {
       if (error) throw error;
 
       toast({
-        title: "Player Removed",
-        description: `${playerName} has been removed from the team`,
+        title: t("coach.toasts.removeSuccess.title"),
+        description: t("coach.toasts.removeSuccess.description", { name: playerName }),
       });
 
       if (activeTeamId) {
@@ -387,21 +392,15 @@ export default function CoachDashboard() {
     } catch (error: any) {
       console.error('Error removing player:', error);
       toast({
-        title: "Error",
-        description: "Could not remove player",
+        title: t("coach.toasts.removeError.title"),
+        description: error.message || t("coach.toasts.removeError.description"),
         variant: "destructive"
       });
     }
   };
 
   const handleDeleteTeam = async (teamId: string, teamName: string) => {
-    if (!confirm(
-      `Are you sure you want to delete "${teamName}"?\n\n` +
-      `This will:\n` +
-      `- Remove all players from the team\n` +
-      `- Delete all team data\n` +
-      `- This action cannot be undone!`
-    )) {
+    if (!confirm(t("coach.confirms.deleteTeam", { name: teamName }))) {
       return;
     }
 
@@ -414,8 +413,8 @@ export default function CoachDashboard() {
       if (error) throw error;
 
       toast({
-        title: "Team Deleted",
-        description: `${teamName} has been deleted`,
+        title: t("coach.toasts.deleteTeamSuccess.title"),
+        description: t("coach.toasts.deleteTeamSuccess.description", { name: teamName }),
       });
 
       queryClient.invalidateQueries({ queryKey: ['coach-teams', coachDbId] });
@@ -426,8 +425,8 @@ export default function CoachDashboard() {
     } catch (error: any) {
       console.error('Error deleting team:', error);
       toast({
-        title: "Error",
-        description: "Could not delete team",
+        title: t("coach.toasts.deleteTeamError.title"),
+        description: error.message || t("coach.toasts.deleteTeamError.description"),
         variant: "destructive"
       });
     }
@@ -443,12 +442,31 @@ export default function CoachDashboard() {
     }));
   };
 
-  if (!isLoaded || loadingTeams) {
+  const resetFilters = () => {
+    setSearchQuery('');
+    setFilterPosition('All');
+    setFilterAgeRange([0, 100]);
+    setFilterScoreRange([0, 100]);
+    setFilterRecency('All');
+    setSortBy('name');
+    setSortOrder('asc');
+  };
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'beginner': return 'bg-success';
+      case 'intermediate': return 'bg-warning';
+      case 'advanced': return 'bg-destructive';
+      default: return 'bg-muted';
+    }
+  };
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading dashboard...</p>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <p className="text-sm font-black uppercase tracking-widest opacity-40">{t("coach.loading")}</p>
         </div>
       </div>
     );
@@ -467,92 +485,75 @@ export default function CoachDashboard() {
           }}
         />
       )}
-      <div className="container mx-auto max-w-7xl">
+      <div className="container mx-auto px-4 md:px-6 py-8 space-y-8">
         {/* Header */}
-        <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 mb-1">Coach Dashboard</h1>
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground font-medium">
-                Welcome back, <span className="text-primary">{(coachProfile as any)?.name || user?.fullName || 'Coach'}</span>
-              </span>
-              <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-bold px-3 py-1 uppercase tracking-wider text-[10px]">
-                Coach
-              </Badge>
-            </div>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h1 className="text-3xl md:text-5xl font-black tracking-tighter text-gradient">
+              {t("coach.title")}
+            </h1>
+            <p className="text-muted-foreground font-medium">
+              {t("coach.welcome", { name: user?.firstName || user?.username })}
+            </p>
           </div>
-        </header>
-
-        {/* Team Selector */}
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-8">
-          <Select value={selectedTeamId || teams[0]?.id} onValueChange={setSelectedTeamId}>
-            <SelectTrigger className="w-full md:w-64 bg-background border-muted-foreground/20">
-              <SelectValue placeholder="Select a team" />
-            </SelectTrigger>
-            <SelectContent>
-              {teams.map((team: any) => (
-                <SelectItem key={team.id} value={team.id}>
-                  {team.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Button onClick={() => setShowCreateModal(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Team
-          </Button>
-
-          {selectedTeam && (
+          <div className="flex flex-wrap items-center gap-3">
+            <Select value={activeTeamId} onValueChange={setSelectedTeamId}>
+              <SelectTrigger className="w-[200px] bg-card border-white/5">
+                <SelectValue placeholder={t("coach.selectTeam")} />
+              </SelectTrigger>
+              <SelectContent>
+                {teams.map(team => (
+                  <SelectItem key={team.id} value={team.id}>
+                    {team.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Button
-              variant="destructive"
-              onClick={() => handleDeleteTeam(selectedTeam.id, selectedTeam.name)}
+              className="bg-primary hover:bg-primary/90 text-black font-bold"
+              onClick={() => setShowCreateModal(true)}
             >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete Team
+              <Plus className="h-4 w-4 mr-2" />
+              {t("coach.createTeam")}
             </Button>
-          )}
+          </div>
         </div>
 
-
-        {/* Team Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          {/* Total Players */}
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           <Card className="bg-card border-white/5 shadow-xl shadow-black/20">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Players</p>
+                  <p className="text-sm text-muted-foreground">{t("stats.totalPlayers")}</p>
                   <p className="text-2xl font-bold">{roster.length}</p>
                 </div>
-                <Users className="h-8 w-8 text-muted-foreground" />
+                <Users className="h-8 w-8 text-primary" />
               </div>
             </CardContent>
           </Card>
 
-          {/* Average Score */}
           <Card className="bg-card border-white/5 shadow-xl shadow-black/20">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Avg Score</p>
+                  <p className="text-sm text-muted-foreground">{t("stats.avgScore")}</p>
                   <p className="text-2xl font-bold">
                     {roster.length > 0
-                      ? (roster.reduce((sum: number, p: any) => sum + (p.latest_score || 0), 0) / roster.length).toFixed(1)
-                      : '-'}
+                      ? (roster.reduce((acc: number, p: any) => acc + (p.latest_score || 0), 0) / roster.length).toFixed(1)
+                      : '0.0'}
                   </p>
                 </div>
-                <Trophy className="h-8 w-8 text-muted-foreground" />
+                <Clock className="h-8 w-8 text-primary" />
               </div>
             </CardContent>
           </Card>
 
-          {/* Active This Week */}
           <Card className="bg-card border-white/5 shadow-xl shadow-black/20">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Active This Week</p>
+                  <p className="text-sm text-muted-foreground">{t("stats.activeThisWeek")}</p>
                   <p className="text-2xl font-bold">
                     {roster.filter((p: any) => {
                       if (!p.last_upload) return false;
@@ -567,12 +568,11 @@ export default function CoachDashboard() {
             </CardContent>
           </Card>
 
-          {/* Top Performer */}
           <Card className="bg-card border-white/5 shadow-xl shadow-black/20">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Top Performer</p>
+                  <p className="text-sm text-muted-foreground">{t("stats.topPerformer")}</p>
                   <p className="text-lg font-bold">
                     {roster.length > 0
                       ? roster.reduce((max: any, p: any) => (p.latest_score || 0) > (max.latest_score || 0) ? p : max, roster[0])?.name
@@ -585,21 +585,21 @@ export default function CoachDashboard() {
           </Card>
         </div>
 
-        {/* Roster Table */}
+        {/* Search & Roster Header */}
         <Card className="bg-card border-white/5 shadow-xl shadow-black/20 overflow-hidden">
           <CardHeader>
             <div className="flex flex-col gap-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <CardTitle className="text-white">Team Roster</CardTitle>
+                <CardTitle className="text-white">{t("tabs.roster")}</CardTitle>
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <input
                       type="text"
-                      placeholder="Search players..."
+                      placeholder={t("coach.searchPlayers")}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-9 pr-4 py-2 rounded-lg border bg-background w-full md:w-64 focus:ring-2 focus:ring-primary/20 transition-all"
+                      className="pl-9 pr-4 py-2 rounded-lg border bg-background w-full md:w-64 focus:ring-2 focus:ring-primary/20 transition-all text-white"
                     />
                   </div>
 
@@ -609,29 +609,29 @@ export default function CoachDashboard() {
                     className={`${showFilters ? 'bg-muted' : ''} transition-all`}
                   >
                     <Filter className="h-4 w-4 mr-2" />
-                    Filters
+                    {t("coach.filters.title")}
                     <ChevronDown className={`ml-2 h-4 w-4 transition-transform duration-300 ${showFilters ? 'rotate-180' : ''}`} />
                   </Button>
 
                   <Button onClick={() => setShowInviteModal(true)}>
                     <UserPlus className="h-4 w-4 mr-2" />
-                    Invite Players
+                    {t("coach.invitePlayers")}
                   </Button>
                 </div>
               </div>
 
               {showFilters && (
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 p-4 border rounded-lg bg-muted/30">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 p-4 border rounded-lg bg-muted/30">
                   <div className="space-y-2">
-                    <label className="text-xs font-medium uppercase text-muted-foreground">Position</label>
+                    <label className="text-xs font-medium uppercase text-muted-foreground">{t("coach.filters.position")}</label>
                     <Select value={filterPosition} onValueChange={setFilterPosition}>
                       <SelectTrigger className="w-full bg-background border-muted-foreground/20">
-                        <SelectValue placeholder="Position" />
+                        <SelectValue placeholder={t("coach.filters.position")} />
                       </SelectTrigger>
                       <SelectContent>
                         {POSITIONS.map(pos => (
                           <SelectItem key={pos} value={pos}>
-                            {pos === 'All' ? 'All Positions' : pos}
+                            {pos === 'All' ? t("coach.filters.allPositions") : pos}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -639,97 +639,82 @@ export default function CoachDashboard() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-xs font-medium uppercase text-muted-foreground">Age Range</label>
+                    <label className="text-xs font-medium uppercase text-muted-foreground">{t("coach.filters.ageRange")}</label>
                     <div className="flex gap-2">
                       <input
                         type="number"
-                        min="0"
-                        max="100"
-                        placeholder="Min"
-                        className="w-1/2 px-3 py-2 rounded-lg border bg-background"
+                        placeholder={t("coach.filters.min")}
+                        className="w-1/2 px-3 py-2 rounded-lg border bg-background text-white"
                         value={filterAgeRange[0]}
-                        onChange={(e) => setFilterAgeRange([Math.min(100, Math.max(0, parseInt(e.target.value) || 0)), filterAgeRange[1]])}
+                        onChange={(e) => setFilterAgeRange([parseInt(e.target.value) || 0, filterAgeRange[1]])}
                       />
                       <input
                         type="number"
-                        min="0"
-                        max="100"
-                        placeholder="Max"
-                        className="w-1/2 px-3 py-2 rounded-lg border bg-background"
+                        placeholder={t("coach.filters.max")}
+                        className="w-1/2 px-3 py-2 rounded-lg border bg-background text-white"
                         value={filterAgeRange[1]}
-                        onChange={(e) => setFilterAgeRange([filterAgeRange[0], Math.min(100, Math.max(0, parseInt(e.target.value) || 100))])}
+                        onChange={(e) => setFilterAgeRange([filterAgeRange[0], parseInt(e.target.value) || 120])}
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-xs font-medium uppercase text-muted-foreground">Score Range</label>
+                    <label className="text-xs font-medium uppercase text-muted-foreground">{t("coach.filters.performance")}</label>
                     <div className="flex gap-2">
                       <input
                         type="number"
-                        min="0"
-                        max="100"
-                        placeholder="Min"
-                        className="w-1/2 px-3 py-2 rounded-lg border bg-background"
+                        placeholder={t("coach.filters.minScore")}
+                        className="w-1/2 px-3 py-2 rounded-lg border bg-background text-white"
                         value={filterScoreRange[0]}
-                        onChange={(e) => setFilterScoreRange([Math.min(100, Math.max(0, parseInt(e.target.value) || 0)), filterScoreRange[1]])}
+                        onChange={(e) => setFilterScoreRange([parseInt(e.target.value) || 0, filterScoreRange[1]])}
                       />
                       <input
                         type="number"
-                        min="0"
-                        max="100"
-                        placeholder="Max"
-                        className="w-1/2 px-3 py-2 rounded-lg border bg-background"
+                        placeholder={t("coach.filters.maxScore")}
+                        className="w-1/2 px-3 py-2 rounded-lg border bg-background text-white"
                         value={filterScoreRange[1]}
-                        onChange={(e) => setFilterScoreRange([filterScoreRange[0], Math.min(100, Math.max(0, parseInt(e.target.value) || 100))])}
+                        onChange={(e) => setFilterScoreRange([filterScoreRange[0], parseInt(e.target.value) || 100])}
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-xs font-medium uppercase text-muted-foreground">Last Upload</label>
+                    <label className="text-xs font-medium uppercase text-muted-foreground">{t("coach.filters.lastUpload")}</label>
                     <Select value={filterRecency} onValueChange={setFilterRecency}>
                       <SelectTrigger className="w-full bg-background border-muted-foreground/20">
-                        <SelectValue placeholder="Last Upload" />
+                        <SelectValue placeholder={t("coach.filters.lastUpload")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="All">All Time</SelectItem>
-                        <SelectItem value="Today">Today</SelectItem>
-                        <SelectItem value="This Week">This Week</SelectItem>
-                        <SelectItem value="This Month">This Month</SelectItem>
+                        <SelectItem value="All">{t("coach.filters.recency.all")}</SelectItem>
+                        <SelectItem value="Today">{t("coach.filters.recency.today")}</SelectItem>
+                        <SelectItem value="This Week">{t("coach.filters.recency.thisWeek")}</SelectItem>
+                        <SelectItem value="This Month">{t("coach.filters.recency.thisMonth")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-xs font-medium uppercase text-muted-foreground">Sort By</label>
+                    <label className="text-xs font-medium uppercase text-muted-foreground">{t("coach.filters.sortBy")}</label>
                     <Select value={sortBy} onValueChange={setSortBy}>
                       <SelectTrigger className="w-full bg-background border-muted-foreground/20">
-                        <SelectValue placeholder="Sort By" />
+                        <SelectValue placeholder={t("coach.filters.sortBy")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="name">Name</SelectItem>
-                        <SelectItem value="age">Age</SelectItem>
-                        <SelectItem value="overall">Overall Score</SelectItem>
-                        <SelectItem value="stability">Stability</SelectItem>
-                        <SelectItem value="power">Power</SelectItem>
-                        <SelectItem value="technique">Technique</SelectItem>
-                        <SelectItem value="balance">Balance</SelectItem>
+                        <SelectItem value="name">{t("coach.filters.sorting.name")}</SelectItem>
+                        <SelectItem value="age">{t("coach.filters.sorting.age")}</SelectItem>
+                        <SelectItem value="overall">{t("coach.filters.sorting.overall")}</SelectItem>
+                        <SelectItem value="stability">{t("coach.filters.sorting.stability")}</SelectItem>
+                        <SelectItem value="power">{t("coach.filters.sorting.power")}</SelectItem>
+                        <SelectItem value="technique">{t("coach.filters.sorting.technique")}</SelectItem>
+                        <SelectItem value="balance">{t("coach.filters.sorting.balance")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-xs font-medium uppercase text-muted-foreground">Order</label>
-                    <Select value={sortOrder} onValueChange={(val) => setSortOrder(val as 'asc' | 'desc')}>
-                      <SelectTrigger className="w-full bg-background border-muted-foreground/20">
-                        <SelectValue placeholder="Order" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="asc">Ascending</SelectItem>
-                        <SelectItem value="desc">Descending</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="flex flex-col justify-end space-y-2">
+                    <Button variant="ghost" onClick={resetFilters} className="text-xs font-bold uppercase tracking-widest h-10 px-4">
+                      {t("coach.filters.reset")}
+                    </Button>
                   </div>
                 </div>
               )}
@@ -740,14 +725,14 @@ export default function CoachDashboard() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-white/5 bg-white/[0.02]">
-                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">#</th>
-                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">Name</th>
-                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">Age</th>
-                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">Pos</th>
-                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">Performance</th>
-                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">History</th>
-                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">Actions</th>
-                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">Flags</th>
+                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">{t("coach.rosterTable.num")}</th>
+                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">{t("coach.rosterTable.name")}</th>
+                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">{t("coach.rosterTable.age")}</th>
+                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">{t("coach.rosterTable.pos")}</th>
+                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">{t("coach.rosterTable.performance")}</th>
+                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">{t("coach.rosterTable.history")}</th>
+                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">{t("coach.rosterTable.actions")}</th>
+                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">{t("coach.rosterTable.flagsTitle")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -764,11 +749,11 @@ export default function CoachDashboard() {
                             <div className="font-bold text-white group-hover:text-primary transition-colors">{player.name}</div>
                             {player.status === 'pending' && (
                               <Badge className="mt-1 bg-amber-400 text-black border-none font-black text-[8px] px-1 py-0 h-4 uppercase tracking-tighter">
-                                Pending
+                                {t("coach.rosterTable.pending")}
                               </Badge>
                             )}
                             <div className="text-[10px] text-muted-foreground uppercase font-black tracking-tight opacity-70 mt-1">
-                              {player.last_upload ? `Last: ${new Date(player.last_upload).toLocaleDateString()}` : 'No Uploads'}
+                              {player.last_upload ? `${t("coach.filters.lastUpload")}: ${new Date(player.last_upload).toLocaleDateString()}` : t("coach.rosterTable.noData")}
                             </div>
                           </td>
                           <td className="p-4 text-sm text-muted-foreground font-medium">{player.age || '-'}</td>
@@ -788,7 +773,9 @@ export default function CoachDashboard() {
                                 )}
                               </div>
                             ) : (
-                              <span className="text-muted-foreground text-[10px] font-black uppercase tracking-widest opacity-30">No Data</span>
+                              <span className="text-muted-foreground text-[10px] font-black uppercase tracking-widest opacity-30">
+                                {t("coach.rosterTable.noData")}
+                              </span>
                             )}
                           </td>
                           <td className="p-4">
@@ -816,7 +803,7 @@ export default function CoachDashboard() {
                                     className="bg-primary text-black hover:bg-primary/90 h-8 font-black text-[10px] uppercase px-3"
                                     onClick={() => handleApprovePlayer(player.id, player.roster_id)}
                                   >
-                                    Approve
+                                    {t("coach.approve")}
                                   </Button>
                                   <Button
                                     size="sm"
@@ -824,7 +811,7 @@ export default function CoachDashboard() {
                                     className="border-white/10 hover:bg-white/5 h-8 font-black text-[10px] uppercase px-3 text-white"
                                     onClick={() => handleDeclinePlayer(player.roster_id)}
                                   >
-                                    Decline
+                                    {t("coach.decline")}
                                   </Button>
                                 </>
                               ) : (
@@ -835,7 +822,7 @@ export default function CoachDashboard() {
                                     className="h-8 rounded-xl bg-white/5 border-white/10 hover:bg-primary hover:text-black hover:border-primary transition-all text-white font-bold"
                                     onClick={() => setSelectedPlayerProfileId(player.id)}
                                   >
-                                    Details
+                                    {t("player.viewResults")}
                                   </Button>
                                   <Button
                                     variant="ghost"
@@ -856,7 +843,7 @@ export default function CoachDashboard() {
                                 size="icon"
                                 className={`h-8 w-8 rounded-xl transition-all ${flags.needsReview ? 'text-blue-400 bg-blue-400/10' : 'text-white/10 hover:text-white/30'}`}
                                 onClick={() => toggleFlag(player.id, 'needsReview')}
-                                title="Needs Review"
+                                title={t("coach.rosterTable.flags.needsReview")}
                               >
                                 <Stethoscope className="h-4 w-4" />
                               </Button>
@@ -865,7 +852,7 @@ export default function CoachDashboard() {
                                 size="icon"
                                 className={`h-8 w-8 rounded-xl transition-all ${flags.topProspect ? 'text-primary bg-primary/10' : 'text-white/10 hover:text-white/30'}`}
                                 onClick={() => toggleFlag(player.id, 'topProspect')}
-                                title="Top Prospect"
+                                title={t("coach.rosterTable.flags.topProspect")}
                               >
                                 <Star className="h-4 w-4" />
                               </Button>
@@ -874,7 +861,7 @@ export default function CoachDashboard() {
                                 size="icon"
                                 className={`h-8 w-8 rounded-xl transition-all ${flags.injuryNote ? 'text-destructive bg-destructive/10' : 'text-white/10 hover:text-white/30'}`}
                                 onClick={() => toggleFlag(player.id, 'injuryNote')}
-                                title="Injury Note"
+                                title={t("coach.rosterTable.flags.injuryNote")}
                               >
                                 <AlertCircle className="h-4 w-4" />
                               </Button>
@@ -888,17 +875,14 @@ export default function CoachDashboard() {
                       <td colSpan={8} className="p-12 text-center text-muted-foreground">
                         <div className="flex flex-col items-center max-w-xs mx-auto">
                           <Users className="h-12 w-12 opacity-10 mb-4" />
-                          <p className="text-sm font-bold uppercase tracking-widest opacity-40">No Players Found</p>
+                          <p className="text-sm font-bold uppercase tracking-widest opacity-40">{t("coach.rosterTable.noPlayers")}</p>
                           {(searchQuery || filterPosition !== 'All') && (
                             <Button
                               variant="link"
                               className="text-primary mt-2"
-                              onClick={() => {
-                                setSearchQuery('');
-                                setFilterPosition('All');
-                              }}
+                              onClick={resetFilters}
                             >
-                              Clear all filters
+                              {t("coach.rosterTable.clearFilters")}
                             </Button>
                           )}
                         </div>
