@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Youtube, Instagram } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export default function Footer() {
@@ -15,6 +16,19 @@ export default function Footer() {
                         <p className="text-gray-400 text-sm leading-relaxed ml-1">
                             {t("description")}
                         </p>
+                        <div className="flex gap-4 mt-6 ml-1">
+                            <a href="https://www.instagram.com/opensport.ai?igsh=MTZ5eHd0ajUwcGVkOA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-[#9FE870] transition-colors">
+                                <Instagram className="h-5 w-5" />
+                            </a>
+                            <a href="https://www.tiktok.com/@opensport_ai?_r=1&_t=ZM-933B8Y8fumJ" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-[#9FE870] transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-music">
+                                    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+                                </svg>
+                            </a>
+                            <a href="https://www.youtube.com/@opensport_ai" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-[#9FE870] transition-colors">
+                                <Youtube className="h-5 w-5" />
+                            </a>
+                        </div>
                     </div>
 
                     {/* Platform */}
@@ -41,7 +55,6 @@ export default function Footer() {
                         <ul className="space-y-3">
                             <li><a href="/#mission" className="text-gray-400 hover:text-[#9FE870] transition-colors text-sm">{t("about.mission")}</a></li>
                             <li><a href="/#how-it-works" className="text-gray-400 hover:text-[#9FE870] transition-colors text-sm">{t("about.howItWorks")}</a></li>
-                            <li><a href="mailto:contact@opensport.app" className="text-gray-400 hover:text-[#9FE870] transition-colors text-sm">{t("about.contact")}</a></li>
                         </ul>
                     </div>
                 </div>
