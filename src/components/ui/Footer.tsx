@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Youtube, Instagram } from "lucide-react";
+import { Youtube, Instagram, Linkedin } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export default function Footer() {
@@ -27,6 +27,9 @@ export default function Footer() {
                             </a>
                             <a href="https://www.youtube.com/@opensport_ai" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-[#9FE870] transition-colors">
                                 <Youtube className="h-5 w-5" />
+                            </a>
+                            <a href="https://www.linkedin.com/in/opensport" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-[#9FE870] transition-colors">
+                                <Linkedin className="h-5 w-5" />
                             </a>
                         </div>
                     </div>
