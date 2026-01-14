@@ -32,6 +32,9 @@ export default function Footer() {
                                 <Linkedin className="h-5 w-5" />
                             </a>
                         </div>
+                        <p className="text-gray-400 text-sm mt-4 ml-1 select-all">
+                            contact@opensport.app
+                        </p>
                     </div>
 
                     {/* Platform */}
