@@ -746,7 +746,7 @@ export default function PlayerDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">{t("stats.level")}</p>
-                <p className="text-2xl font-bold">12</p>
+                <p className="text-2xl font-bold">{trainingStats?.progress?.level || 1}</p>
               </div>
               <Trophy className="h-8 w-8 text-primary" />
             </div>
@@ -758,7 +758,7 @@ export default function PlayerDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">{t("stats.streak")}</p>
-                <p className="text-2xl font-bold">5 Days</p>
+                <p className="text-2xl font-bold">{trainingStats?.progress?.current_streak || 0} {t("player.training.dayStreak")}</p>
               </div>
               <Activity className="h-8 w-8 text-primary" />
             </div>
@@ -770,7 +770,7 @@ export default function PlayerDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">{t("stats.xp")}</p>
-                <p className="text-2xl font-bold">2,450</p>
+                <p className="text-2xl font-bold">{trainingStats?.progress?.total_xp?.toLocaleString() || 0}</p>
               </div>
               <TrendingUp className="h-8 w-8 text-primary" />
             </div>

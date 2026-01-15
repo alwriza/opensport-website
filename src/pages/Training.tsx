@@ -601,7 +601,7 @@ const Training = () => {
                         disabled={!unlocked}
                         className={`group relative p-4 md:p-8 rounded-3xl border-2 transition-all duration-300 text-center flex flex-col items-center gap-2 md:gap-4 ${unlocked
                           ? 'bg-card border-white/5 hover:border-primary hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1'
-                          : 'bg-white/5 border-transparent opacity-40 cursor-not-allowed'
+                          : 'bg-background/5 border-transparent opacity-40 cursor-not-allowed'
                           } ${isFullyCompleted ? 'ring-4 ring-primary/10 border-primary' : ''}`}
                       >
                         <div className={`text-5xl transition-transform group-hover:scale-110 ${!unlocked && 'grayscale'}`}>
@@ -641,7 +641,7 @@ const Training = () => {
           {/* Detailed Skill View Modal/Section could go here */}
           {selectedSkill && (
             <div ref={skillDetailsRef} className="pb-36">
-              <Card className="mt-8 mb-12 border-2 border-primary/20 bg-white p-8 rounded-[2rem] shadow-xl animate-in fade-in slide-in-from-bottom-4">
+              <Card className="mt-8 mb-12 border-2 border-primary/20 bg-background p-8 rounded-[2rem] shadow-xl animate-in fade-in slide-in-from-bottom-4">
                 <div className="flex flex-col md:flex-row gap-8">
                   <div className="md:w-1/3 space-y-4">
                     <div className="text-7xl mb-4">{selectedSkill.icon}</div>
@@ -662,7 +662,7 @@ const Training = () => {
                           <div
                             key={level.id}
                             className={`p-5 rounded-2xl border-2 flex items-center justify-between transition-all ${unlocked
-                              ? 'border-slate-100 bg-white hover:border-primary/30'
+                              ? 'border-slate-100 bg-background hover:border-primary/30'
                               : 'border-transparent bg-slate-50 opacity-40'
                               }`}
                           >
@@ -801,10 +801,10 @@ const Training = () => {
                   title={selectedLevel.video_title}
                 />
               </div>
-              <div className="p-8 bg-white space-y-6">
+              <div className="p-8 bg-background space-y-6">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h2 className="text-2xl font-bold text-slate-900">{selectedLevel.video_title}</h2>
+                    <h2 className="text-2xl font-bold text-white">{selectedLevel.video_title}</h2>
                     <div className="flex items-center gap-2 mt-2">
                       <Badge className="bg-primary/10 text-primary border-none text-[10px] font-bold uppercase tracking-widest">
                         {t("skillTree.tier", { name: selectedLevel.level_name })}
