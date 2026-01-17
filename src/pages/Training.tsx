@@ -346,7 +346,8 @@ const Training = () => {
       const newXP = (playerProgress?.total_xp || 0) + level.xp_reward;
       const newLevel = Math.floor(newXP / 500) + 1;
 
-      const today = new Date().toISOString().split('T')[0];
+      // Use local date to avoid timezone issues
+      const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in local time
       const lastActivity = playerProgress?.last_activity_date;
       let newStreak = playerProgress?.current_streak || 0;
 
@@ -355,7 +356,7 @@ const Training = () => {
       } else {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = yesterday.toISOString().split('T')[0];
+        const yesterdayStr = yesterday.toLocaleDateString('en-CA'); // YYYY-MM-DD in local time
 
         if (lastActivity === yesterdayStr) {
           newStreak += 1;

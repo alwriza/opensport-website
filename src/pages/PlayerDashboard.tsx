@@ -15,6 +15,7 @@ import { TeamProfileOverlay } from "@/components/ui/TeamProfileOverlay";
 import { Info } from "lucide-react";
 import { TermsAcceptanceModal } from "@/components/ui/TermsAcceptanceModal";
 import { useTranslation } from "react-i18next";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface VideoRecord {
   id: string;
@@ -48,6 +49,8 @@ export default function PlayerDashboard() {
   const [localUser, setLocalUser] = useState<any>(null);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [resultsModalOpen, setResultsModalOpen] = useState(false);
+  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+  const [loadingResults, setLoadingResults] = useState(false);
   const [selectedAnalysis, setSelectedAnalysis] = useState<any>(null);
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string>("");
   const [selectedTeamProfileId, setSelectedTeamProfileId] = useState<string | null>(null);
@@ -349,10 +352,10 @@ export default function PlayerDashboard() {
     const file = event.target.files?.[0];
     if (!file || !dbUser?.id) return;
 
-    if (file.size > 100 * 1024 * 1024) {
+    if (file.size > 50 * 1024 * 1024) {
       toast({
         title: "File too large",
-        description: "Maximum file size is 100MB",
+        description: "Maximum file size is 50MB",
         variant: "destructive"
       });
       return;
@@ -585,54 +588,73 @@ export default function PlayerDashboard() {
     }
   };
 
-  const openResultsModal = async (videoId: string) => {
-    try {
-      // Fetch analysis
-      const { data: analysisData, error: analysisError } = await supabase
-        .from('analyses')
-        .select('*')
-        .eq('video_id', videoId)
-        .single();
-
-      if (analysisError) throw analysisError;
-      setSelectedAnalysis(analysisData);
-
-      // Fetch video URL
-      const { data: videoData, error: videoError } = await supabase
-        .from('videos')
-        .select('storage_path')
-        .eq('id', videoId)
-        .single();
-
-      if (videoError) throw videoError;
-
-      const { data: urlData, error: urlError } = await supabase.storage
-        .from('videos')
-        .createSignedUrl((videoData as any).storage_path, 3600);
-
-      if (urlError) throw urlError;
-      setSelectedVideoUrl(urlData.signedUrl);
-
-      // Get recommendations
-      const scores = {
-        stability: (analysisData as any)?.stability || 0,
-        power: (analysisData as any)?.power || 0,
-        technique: (analysisData as any)?.technique || 0,
-        balance: (analysisData as any)?.balance || 0
-      };
-      const recommendations = await getRecommendedTraining(scores);
-      setRecommendedTraining(recommendations);
-
-      setResultsModalOpen(true);
-    } catch (error: any) {
-      console.error('Error loading results:', error);
-      toast({
-        title: "Error",
-        description: "Could not load analysis results.",
-        variant: "destructive"
-      });
-    }
+  // Open results modal instantly, then fetch data
+  const openResultsModal = (videoId: string) => {
+    // Clear previous data and open modal immediately
+    setSelectedAnalysis(null);
+    setSelectedVideoUrl("");
+    setRecommendedTraining([]);
+    setSelectedVideoId(videoId);
+    setResultsModalOpen(true);
   };
+
+  // Fetch data when modal is opened
+  useEffect(() => {
+    if (!resultsModalOpen || !selectedVideoId) return;
+
+    const fetchResultsData = async () => {
+      setLoadingResults(true);
+      try {
+        // Fetch analysis
+        const { data: analysisData, error: analysisError } = await supabase
+          .from('analyses')
+          .select('*')
+          .eq('video_id', selectedVideoId)
+          .single();
+
+        if (analysisError) throw analysisError;
+        setSelectedAnalysis(analysisData);
+
+        // Fetch video URL
+        const { data: videoData, error: videoError } = await supabase
+          .from('videos')
+          .select('storage_path')
+          .eq('id', selectedVideoId)
+          .single();
+
+        if (videoError) throw videoError;
+
+        const { data: urlData, error: urlError } = await supabase.storage
+          .from('videos')
+          .createSignedUrl((videoData as any).storage_path, 3600);
+
+        if (urlError) throw urlError;
+        setSelectedVideoUrl(urlData.signedUrl);
+
+        // Get recommendations
+        const scores = {
+          stability: (analysisData as any)?.stability || 0,
+          power: (analysisData as any)?.power || 0,
+          technique: (analysisData as any)?.technique || 0,
+          balance: (analysisData as any)?.balance || 0
+        };
+        const recommendations = await getRecommendedTraining(scores);
+        setRecommendedTraining(recommendations);
+
+      } catch (error: any) {
+        console.error('Error loading results:', error);
+        toast({
+          title: "Error",
+          description: "Could not load analysis results.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoadingResults(false);
+      }
+    };
+
+    fetchResultsData();
+  }, [resultsModalOpen, selectedVideoId]);
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-primary";
@@ -704,19 +726,24 @@ export default function PlayerDashboard() {
     );
   }
 
-  return (
-    <div className="container px-4 md:px-6 py-6 md:py-8 space-y-8 max-w-[1600px] mx-auto">
-      {/* Terms Acceptance Modal */}
-      {dbUser && (
+  // Block all dashboard content if terms are not accepted
+  if (showTermsModal && dbUser) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-card">
         <TermsAcceptanceModal
-          open={showTermsModal}
+          open={true}
           userId={(dbUser as any).id}
           onAccept={() => {
             setShowTermsModal(false);
             queryClient.invalidateQueries({ queryKey: ['db-user', user?.id] });
           }}
         />
-      )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="container px-4 md:px-6 py-6 md:py-8 space-y-8 max-w-[1600px] mx-auto">
 
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1331,12 +1358,12 @@ export default function PlayerDashboard() {
           <DialogHeader>
             <DialogTitle>{t("player.results.title")}</DialogTitle>
           </DialogHeader>
-          {selectedAnalysis && (
+          {selectedAnalysis ? (
             <div className="space-y-6">
               {/* Video and Overall Score */}
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center">
-                  {selectedVideoUrl && (
+                  {selectedVideoUrl ? (
                     <video
                       controls
                       playsInline
@@ -1344,6 +1371,11 @@ export default function PlayerDashboard() {
                       className="w-full h-full object-contain"
                       src={selectedVideoUrl}
                     />
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <Loader2 className="h-8 w-8 animate-spin" />
+                      <span className="text-xs">Loading video...</span>
+                    </div>
                   )}
                 </div>
                 <div className="flex flex-col justify-center">
@@ -1465,6 +1497,40 @@ export default function PlayerDashboard() {
                   </div>
                 </div>
               )}
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Loading Skeleton for Video and Score */}
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center">
+                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                    <span className="text-xs">Loading...</span>
+                  </div>
+                </div>
+                <div className="flex flex-col justify-center">
+                  <div className="text-center p-6 bg-primary/5 rounded-lg space-y-3">
+                    <Skeleton className="h-4 w-24 mx-auto" />
+                    <Skeleton className="h-16 w-32 mx-auto" />
+                    <Skeleton className="h-4 w-20 mx-auto" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Loading Skeleton for Metrics */}
+              <div className="space-y-3">
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+              </div>
+
+              {/* Loading Skeleton for Feedback */}
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-24" />
+                <Skeleton className="h-20 w-full" />
+              </div>
             </div>
           )}
         </DialogContent>

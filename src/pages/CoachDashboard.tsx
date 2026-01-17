@@ -473,19 +473,24 @@ export default function CoachDashboard() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-card p-8">
-      {/* Terms Acceptance Modal */}
-      {coachProfile && (
+  // Block all dashboard content if terms are not accepted
+  if (showTermsModal && coachProfile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-card">
         <TermsAcceptanceModal
-          open={showTermsModal}
+          open={true}
           userId={(coachProfile as any).id}
           onAccept={() => {
             setShowTermsModal(false);
             queryClient.invalidateQueries({ queryKey: ['coach-profile', user?.id] });
           }}
         />
-      )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-card p-8">
       <div className="container mx-auto px-4 md:px-6 py-8 space-y-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
