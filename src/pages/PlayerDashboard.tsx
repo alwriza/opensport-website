@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Upload, Trophy, Loader2, Video, AlertCircle, Plus, X, Users, Check, XCircle, LogOut, ChevronRight, ChevronUp, ChevronDown, Play, Activity, TrendingUp, Award } from "lucide-react";
+import { Upload, Trophy, Loader2, Video, AlertCircle, Plus, X, Users, Check, XCircle, LogOut, ChevronRight, ChevronUp, ChevronDown, Play, Activity, TrendingUp, Award, Flame, Target, Crosshair, Footprints, Shield, Dumbbell, Brain, Star, Zap, Swords, Goal, CircleDot, Gauge, HeartPulse, Clock, type LucideIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,6 +16,24 @@ import { Info } from "lucide-react";
 import { TermsAcceptanceModal } from "@/components/ui/TermsAcceptanceModal";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
+
+const emojiToIcon: Record<string, LucideIcon> = {
+  '⚽': Goal, '🎯': Crosshair, '🏃': Footprints, '🦶': CircleDot,
+  '🔥': Flame, '💪': Dumbbell, '🧠': Brain, '🛡️': Shield, '🛡': Shield,
+  '⭐': Star, '🏆': Trophy, '⚡': Zap, '🎮': Swords,
+  '🤾': HeartPulse, '🧘': Gauge,
+};
+
+const SkillIconDash = ({ icon, size = 'md' }: { icon: string; size?: 'sm' | 'md' | 'lg' }) => {
+  const IconComponent = emojiToIcon[icon] || Target;
+  const sizeMap = { sm: 'w-8 h-8 rounded-lg', md: 'w-12 h-12 rounded-xl', lg: 'w-14 h-14 rounded-xl' };
+  const iconMap = { sm: 'h-4 w-4', md: 'h-6 w-6', lg: 'h-7 w-7' };
+  return (
+    <div className={`${sizeMap[size]} bg-[#9FE870]/10 flex items-center justify-center shrink-0`}>
+      <IconComponent className={`${iconMap[size]} text-[#9FE870]`} />
+    </div>
+  );
+};
 
 interface VideoRecord {
   id: string;
@@ -927,8 +945,8 @@ export default function PlayerDashboard() {
                         >
                           <CardContent className="p-4 text-white">
                             <div className="flex items-center gap-4">
-                              <div className="text-4xl grayscale group-hover:grayscale-0 transition-all duration-500 transform group-hover:scale-110">
-                                {level.skills?.icon}
+                              <div className="transition-all duration-500 transform group-hover:scale-110">
+                                <SkillIconDash icon={level.skills?.icon || '⚽'} size="lg" />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <h4 className="font-bold text-sm group-hover:text-primary transition-colors text-white">
@@ -1252,8 +1270,8 @@ export default function PlayerDashboard() {
             <div className="h-1.5 bg-primary w-full" />
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center text-lg">
-                  🎯
+                <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <Crosshair className="h-4 w-4 text-primary" />
                 </div>
                 {t("player.training.title")}
               </CardTitle>
@@ -1278,7 +1296,7 @@ export default function PlayerDashboard() {
               {/* Streak */}
               <div className="flex items-center justify-between p-4 bg-orange-500/10 dark:bg-orange-500/5 rounded-2xl border border-orange-500/20">
                 <div className="flex items-center gap-4">
-                  <span className="text-3xl filter drop-shadow-sm">🔥</span>
+                  <Flame className="text-3xl h-8 w-8 text-orange-500 filter drop-shadow-sm" />
                   <div>
                     <div className="font-black text-2xl text-orange-600 dark:text-orange-400">
                       {trainingStats?.progress?.current_streak || 0}
@@ -1474,7 +1492,9 @@ export default function PlayerDashboard() {
                       >
                         <CardContent className="p-4">
                           <div className="flex items-center gap-3">
-                            <div className="text-3xl grayscale group-hover:grayscale-0 transition-all">{level.skills?.icon}</div>
+                            <div className="transition-all group-hover:scale-110">
+                              <SkillIconDash icon={level.skills?.icon || '⚽'} size="md" />
+                            </div>
                             <div className="flex-1">
                               <h4 className="font-semibold text-sm text-white group-hover:text-primary transition-colors">
                                 {level.skills?.name} - {level.level_name.charAt(0).toUpperCase() + level.level_name.slice(1)}
@@ -1483,7 +1503,7 @@ export default function PlayerDashboard() {
                                 {level.video_title}
                               </p>
                               <div className="flex items-center gap-3 mt-2 text-[10px] uppercase font-bold tracking-widest text-slate-400">
-                                <span>⏱️ {level.duration_minutes} min</span>
+                                <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {level.duration_minutes} min</span>
                                 <span>+{level.xp_reward} XP</span>
                               </div>
                             </div>
