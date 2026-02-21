@@ -25,7 +25,7 @@ export default function Footer() {
                                     <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
                                 </svg>
                             </a>
-                            <a href="https://www.youtube.com/@opensport_ai" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-[#9FE870] transition-colors">
+                            <a href="https://www.youtube.com/@opensport_app" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-[#9FE870] transition-colors">
                                 <Youtube className="h-5 w-5" />
                             </a>
                             <a href="https://www.linkedin.com/in/opensport" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-[#9FE870] transition-colors">
