@@ -113,38 +113,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ===== Technology & Traction Section ===== */}
-      <section ref={tractionRef} className="scroll-reveal bg-[#0A1628] py-24 px-6">
-        <div className="container mx-auto max-w-5xl">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight">
-            <span className="text-[#9FE870]">{t("traction.title")}</span>
-          </h2>
-          <p className="text-gray-400 text-lg mb-14 max-w-2xl">{t("traction.subtitle")}</p>
-
-          <div className="space-y-4">
-            {tractionItems.map(({ key, icon: Icon }) => (
-              <div
-                key={key}
-                className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 px-6 py-5 rounded-2xl border border-gray-700/50 bg-gradient-to-br from-gray-800/50 to-gray-900/50 hover:border-[#9FE870]/30 transition-all duration-300"
-              >
-                <div className="w-12 h-12 rounded-xl bg-[#9FE870]/10 flex items-center justify-center shrink-0">
-                  <Icon className="h-6 w-6 text-[#9FE870]" />
-                </div>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-6 flex-1">
-                  <span className="text-white font-semibold text-lg shrink-0 min-w-[180px]">
-                    {t(`traction.items.${key}.label`)}
-                  </span>
-                  <span className="text-gray-400 text-sm sm:text-base leading-relaxed">
-                    {t(`traction.items.${key}.description`)}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-
       {/* ===== Community Impact Section ===== */}
       <section ref={impactRef} id="mission" className="scroll-reveal bg-[#0A1628] py-24 px-6">
         <div className="container mx-auto max-w-7xl">
