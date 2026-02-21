@@ -12,6 +12,13 @@ dist
 dist-ssr
 *.local
 *.env
+# AI and Planning
+ARCHITECTURE.md
+AI_PROMPTING_TASKS.md
+PLANNING.TXT
+SYSTEM_DESIGN_PLAN.md
+training.txt
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
