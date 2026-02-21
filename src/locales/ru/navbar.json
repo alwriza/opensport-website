@@ -1,6 +1,7 @@
 {
     "nav": {
         "home": "Главная",
+        "ranking": "Рейтинг",
         "playerDashboard": "Игрок",
         "coachDashboard": "Тренер",
         "training": "Тренировки"

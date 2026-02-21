@@ -1,0 +1,48 @@
+{
+    "title": "Жаһандық Рейтинг",
+    "subtitle": "Әлемнің үздік ойыншылары",
+    "filters": {
+        "position": "Позиция",
+        "allPositions": "Барлық Позициялар",
+        "ageGroup": "Жас Топтары",
+        "allAges": "Барлық Жастар",
+        "country": "Ел",
+        "countryPlaceholder": "мысалы, Қазақстан",
+        "city": "Қала",
+        "cityPlaceholder": "мысалы, Алматы",
+        "reset": "Тазалау"
+    },
+    "table": {
+        "rank": "Орын",
+        "player": "Ойыншы",
+        "age": "Жасы",
+        "position": "Поз",
+        "location": "Орналасу",
+        "score": "Ұпай",
+        "actions": "Әрекеттер",
+        "view": "Көру"
+    },
+    "location": {
+        "unknown": "Белгісіз"
+    },
+    "empty": {
+        "title": "Ойыншылар табылмады",
+        "description": "Іздеу үшін сүзгілерді өзгертіп көріңіз."
+    },
+    "modal": {
+        "title": "Ойыншы туралы",
+        "bestScore": "Ең Жоғарғы Ұпай",
+        "totalAnalyses": "Барлық Соққылар",
+        "breakdown": "Дағдылар Талдауы",
+        "noData": "Толық талдау қолжетімді емес.",
+        "close": "Жабу",
+        "viewProfile": "Толық Профиль"
+    },
+    "scores": {
+        "stability": "Тұрақтылық",
+        "power": "Күш",
+        "technique": "Техника",
+        "balance": "Тепе-теңдік"
+    },
+    "loading": "Рейтинг жүктелуде..."
+}

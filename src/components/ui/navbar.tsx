@@ -72,6 +72,14 @@ export default function Navbar() {
             >
               {t("nav.training")}
             </Link>
+
+            <Link
+              to="/ranking"
+              className={`text-lg font-medium transition-colors whitespace-nowrap ${isActive('/ranking') ? 'text-white' : 'text-gray-400 hover:text-white'
+                }`}
+            >
+              {t("nav.ranking")}
+            </Link>
           </nav>
 
           {/* CTA Button & Language Switcher & User/Auth */}
@@ -158,6 +166,13 @@ export default function Navbar() {
                 className={`text-base font-medium py-2 ${isActive('/training') ? 'text-white' : 'text-gray-400'}`}
               >
                 {t("nav.training")}
+              </Link>
+              <Link
+                to="/ranking"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`text-base font-medium py-2 ${isActive('/ranking') ? 'text-white' : 'text-gray-400'}`}
+              >
+                {t("nav.ranking")}
               </Link>
 
               {/* Mobile Language Switcher */}

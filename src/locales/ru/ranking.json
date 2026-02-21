@@ -1,0 +1,48 @@
+{
+    "title": "Глобальный Рейтинг",
+    "subtitle": "Лучшие исполнители со всего мира",
+    "filters": {
+        "position": "Позиция",
+        "allPositions": "Все Позиции",
+        "ageGroup": "Возраст",
+        "allAges": "Все Возраста",
+        "country": "Страна",
+        "countryPlaceholder": "напр. Казахстан",
+        "city": "Город",
+        "cityPlaceholder": "напр. Алматы",
+        "reset": "Сбросить"
+    },
+    "table": {
+        "rank": "Место",
+        "player": "Игрок",
+        "age": "Возраст",
+        "position": "Поз",
+        "location": "Локация",
+        "score": "Очки",
+        "actions": "Действия",
+        "view": "Просмотр"
+    },
+    "location": {
+        "unknown": "Неизвестно"
+    },
+    "empty": {
+        "title": "Игроки не найдены",
+        "description": "Попробуйте изменить фильтры для поиска."
+    },
+    "modal": {
+        "title": "Предпросмотр Игрока",
+        "bestScore": "Лучший Счет",
+        "totalAnalyses": "Всего Ударов",
+        "breakdown": "Анализ Навыков",
+        "noData": "Детальный анализ недоступен.",
+        "close": "Закрыть",
+        "viewProfile": "Полный Профиль"
+    },
+    "scores": {
+        "stability": "Стабильность",
+        "power": "Сила",
+        "technique": "Техника",
+        "balance": "Баланс"
+    },
+    "loading": "Загрузка рейтинга..."
+}

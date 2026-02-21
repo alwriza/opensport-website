@@ -1,0 +1,48 @@
+{
+    "title": "Global Ranking",
+    "subtitle": "Top performers from around the world",
+    "filters": {
+        "position": "Position",
+        "allPositions": "All Positions",
+        "ageGroup": "Age Group",
+        "allAges": "All Ages",
+        "country": "Country",
+        "countryPlaceholder": "e.g. Kazakhstan",
+        "city": "City",
+        "cityPlaceholder": "e.g. Almaty",
+        "reset": "Reset Filters"
+    },
+    "table": {
+        "rank": "Rank",
+        "player": "Player",
+        "age": "Age",
+        "position": "Pos",
+        "location": "Location",
+        "score": "Score",
+        "actions": "Actions",
+        "view": "View"
+    },
+    "location": {
+        "unknown": "Unknown"
+    },
+    "empty": {
+        "title": "No players found",
+        "description": "Try adjusting your filters to see more results."
+    },
+    "modal": {
+        "title": "Player Preview",
+        "bestScore": "Best Score",
+        "totalAnalyses": "Total Kicks",
+        "breakdown": "Skill Breakdown",
+        "noData": "Detailed analysis data not available.",
+        "close": "Close",
+        "viewProfile": "View Full Profile"
+    },
+    "scores": {
+        "stability": "Stability",
+        "power": "Power",
+        "technique": "Technique",
+        "balance": "Balance"
+    },
+    "loading": "Loading rankings..."
+}

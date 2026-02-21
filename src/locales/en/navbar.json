@@ -1,6 +1,7 @@
 {
     "nav": {
         "home": "Home",
+        "ranking": "Ranking",
         "playerDashboard": "Player",
         "coachDashboard": "Coach",
         "training": "Training"

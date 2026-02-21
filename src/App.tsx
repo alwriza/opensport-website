@@ -10,6 +10,7 @@ import Home from "./pages/Home";
 import PlayerDashboard from "./pages/PlayerDashboard";
 import CoachDashboard from "./pages/CoachDashboard";
 import Training from "./pages/Training";
+import Ranking from "./pages/Ranking";
 import About from "./pages/About";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
@@ -72,6 +73,19 @@ const App = () => (
                 <>
                   <SignedIn>
                     <Training />
+                  </SignedIn>
+                  <SignedOut>
+                    <RedirectToSignIn />
+                  </SignedOut>
+                </>
+              }
+            />
+            <Route
+              path="/ranking"
+              element={
+                <>
+                  <SignedIn>
+                    <Ranking />
                   </SignedIn>
                   <SignedOut>
                     <RedirectToSignIn />
