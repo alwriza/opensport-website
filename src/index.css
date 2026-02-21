@@ -112,6 +112,18 @@ input[type="number"] {
   .custom-scrollbar::-webkit-scrollbar-thumb {
     @apply bg-gray-600 rounded-full hover:bg-gray-500;
   }
+
+  /* Scroll Reveal Animation */
+  .scroll-reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+  }
+
+  .scroll-reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ============================================

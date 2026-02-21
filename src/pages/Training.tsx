@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@clerk/clerk-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useSearchParams } from "react-router-dom";
-import { Play, Target, Loader2, Filter, Lock, CheckCircle, Circle, Trophy, Flame, Star, Zap, ChevronRight, ExternalLink } from "lucide-react";
+import { Play, Target, Loader2, Filter, Lock, CheckCircle, Circle, Trophy, Flame, Star, Zap, ChevronRight, ExternalLink, Footprints, Crosshair, Shield, Dumbbell, Brain, Swords, Goal, CircleDot, Gauge, HeartPulse, type LucideIcon } from "lucide-react";
 
 interface Exercise {
   id: string;
@@ -76,6 +76,44 @@ interface SkillProgress {
   completed_levels: string[];
   is_completed: boolean;
 }
+
+// Map database emoji icons to styled lucide icon boxes
+const emojiToIcon: Record<string, LucideIcon> = {
+  '⚽': Goal,          // football → goal
+  '🎯': Crosshair,    // target → crosshair for precision
+  '🏃': Footprints,   // running → footprints
+  '🦶': CircleDot,    // foot → ball control
+  '🔥': Flame,        // fire → intensity
+  '💪': Dumbbell,     // strength → weights
+  '🧠': Brain,        // brain → mental skills
+  '🛡️': Shield,      // shield → defensive
+  '🛡': Shield,
+  '⭐': Star,          // star → excellence
+  '🏆': Trophy,       // trophy → achievement
+  '⚡': Zap,           // lightning → speed/power
+  '🎮': Swords,       // gamepad → tactical
+  '🤾': HeartPulse,   // handball → agility/cardio
+  '🧘': Gauge,        // yoga → balance/stamina
+};
+
+const SkillIcon = ({ icon, size = 'lg' }: { icon: string; size?: 'sm' | 'lg' | 'xl' }) => {
+  const IconComponent = emojiToIcon[icon] || Target;
+  const sizeClasses = {
+    sm: 'w-8 h-8 rounded-lg',
+    lg: 'w-14 h-14 rounded-xl',
+    xl: 'w-20 h-20 rounded-2xl',
+  };
+  const iconSizes = {
+    sm: 'h-4 w-4',
+    lg: 'h-7 w-7',
+    xl: 'h-10 w-10',
+  };
+  return (
+    <div className={`${sizeClasses[size]} bg-[#9FE870]/10 flex items-center justify-center`}>
+      <IconComponent className={`${iconSizes[size]} text-[#9FE870]`} />
+    </div>
+  );
+};
 
 const Training = () => {
   const { t } = useTranslation(["training", "common"]);
@@ -605,8 +643,8 @@ const Training = () => {
                           : 'bg-background/5 border-transparent opacity-40 cursor-not-allowed'
                           } ${isFullyCompleted ? 'ring-4 ring-primary/10 border-primary' : ''}`}
                       >
-                        <div className={`text-5xl transition-transform group-hover:scale-110 ${!unlocked && 'grayscale'}`}>
-                          {skill.icon}
+                        <div className={`transition-transform group-hover:scale-110 ${!unlocked && 'grayscale opacity-50'}`}>
+                          <SkillIcon icon={skill.icon} size="lg" />
                         </div>
                         <div>
                           <h3 className="font-bold text-white group-hover:text-primary transition-colors">{skill.name}</h3>
@@ -645,7 +683,7 @@ const Training = () => {
               <Card className="mt-8 mb-12 border-2 border-primary/20 bg-background p-8 rounded-[2rem] shadow-xl animate-in fade-in slide-in-from-bottom-4">
                 <div className="flex flex-col md:flex-row gap-8">
                   <div className="md:w-1/3 space-y-4">
-                    <div className="text-7xl mb-4">{selectedSkill.icon}</div>
+                    <div className="mb-4"><SkillIcon icon={selectedSkill.icon} size="xl" /></div>
                     <h2 className="text-3xl font-bold">{selectedSkill.name}</h2>
                     <p className="text-slate-600 leading-relaxed font-medium">{selectedSkill.description}</p>
                     <Button variant="outline" onClick={() => setSelectedSkill(null)} className="w-full rounded-2xl">
@@ -760,7 +798,7 @@ const Training = () => {
                         </div>
                         <CardHeader className="p-5">
                           <div className="flex items-center gap-2 mb-2">
-                            <span className="text-lg">{skill?.icon}</span>
+                            <SkillIcon icon={skill?.icon || '⚽'} size="sm" />
                             <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
                               {level.level_name}
                             </Badge>

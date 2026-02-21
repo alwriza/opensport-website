@@ -2,17 +2,33 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { SignInButton, SignedIn, SignedOut } from "@clerk/clerk-react";
-import { ArrowRight, UserPlus, Video, TrendingUp, Sprout } from "lucide-react";
+import { ArrowRight, UserPlus, Video, TrendingUp, Sprout, Linkedin, Mail, CheckCircle2, Loader, Rocket, Cloud, Instagram } from "lucide-react";
 import AutoScroll from "embla-carousel-auto-scroll";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 
 export default function Home() {
   const { t } = useTranslation(["home", "navbar", "buttons"]);
+
+  const tractionRef = useScrollReveal();
+  const teamRef = useScrollReveal();
+  const impactRef = useScrollReveal();
+  const howItWorksRef = useScrollReveal();
+  const quoteRef = useScrollReveal();
+  const contactRef = useScrollReveal();
+
+  const tractionItems = [
+    { key: "mvp", icon: CheckCircle2 },
+    { key: "dataset", icon: CheckCircle2 },
+    { key: "v2", icon: Loader },
+    { key: "cloud", icon: Cloud },
+  ] as const;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section - Stadium Background */}
       <section className="relative min-h-[90vh] flex items-center justify-start px-6 md:px-12">
-        {/* Background Image - YOU ADD THIS */}
+        {/* Background Image */}
         <div className="absolute inset-0 bg-black">
           <img src="/stadium-bg.png" alt="" className="w-full h-full object-cover opacity-60" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
@@ -61,8 +77,40 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Community Impact Section */}
-      <section id="mission" className="bg-black py-24 px-6">
+      {/* ===== Technology & Traction Section ===== */}
+      <section ref={tractionRef} className="scroll-reveal bg-[#0A1628] py-24 px-6">
+        <div className="container mx-auto max-w-5xl">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight">
+            <span className="text-[#9FE870]">{t("traction.title")}</span>
+          </h2>
+          <p className="text-gray-400 text-lg mb-14 max-w-2xl">{t("traction.subtitle")}</p>
+
+          <div className="space-y-4">
+            {tractionItems.map(({ key, icon: Icon }) => (
+              <div
+                key={key}
+                className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 px-6 py-5 rounded-2xl border border-gray-700/50 bg-gradient-to-br from-gray-800/50 to-gray-900/50 hover:border-[#9FE870]/30 transition-all duration-300"
+              >
+                <div className="w-12 h-12 rounded-xl bg-[#9FE870]/10 flex items-center justify-center shrink-0">
+                  <Icon className="h-6 w-6 text-[#9FE870]" />
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-6 flex-1">
+                  <span className="text-white font-semibold text-lg shrink-0 min-w-[180px]">
+                    {t(`traction.items.${key}.label`)}
+                  </span>
+                  <span className="text-gray-400 text-sm sm:text-base leading-relaxed">
+                    {t(`traction.items.${key}.description`)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+
+      {/* ===== Community Impact Section ===== */}
+      <section ref={impactRef} id="mission" className="scroll-reveal bg-[#0A1628] py-24 px-6">
         <div className="container mx-auto max-w-7xl">
           <h2 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight">
             <span className="text-[#9FE870]">{t("impact.title")}</span>
@@ -76,21 +124,14 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-6">
             {/* Card 1 - Global Reach */}
             <div className="group relative rounded-3xl overflow-hidden border-2 border-[#9FE870]/20 hover:border-[#9FE870] transition-all duration-300">
-              {/* Image Background - YOU ADD THIS */}
               <div className="relative h-80 bg-gradient-to-br from-gray-900 to-gray-800">
                 <img src="/global-reach.png" alt="" className="w-full h-full object-fit" />
                 <div className="absolute inset-0 bg-black/60 group-hover:bg-black/40 transition-all" />
               </div>
-
-              {/* Content */}
               <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black via-black/90 to-transparent">
                 <h3 className="text-3xl font-bold text-white mb-3">{t("impact.cards.global.title")}</h3>
-                <p className="text-gray-300 leading-relaxed mb-4">
-                  {t("impact.cards.global.subtitle")}
-                </p>
-                <p className="text-gray-400 text-sm leading-relaxed">
-                  {t("impact.cards.global.description")}
-                </p>
+                <p className="text-gray-300 leading-relaxed mb-4">{t("impact.cards.global.subtitle")}</p>
+                <p className="text-gray-400 text-sm leading-relaxed">{t("impact.cards.global.description")}</p>
               </div>
             </div>
 
@@ -100,15 +141,10 @@ export default function Home() {
                 <img src="/fair-play.png" alt="" className="w-full h-full object-fit" />
                 <div className="absolute inset-0 bg-black/60 group-hover:bg-black/40 transition-all" />
               </div>
-
               <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black via-black/90 to-transparent">
                 <h3 className="text-3xl font-bold text-white mb-3">{t("impact.cards.fairPlay.title")}</h3>
-                <p className="text-gray-300 leading-relaxed mb-4">
-                  {t("impact.cards.fairPlay.subtitle")}
-                </p>
-                <p className="text-gray-400 text-sm leading-relaxed">
-                  {t("impact.cards.fairPlay.description")}
-                </p>
+                <p className="text-gray-300 leading-relaxed mb-4">{t("impact.cards.fairPlay.subtitle")}</p>
+                <p className="text-gray-400 text-sm leading-relaxed">{t("impact.cards.fairPlay.description")}</p>
               </div>
             </div>
 
@@ -118,23 +154,18 @@ export default function Home() {
                 <img src="/equal-access.png" alt="" className="w-full h-full object-fit" />
                 <div className="absolute inset-0 bg-black/60 group-hover:bg-black/40 transition-all" />
               </div>
-
               <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black via-black/90 to-transparent">
                 <h3 className="text-3xl font-bold text-white mb-3">{t("impact.cards.equalAccess.title")}</h3>
-                <p className="text-gray-300 leading-relaxed mb-4">
-                  {t("impact.cards.equalAccess.subtitle")}
-                </p>
-                <p className="text-gray-400 text-sm leading-relaxed">
-                  {t("impact.cards.equalAccess.description")}
-                </p>
+                <p className="text-gray-300 leading-relaxed mb-4">{t("impact.cards.equalAccess.subtitle")}</p>
+                <p className="text-gray-400 text-sm leading-relaxed">{t("impact.cards.equalAccess.description")}</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* How It Works Section */}
-      <section id="how-it-works" className="relative bg-[#0A1628] py-24 md:py-32 px-6">
+      {/* ===== How It Works Section ===== */}
+      <section ref={howItWorksRef} id="how-it-works" className="scroll-reveal relative bg-[#0A1628] py-24 md:py-32 px-6">
         <div className="container mx-auto max-w-7xl">
           <div className="grid lg:grid-cols-2 gap-16 items-start">
             {/* Left - Text Content (Fixed) */}
@@ -176,9 +207,7 @@ export default function Home() {
                         <UserPlus className="h-7 w-7 text-[#9FE870]" />
                       </div>
                       <h3 className="text-2xl font-semibold text-white mb-3">{t("howItWorks.steps.step1.title")}</h3>
-                      <p className="text-gray-400 leading-relaxed">
-                        {t("howItWorks.steps.step1.description")}
-                      </p>
+                      <p className="text-gray-400 leading-relaxed">{t("howItWorks.steps.step1.description")}</p>
                     </div>
                   </CarouselItem>
 
@@ -189,9 +218,7 @@ export default function Home() {
                         <Video className="h-7 w-7 text-[#9FE870]" />
                       </div>
                       <h3 className="text-2xl font-semibold text-white mb-3">{t("howItWorks.steps.step2.title")}</h3>
-                      <p className="text-gray-400 leading-relaxed">
-                        {t("howItWorks.steps.step2.description")}
-                      </p>
+                      <p className="text-gray-400 leading-relaxed">{t("howItWorks.steps.step2.description")}</p>
                     </div>
                   </CarouselItem>
 
@@ -202,9 +229,7 @@ export default function Home() {
                         <TrendingUp className="h-7 w-7 text-[#9FE870]" />
                       </div>
                       <h3 className="text-2xl font-semibold text-white mb-3">{t("howItWorks.steps.step3.title")}</h3>
-                      <p className="text-gray-400 leading-relaxed">
-                        {t("howItWorks.steps.step3.description")}
-                      </p>
+                      <p className="text-gray-400 leading-relaxed">{t("howItWorks.steps.step3.description")}</p>
                     </div>
                   </CarouselItem>
 
@@ -215,9 +240,7 @@ export default function Home() {
                         <Sprout className="h-7 w-7 text-[#9FE870]" />
                       </div>
                       <h3 className="text-2xl font-semibold text-white mb-3">{t("howItWorks.steps.step4.title")}</h3>
-                      <p className="text-gray-400 leading-relaxed">
-                        {t("howItWorks.steps.step4.description")}
-                      </p>
+                      <p className="text-gray-400 leading-relaxed">{t("howItWorks.steps.step4.description")}</p>
                     </div>
                   </CarouselItem>
                 </CarouselContent>
@@ -229,13 +252,12 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </section >
+      </section>
 
-      {/* Quote Section - Arsene Wenger */}
-      < section className="relative bg-[#0A1628] py-24 px-6" >
+      {/* ===== Quote Section - Arsene Wenger ===== */}
+      <section ref={quoteRef} className="scroll-reveal relative bg-[#0A1628] py-24 px-6">
         <div className="container mx-auto max-w-5xl text-center">
-          {/* Quote Marks */}
-          <div className="text-[#9FE870] text-8xl font-serif mb-8">"</div>
+          <div className="text-[#9FE870] text-8xl font-serif mb-8">&ldquo;</div>
 
           <blockquote className="text-2xl md:text-3xl text-white font-normal leading-relaxed mb-8 max-w-4xl mx-auto">
             {t("quote.text")}
@@ -246,7 +268,38 @@ export default function Home() {
             <p className="text-sm">{t("quote.role")}</p>
           </div>
         </div>
-      </section >
-    </div >
+      </section>
+
+      {/* ===== Contact / Closing Section ===== */}
+      <section ref={contactRef} className="scroll-reveal relative bg-[#0A1628] py-28 px-6">
+        <div className="container mx-auto max-w-3xl text-center">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight mb-4">
+            <span className="block text-white">{t("contact.headline1")}</span>
+            <span className="block text-[#9FE870]">{t("contact.headline2")}</span>
+          </h2>
+
+          <p className="text-gray-400 text-lg md:text-xl leading-relaxed mt-8 mb-10 max-w-2xl mx-auto">
+            {t("contact.subtext")}
+          </p>
+
+          <a
+            href="https://www.instagram.com/opensport.ai"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-3 bg-[#9FE870] hover:bg-[#8DD760] text-black font-semibold px-8 py-4 rounded-full text-lg transition-all duration-300 hover:scale-105"
+          >
+            <Instagram className="h-5 w-5" />
+            {t("contact.emailLabel")}
+          </a>
+
+          <div className="flex items-center justify-center gap-6 mt-6">
+            <a href="mailto:contact@opensport.app" className="text-gray-500 hover:text-[#9FE870] transition-colors text-sm">contact@opensport.app</a>
+            <a href="https://www.linkedin.com/in/opensport" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-[#9FE870] transition-colors">
+              <Linkedin className="h-5 w-5" />
+            </a>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }

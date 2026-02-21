@@ -62,5 +62,53 @@
         "text": "Talent can be wasted if it is not guided properly. Development is about education, patience, and creating the right environment for young players to express themselves.",
         "author": "Arsene Wenger",
         "role": "Head Coach & Football Thinker"
+    },
+    "traction": {
+        "title": "Technology & Traction",
+        "subtitle": "Where we are — and where we're going.",
+        "items": {
+            "mvp": {
+                "status": "✅ Done",
+                "label": "Working MVP",
+                "description": "End-to-end pipeline: phone video → pose estimation → kick scoring"
+            },
+            "dataset": {
+                "status": "✅ Done",
+                "label": "Dataset",
+                "description": "Collected and labeled 600+ football videos across multiple camera angles"
+            },
+            "v2": {
+                "status": "🔄 Now",
+                "label": "v2.0 in Development",
+                "description": "Multi-player tracking, full match analysis, GPU-accelerated pipeline"
+            },
+            "cloud": {
+                "status": "🔜 Next",
+                "label": "Cloud Scale",
+                "description": "Automated GPU workers, auto-scaling infrastructure, sub-$0.10/match processing cost"
+            }
+        }
+    },
+    "team": {
+        "title": "The Team",
+        "location": "Based in Almaty, Kazakhstan  — building global.",
+        "members": {
+            "cto": {
+                "name": "Aituar Aubakirov",
+                "role": "Co-Founder & CTO",
+                "bio": "Leads all technical architecture and machine learning development. Building the AI systems that power OpenSport's analysis pipeline — from pose estimation models to cloud infrastructure."
+            },
+            "ceo": {
+                "name": "Kaiyrov Said",
+                "role": "Co-Founder & CEO",
+                "bio": "Brings deep football domain expertise to the product. Responsible for dataset strategy, product vision, and taking OpenSport to market across Central Asia and beyond."
+            }
+        }
+    },
+    "contact": {
+        "headline1": "Sport is for everyone.",
+        "headline2": "The data should be too.",
+        "subtext": "OpenSport is currently in active development. If you're a coach, club, or early adopter — we'd love to hear from you.",
+        "emailLabel": "Get in Touch"
     }
 }

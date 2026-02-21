@@ -23,7 +23,21 @@ import {
     Trophy,
     CheckCircle,
     Zap,
-    History
+    History,
+    Flame,
+    Target,
+    Crosshair,
+    Footprints,
+    Shield,
+    Dumbbell,
+    Brain,
+    Star,
+    Swords,
+    Goal,
+    CircleDot,
+    Gauge,
+    HeartPulse,
+    type LucideIcon
 } from "lucide-react";
 import { format } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,6 +49,22 @@ interface PlayerProfileOverlayProps {
     onClose: () => void;
     teamName?: string;
 }
+
+const emojiToIcon: Record<string, LucideIcon> = {
+    '⚽': Goal, '🎯': Crosshair, '🏃': Footprints, '🦶': CircleDot,
+    '🔥': Flame, '💪': Dumbbell, '🧠': Brain, '🛡️': Shield, '🛡': Shield,
+    '⭐': Star, '🏆': Trophy, '⚡': Zap, '🎮': Swords,
+    '🤾': HeartPulse, '🧘': Gauge,
+};
+
+const SkillIconOverlay = ({ icon }: { icon: string }) => {
+    const IconComponent = emojiToIcon[icon] || Target;
+    return (
+        <div className="w-14 h-14 rounded-xl bg-[#9FE870]/10 flex items-center justify-center">
+            <IconComponent className="h-7 w-7 text-[#9FE870]" />
+        </div>
+    );
+};
 
 export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
     player,
@@ -365,7 +395,7 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
                                     </Card>
                                     <Card className="bg-card border border-white/5 rounded-3xl p-6 shadow-xl shadow-black/20">
                                         <div className="flex items-center gap-3 mb-3">
-                                            <span className="text-lg">🔥</span>
+                                            <Flame className="h-4 w-4 text-orange-500" />
                                             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t("training.streak")}</p>
                                         </div>
                                         <p className="text-3xl font-black text-orange-500">{(trainingProgress as any)?.progress?.current_streak || 0}</p>
@@ -390,8 +420,8 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
                                     <div className="grid md:grid-cols-2 gap-6">
                                         {trainingProgress?.skillProgress?.map((sp: any) => (
                                             <Card key={sp.id} className="p-6 rounded-3xl border border-white/5 bg-card shadow-xl flex items-center gap-6 group hover:border-primary/20 transition-all">
-                                                <div className="text-4xl p-4 bg-white/5 rounded-2xl transition-transform group-hover:scale-110">
-                                                    {sp.skills?.icon || '⚽'}
+                                                <div className="p-2 bg-white/5 rounded-2xl transition-transform group-hover:scale-110">
+                                                    <SkillIconOverlay icon={sp.skills?.icon || '⚽'} />
                                                 </div>
                                                 <div className="flex-1">
                                                     <div className="flex items-center justify-between mb-3">
