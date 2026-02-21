@@ -26,7 +26,7 @@ export default function Navbar() {
   const languages = [
     { code: 'en', label: 'EN' },
     { code: 'ru', label: 'RU' },
-    { code: 'kk', label: 'KK' }
+    { code: 'kk', label: 'KZ' }
   ];
 
   return (
