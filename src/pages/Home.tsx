@@ -76,7 +76,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ===== What is OpenSport? Section ===== */}
+      {/* ===== What is OPENsport? Section ===== */}
       <section ref={aboutRef} className="scroll-reveal bg-[#0A1628] py-24 px-6">
         <div className="container mx-auto max-w-5xl">
           <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">

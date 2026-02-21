@@ -24,7 +24,7 @@
             "toasts": {
                 "userNotFound": {
                     "title": "User not found",
-                    "description": "This player is not registered in OpenSport. Ask them to sign up first."
+                    "description": "This player is not registered in OPENsport. Ask them to sign up first."
                 },
                 "success": {
                     "title": "Invitation Sent! 📧",

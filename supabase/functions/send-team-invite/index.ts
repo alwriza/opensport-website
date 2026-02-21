@@ -2,60 +2,60 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
 serve(async (req) => {
-    // 1. Обработка CORS (уже работает, но оставим для стабильности)
-    if (req.method === 'OPTIONS') {
-        return new Response('ok', { headers: corsHeaders })
+  // 1. Обработка CORS (уже работает, но оставим для стабильности)
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
+  try {
+    const { email, team_name, invite_code, origin } = await req.json()
+    console.log(`[LOG] Начинаем процесс для: ${email}, Команда: ${team_name}`);
+
+    // 2. Инициализация Supabase Admin (Service Role)
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
+    // 3. Поиск пользователя (Используем ilike для игнорирования регистра)
+    console.log("[LOG] Ищем пользователя в БД...");
+    const { data: userData, error: userError } = await supabaseAdmin
+      .from('users')
+      .select('id, name')
+      .ilike('email', email.trim())
+      .maybeSingle()
+
+    if (userError) throw new Error(`Ошибка БД: ${userError.message}`);
+
+    if (!userData) {
+      console.log("[LOG] Пользователь не найден");
+      return new Response(JSON.stringify({ error: "USER_NOT_REGISTERED" }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
-    try {
-        const { email, team_name, invite_code, origin } = await req.json()
-        console.log(`[LOG] Начинаем процесс для: ${email}, Команда: ${team_name}`);
+    // 4. Отправка через Resend API напрямую через fetch (самый надежный способ в Edge)
+    const resendKey = Deno.env.get('RESEND_API_KEY')
+    if (!resendKey) throw new Error("RESEND_API_KEY не установлен в секретах Supabase");
 
-        // 2. Инициализация Supabase Admin (Service Role)
-        const supabaseAdmin = createClient(
-            Deno.env.get('SUPABASE_URL') ?? '',
-            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-        )
-
-        // 3. Поиск пользователя (Используем ilike для игнорирования регистра)
-        console.log("[LOG] Ищем пользователя в БД...");
-        const { data: userData, error: userError } = await supabaseAdmin
-            .from('users')
-            .select('id, name')
-            .ilike('email', email.trim())
-            .maybeSingle()
-
-        if (userError) throw new Error(`Ошибка БД: ${userError.message}`);
-
-        if (!userData) {
-            console.log("[LOG] Пользователь не найден");
-            return new Response(JSON.stringify({ error: "USER_NOT_REGISTERED" }), {
-                status: 404,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            })
-        }
-
-        // 4. Отправка через Resend API напрямую через fetch (самый надежный способ в Edge)
-        const resendKey = Deno.env.get('RESEND_API_KEY')
-        if (!resendKey) throw new Error("RESEND_API_KEY не установлен в секретах Supabase");
-
-        console.log("[LOG] Отправляем запрос в Resend...");
-        const resendResponse = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${resendKey}`,
-            },
-            body: JSON.stringify({
-                from: 'OpenSport <onboarding@opensport.app>', // Смени на свой домен после верификации
-                to: [email],
-                subject: `Приглашение в команду ${team_name}`,
-                html: `
+    console.log("[LOG] Отправляем запрос в Resend...");
+    const resendResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${resendKey}`,
+      },
+      body: JSON.stringify({
+        from: 'OPENsport <onboarding@opensport.app>', // Смени на свой домен после верификации
+        to: [email],
+        subject: `Приглашение в команду ${team_name}`,
+        html: `
           <!DOCTYPE html>
     <html>
     <head>
@@ -93,31 +93,31 @@ serve(async (req) => {
           
           <div class="footer">
             Если кнопка не работает, введите код вручную в приложении.<br>
-            &copy; 2026 OpenSport AI. Все права защищены.
+            &copy; 2026 OPENsport AI. Все права защищены.
           </div>
         </div>
       </div>
     </body>
     </html>
         `,
-            }),
-        })
+      }),
+    })
 
-        const resendResult = await resendResponse.json()
-        console.log("[LOG] Ответ от Resend:", resendResult);
+    const resendResult = await resendResponse.json()
+    console.log("[LOG] Ответ от Resend:", resendResult);
 
-        if (!resendResponse.ok) throw new Error(`Resend Error: ${JSON.stringify(resendResult)}`);
+    if (!resendResponse.ok) throw new Error(`Resend Error: ${JSON.stringify(resendResult)}`);
 
-        return new Response(JSON.stringify({ success: true }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200,
-        })
+    return new Response(JSON.stringify({ success: true }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
+    })
 
-    } catch (error) {
-        console.error("[ERROR] Критическая ошибка:", error.message);
-        return new Response(JSON.stringify({ error: error.message }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 500,
-        })
-    }
+  } catch (error) {
+    console.error("[ERROR] Критическая ошибка:", error.message);
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500,
+    })
+  }
 })

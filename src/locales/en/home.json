@@ -14,8 +14,8 @@
     },
     "about": {
         "titleStart": "What is",
-        "titleHighlight": "OpenSport?",
-        "description": "OpenSport is an AI-powered scouting and training platform for football. We analyze player performance through phone camera video, deliver professional-grade metrics, and provide personalized training programs — making elite-level analysis accessible to every player, coach, and club.",
+        "titleHighlight": "OPENsport?",
+        "description": "OPENsport is an AI-powered scouting and training platform for football. We analyze player performance through phone camera video, deliver professional-grade metrics, and provide personalized training programs — making elite-level analysis accessible to every player, coach, and club.",
         "features": {
             "ai": {
                 "title": "AI Scouting",
@@ -115,19 +115,19 @@
             "cto": {
                 "name": "Aituar Aubakirov",
                 "role": "Co-Founder & CTO",
-                "bio": "Leads all technical architecture and machine learning development. Building the AI systems that power OpenSport's analysis pipeline — from pose estimation models to cloud infrastructure."
+                "bio": "Leads all technical architecture and machine learning development. Building the AI systems that power OPENsport's analysis pipeline — from pose estimation models to cloud infrastructure."
             },
             "ceo": {
                 "name": "Kaiyrov Said",
                 "role": "Co-Founder & CEO",
-                "bio": "Brings deep football domain expertise to the product. Responsible for dataset strategy, product vision, and taking OpenSport to market across Central Asia and beyond."
+                "bio": "Brings deep football domain expertise to the product. Responsible for dataset strategy, product vision, and taking OPENsport to market across Central Asia and beyond."
             }
         }
     },
     "contact": {
         "headline1": "Sport is for everyone.",
         "headline2": "The data should be too.",
-        "subtext": "OpenSport is currently in active development. If you're a coach, club, or early adopter — we'd love to hear from you.",
+        "subtext": "OPENsport is currently in active development. If you're a coach, club, or early adopter — we'd love to hear from you.",
         "emailLabel": "Get in Touch"
     }
 }
