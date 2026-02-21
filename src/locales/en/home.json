@@ -12,6 +12,25 @@
             "dashboard": "Go to Dashboard"
         }
     },
+    "about": {
+        "titleStart": "What is",
+        "titleHighlight": "OpenSport?",
+        "description": "OpenSport is an AI-powered scouting and training platform for football. We analyze player performance through phone camera video, deliver professional-grade metrics, and provide personalized training programs — making elite-level analysis accessible to every player, coach, and club.",
+        "features": {
+            "ai": {
+                "title": "AI Scouting",
+                "description": "Upload a video from any phone camera. Our AI extracts pose data, evaluates technique, power, stability, and balance — delivering a full scouting report in under 60 seconds."
+            },
+            "analytics": {
+                "title": "Performance Analytics",
+                "description": "Track progress over time with detailed metrics across every kick. Compare scores, identify weaknesses, and see measurable improvement session by session."
+            },
+            "training": {
+                "title": "Smart Training",
+                "description": "Get personalized training recommendations based on your analysis results. Follow structured skill trees with video-guided exercises to level up your game."
+            }
+        }
+    },
     "impact": {
         "title": "COMMUNITY IMPACT",
         "description": "From grassroots football to elite academies, OPENsport's AI-powered platform helps you evaluate talent, unlock potential, and make smarter development decisions.",

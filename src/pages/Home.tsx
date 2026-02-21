@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { SignInButton, SignedIn, SignedOut } from "@clerk/clerk-react";
-import { ArrowRight, UserPlus, Video, TrendingUp, Sprout, Linkedin, Mail, CheckCircle2, Loader, Rocket, Cloud, Instagram } from "lucide-react";
+import { ArrowRight, UserPlus, Video, TrendingUp, Sprout, CheckCircle2, Loader, Cloud, Cpu, BarChart3, GraduationCap } from "lucide-react";
 import AutoScroll from "embla-carousel-auto-scroll";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
@@ -10,12 +10,11 @@ import { useScrollReveal } from "@/hooks/useScrollReveal";
 export default function Home() {
   const { t } = useTranslation(["home", "navbar", "buttons"]);
 
+  const aboutRef = useScrollReveal();
   const tractionRef = useScrollReveal();
-  const teamRef = useScrollReveal();
   const impactRef = useScrollReveal();
   const howItWorksRef = useScrollReveal();
   const quoteRef = useScrollReveal();
-  const contactRef = useScrollReveal();
 
   const tractionItems = [
     { key: "mvp", icon: CheckCircle2 },
@@ -73,6 +72,43 @@ export default function Home() {
                 </Button>
               </Link>
             </SignedIn>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== What is OpenSport? Section ===== */}
+      <section ref={aboutRef} className="scroll-reveal bg-[#0A1628] py-24 px-6">
+        <div className="container mx-auto max-w-5xl">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">
+            <span className="text-white">{t("about.titleStart")} </span>
+            <span className="text-[#9FE870]">{t("about.titleHighlight")}</span>
+          </h2>
+          <p className="text-gray-300 text-xl md:text-2xl leading-relaxed max-w-3xl mb-14">
+            {t("about.description")}
+          </p>
+
+          <div className="grid sm:grid-cols-3 gap-6">
+            <div className="flex flex-col gap-4 p-6 rounded-2xl border border-gray-700/50 bg-gradient-to-br from-gray-800/50 to-gray-900/50">
+              <div className="w-12 h-12 rounded-xl bg-[#9FE870]/10 flex items-center justify-center">
+                <Cpu className="h-6 w-6 text-[#9FE870]" />
+              </div>
+              <h3 className="text-white font-semibold text-lg">{t("about.features.ai.title")}</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">{t("about.features.ai.description")}</p>
+            </div>
+            <div className="flex flex-col gap-4 p-6 rounded-2xl border border-gray-700/50 bg-gradient-to-br from-gray-800/50 to-gray-900/50">
+              <div className="w-12 h-12 rounded-xl bg-[#9FE870]/10 flex items-center justify-center">
+                <BarChart3 className="h-6 w-6 text-[#9FE870]" />
+              </div>
+              <h3 className="text-white font-semibold text-lg">{t("about.features.analytics.title")}</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">{t("about.features.analytics.description")}</p>
+            </div>
+            <div className="flex flex-col gap-4 p-6 rounded-2xl border border-gray-700/50 bg-gradient-to-br from-gray-800/50 to-gray-900/50">
+              <div className="w-12 h-12 rounded-xl bg-[#9FE870]/10 flex items-center justify-center">
+                <GraduationCap className="h-6 w-6 text-[#9FE870]" />
+              </div>
+              <h3 className="text-white font-semibold text-lg">{t("about.features.training.title")}</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">{t("about.features.training.description")}</p>
+            </div>
           </div>
         </div>
       </section>
@@ -270,36 +306,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ===== Contact / Closing Section ===== */}
-      <section ref={contactRef} className="scroll-reveal relative bg-[#0A1628] py-28 px-6">
-        <div className="container mx-auto max-w-3xl text-center">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight mb-4">
-            <span className="block text-white">{t("contact.headline1")}</span>
-            <span className="block text-[#9FE870]">{t("contact.headline2")}</span>
-          </h2>
-
-          <p className="text-gray-400 text-lg md:text-xl leading-relaxed mt-8 mb-10 max-w-2xl mx-auto">
-            {t("contact.subtext")}
-          </p>
-
-          <a
-            href="https://www.instagram.com/opensport.ai"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-3 bg-[#9FE870] hover:bg-[#8DD760] text-black font-semibold px-8 py-4 rounded-full text-lg transition-all duration-300 hover:scale-105"
-          >
-            <Instagram className="h-5 w-5" />
-            {t("contact.emailLabel")}
-          </a>
-
-          <div className="flex items-center justify-center gap-6 mt-6">
-            <a href="mailto:contact@opensport.app" className="text-gray-500 hover:text-[#9FE870] transition-colors text-sm">contact@opensport.app</a>
-            <a href="https://www.linkedin.com/in/opensport" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-[#9FE870] transition-colors">
-              <Linkedin className="h-5 w-5" />
-            </a>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
