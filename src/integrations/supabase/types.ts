@@ -22,6 +22,14 @@ export interface Database {
           height: number | null
           weight: number | null
           created_at: string
+          // v2.0 fields
+          user_track: 'player' | 'individual' | null
+          subscription_tier: 'free' | 'premium' | 'basic' | 'pro'
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_status: 'active' | 'cancelled' | 'past_due' | 'none'
+          track_switch_count: number
+          is_admin: boolean
         }
         Insert: {
           id?: string
@@ -35,6 +43,14 @@ export interface Database {
           height?: number | null
           weight?: number | null
           created_at?: string
+          // v2.0 fields
+          user_track?: 'player' | 'individual' | null
+          subscription_tier?: 'free' | 'premium' | 'basic' | 'pro'
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: 'active' | 'cancelled' | 'past_due' | 'none'
+          track_switch_count?: number
+          is_admin?: boolean
         }
         Update: {
           id?: string
@@ -48,6 +64,14 @@ export interface Database {
           height?: number | null
           weight?: number | null
           created_at?: string
+          // v2.0 fields
+          user_track?: 'player' | 'individual' | null
+          subscription_tier?: 'free' | 'premium' | 'basic' | 'pro'
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: 'active' | 'cancelled' | 'past_due' | 'none'
+          track_switch_count?: number
+          is_admin?: boolean
         }
       }
       videos: {

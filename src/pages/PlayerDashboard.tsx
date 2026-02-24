@@ -444,7 +444,7 @@ export default function PlayerDashboard() {
 
         console.log('Calling ML Worker...');
 
-        const mlWorkerUrl = 'https://opensportml-production.up.railway.app';
+        const mlWorkerUrl = 'http://34.141.241.210:8000';
         const mlResponse = await fetch(`${mlWorkerUrl}/analyze`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
