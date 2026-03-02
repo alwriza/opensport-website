@@ -77,6 +77,13 @@ export default function PlayerDashboard() {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showAllVideos, setShowAllVideos] = useState(false);
 
+  // Metadata state
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [cameraAngle, setCameraAngle] = useState<string>("unknown");
+  const [shotType, setShotType] = useState<string>("unknown");
+  const [footPart, setFootPart] = useState<string>("unknown");
+  const [kickingFoot, setKickingFoot] = useState<string>("unknown");
+
 
 
   // 1. Sync & Fetch DB User
@@ -366,9 +373,18 @@ export default function PlayerDashboard() {
     }
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !dbUser?.id) return;
+    if (!file) return;
+
+    if (!dbUser?.id) {
+      toast({
+        title: "Authentication Error",
+        description: "Please sign in to upload videos.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     if (file.size > 50 * 1024 * 1024) {
       toast({
@@ -389,6 +405,12 @@ export default function PlayerDashboard() {
       return;
     }
 
+    setSelectedFile(file);
+  };
+
+  const handleUploadAndAnalyze = async () => {
+    if (!selectedFile || !dbUser?.id) return;
+    const file = selectedFile;
     setUploading(true);
     console.log("Starting upload:", file.name);
 
@@ -444,13 +466,17 @@ export default function PlayerDashboard() {
 
         console.log('Calling ML Worker...');
 
-        const mlWorkerUrl = 'https://opensportml-production.up.railway.app';
+        const mlWorkerUrl = 'http://34.147.162.115:8000';
         const mlResponse = await fetch(`${mlWorkerUrl}/analyze`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             video_url: urlData.signedUrl,
-            video_id: (newVideo as any).id
+            video_id: (newVideo as any).id,
+            camera_angle: cameraAngle,
+            shot_type: shotType,
+            foot_part: footPart,
+            kicking_foot: kickingFoot
           })
         });
 
@@ -462,6 +488,11 @@ export default function PlayerDashboard() {
 
         const result = await mlResponse.json();
         console.log(' ML analysis complete:', result);
+
+        // Check if the model actually detected a kick successfully
+        if (result.status === 'error' || !result.is_kick) {
+          throw new Error(result.message || "No kicks detected in the video.");
+        }
 
         // Save analysis to database
         const { error: analysisError } = await (supabase
@@ -513,6 +544,7 @@ export default function PlayerDashboard() {
 
       await queryClient.invalidateQueries({ queryKey: ['videos', dbUser.id] });
       setUploadModalOpen(false);
+      setSelectedFile(null); // Reset file state
 
     } catch (error: any) {
       console.error("❌ Upload failed:", error);
@@ -523,7 +555,7 @@ export default function PlayerDashboard() {
       });
     } finally {
       setUploading(false);
-      event.target.value = '';
+      // event.target.value = ''; // This was from the old handleFileUpload, not needed here
     }
   };
 
@@ -1334,7 +1366,10 @@ export default function PlayerDashboard() {
         </div>
       </div>
 
-      <Dialog open={uploadModalOpen} onOpenChange={setUploadModalOpen}>
+      <Dialog open={uploadModalOpen} onOpenChange={(open) => {
+        setUploadModalOpen(open);
+        if (!open) setSelectedFile(null); // Reset when closed
+      }}>
         <DialogContent className="sm:max-w-md bg-background text-white border-white/5 shadow-2xl">
           <DialogHeader>
             <DialogTitle>{t("modals.upload.title")}</DialogTitle>
@@ -1346,24 +1381,100 @@ export default function PlayerDashboard() {
                 <p className="text-sm text-muted-foreground">{t("modals.upload.uploading")}</p>
               </div>
             ) : (
-              <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-                <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-sm text-muted-foreground mb-4">
-                  {t("modals.upload.dropzone")}
-                </p>
-                <input
-                  type="file"
-                  accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  id="video-upload-modal"
-                  disabled={uploading}
-                />
-                <Button asChild>
-                  <label htmlFor="video-upload-modal" className="cursor-pointer">
-                    {t("modals.upload.button")}
-                  </label>
-                </Button>
+              <div className="flex flex-col gap-4">
+                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
+                  <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {selectedFile ? selectedFile.name : t("modals.upload.dropzone")}
+                  </p>
+                  <input
+                    type="file"
+                    accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    id="video-upload-modal"
+                    disabled={uploading}
+                  />
+                  <Button asChild variant={selectedFile ? "secondary" : "default"}>
+                    <label htmlFor="video-upload-modal" className="cursor-pointer">
+                      {selectedFile ? "Change Video" : t("modals.upload.button")}
+                    </label>
+                  </Button>
+                </div>
+
+                {selectedFile && (
+                  <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Camera Angle</label>
+                        <Select value={cameraAngle} onValueChange={setCameraAngle}>
+                          <SelectTrigger className="bg-white/5 border-white/10">
+                            <SelectValue placeholder="Select angle" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="side">Side</SelectItem>
+                            <SelectItem value="diagonal">Diagonal</SelectItem>
+                            <SelectItem value="behind">Behind</SelectItem>
+                            <SelectItem value="unknown">Unknown</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Shot Type</label>
+                        <Select value={shotType} onValueChange={setShotType}>
+                          <SelectTrigger className="bg-white/5 border-white/10">
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="power">Power</SelectItem>
+                            <SelectItem value="curl">Curl / Finesse</SelectItem>
+                            <SelectItem value="chip">Chip</SelectItem>
+                            <SelectItem value="unknown">Unknown</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Foot Part</label>
+                        <Select value={footPart} onValueChange={setFootPart}>
+                          <SelectTrigger className="bg-white/5 border-white/10">
+                            <SelectValue placeholder="Select part" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="instep">Instep (Laces)</SelectItem>
+                            <SelectItem value="inside">Inside</SelectItem>
+                            <SelectItem value="outside">Outside</SelectItem>
+                            <SelectItem value="toe">Toe</SelectItem>
+                            <SelectItem value="unknown">Unknown</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Kicking Foot</label>
+                        <Select value={kickingFoot} onValueChange={setKickingFoot}>
+                          <SelectTrigger className="bg-white/5 border-white/10">
+                            <SelectValue placeholder="Select foot" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="right">Right</SelectItem>
+                            <SelectItem value="left">Left</SelectItem>
+                            <SelectItem value="unknown">Unknown</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <Button
+                      className="w-full bg-primary text-black font-bold h-12 shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform"
+                      onClick={handleUploadAndAnalyze}
+                    >
+                      <Video className="w-5 h-5 mr-2" />
+                      Upload & Analyze
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>
