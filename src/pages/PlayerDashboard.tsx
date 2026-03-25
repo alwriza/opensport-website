@@ -450,76 +450,31 @@ export default function PlayerDashboard() {
 
       console.log("✓ Video record created:", (newVideo as any).id);
 
-      // 3. Call ML Worker directly (without Edge Function)
+      // 3. Call Edge Function to process video securely
       try {
-        console.log('Creating signed URL for ML Worker...');
+        console.log('Calling process-video Edge Function...');
 
-        // Create signed URL
-        const { data: urlData, error: signError } = await supabase.storage
-          .from('videos')
-          .createSignedUrl(filePath, 3600); // 1 hour expiry
-
-        if (signError) {
-          console.error("Signed URL error:", signError);
-          throw new Error('Could not create signed URL');
-        }
-
-        console.log('Calling ML Worker...');
-
-        const mlWorkerUrl = 'http://34.141.241.210:8000';
-        const mlResponse = await fetch(`${mlWorkerUrl}/analyze`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            video_url: urlData.signedUrl,
+        const { data: functionData, error: functionError } = await supabase.functions.invoke('process-video', {
+          body: {
             video_id: (newVideo as any).id,
             camera_angle: cameraAngle,
             shot_type: shotType,
             foot_part: footPart,
             kicking_foot: kickingFoot
-          })
+          }
         });
 
-        if (!mlResponse.ok) {
-          const errorText = await mlResponse.text();
-          console.error('ML Worker error:', errorText);
-          throw new Error(`ML analysis failed: ${mlResponse.status}`);
+        if (functionError) {
+          console.error("Edge Function error:", functionError);
+          // Sometimes error is returned in body
+          throw new Error(functionError.message || 'Error from edge function');
         }
 
-        const result = await mlResponse.json();
-        console.log(' ML analysis complete:', result);
-
-        // Check if the model actually detected a kick successfully
-        if (result.status === 'error' || !result.is_kick) {
-          throw new Error(result.message || "No kicks detected in the video.");
+        if (functionData?.error) {
+          throw new Error(functionData.error);
         }
 
-        // Save analysis to database
-        const { error: analysisError } = await (supabase
-          .from('analyses') as any)
-          .insert({
-            user_id: dbUser.id,
-            video_id: (newVideo as any).id,
-            stability: (result as any).scores?.stability || 0,
-            power: (result as any).scores?.power || 0,
-            technique: (result as any).scores?.technique || 0,
-            balance: (result as any).scores?.balance || 0,
-            overall: (result as any).scores?.overall || 0,
-            feedback: (result as any).feedback || '',
-            tags: (result as any).tags || [],
-            processing_time_ms: (result as any).processing_time_ms || 0
-          });
-
-        if (analysisError) {
-          console.error('Failed to save analysis:', analysisError);
-          throw analysisError;
-        }
-
-        // Update video status to completed
-        await (supabase
-          .from('videos') as any)
-          .update({ status: 'completed' })
-          .eq('id', (newVideo as any).id);
+        console.log('✓ Edge Function analysis complete');
 
         toast({
           title: "Analysis Complete! 🎉",
@@ -527,7 +482,7 @@ export default function PlayerDashboard() {
         });
 
       } catch (mlError: any) {
-        console.error(' ML processing failed:', mlError);
+        console.error('❌ ML processing failed via Edge Function:', mlError);
 
         // Mark video as failed
         await (supabase
@@ -537,7 +492,7 @@ export default function PlayerDashboard() {
 
         toast({
           title: "Analysis Failed",
-          description: mlError.message || "Could not analyze video. The video has been saved but analysis failed.",
+          description: mlError.message || "Could not analyze video due to a timeout or error. Video is saved but analysis failed.",
           variant: "destructive"
         });
       }

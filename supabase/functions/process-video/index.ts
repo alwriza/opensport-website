@@ -12,7 +12,7 @@ serve(async (req) => {
     }
 
     try {
-        const { video_id } = await req.json()
+        const { video_id, camera_angle, shot_type, foot_part, kicking_foot } = await req.json()
         const supabaseClient = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -42,14 +42,26 @@ serve(async (req) => {
         const mlResponse = await fetch(`${mlWorkerUrl}/analyze`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ video_url: signedUrl, video_id: video_id }),
+            body: JSON.stringify({
+                video_url: signedUrl,
+                video_id: video_id,
+                camera_angle: camera_angle || 'unknown',
+                shot_type: shot_type || 'unknown',
+                foot_part: foot_part || 'unknown',
+                kicking_foot: kicking_foot || 'unknown'
+            }),
         })
 
         if (!mlResponse.ok) {
-            throw new Error(`ML Worker failed: ${mlResponse.statusText}`)
+            const errorText = await mlResponse.text()
+            throw new Error(`ML Worker failed: ${mlResponse.status} - ${errorText}`)
         }
 
         const analysisResult = await mlResponse.json()
+
+        if (analysisResult.status === 'error' || !analysisResult.is_kick) {
+            throw new Error(analysisResult.message || "No kicks detected in the video.")
+        }
 
         // 4. Save results
         const { error: saveError } = await supabaseClient
@@ -57,14 +69,14 @@ serve(async (req) => {
             .insert({
                 user_id: video.user_id,
                 video_id: video.id,
-                stability: analysisResult.scores.stability,
-                power: analysisResult.scores.power,
-                technique: analysisResult.scores.technique,
-                balance: analysisResult.scores.balance,
-                overall: analysisResult.scores.overall,
-                feedback: analysisResult.feedback,
-                tags: analysisResult.tags,
-                processing_time_ms: analysisResult.processing_time_ms
+                stability: analysisResult.scores?.stability || 0,
+                power: analysisResult.scores?.power || 0,
+                technique: analysisResult.scores?.technique || 0,
+                balance: analysisResult.scores?.balance || 0,
+                overall: analysisResult.scores?.overall || 0,
+                feedback: analysisResult.feedback || '',
+                tags: analysisResult.tags || [],
+                processing_time_ms: analysisResult.processing_time_ms || 0
             })
 
         if (saveError) throw saveError
