@@ -466,7 +466,7 @@ export default function PlayerDashboard() {
 
         console.log('Calling ML Worker...');
 
-        const mlWorkerUrl = 'http://34.147.162.115:8000';
+        const mlWorkerUrl = 'http://34.141.241.210:8000';
         const mlResponse = await fetch(`${mlWorkerUrl}/analyze`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
