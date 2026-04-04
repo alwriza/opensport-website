@@ -515,6 +515,16 @@ export default function CoachDashboard() {
                 ))}
               </SelectContent>
             </Select>
+            {selectedTeam && (
+              <Button
+                variant="outline"
+                className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive font-bold"
+                onClick={() => handleDeleteTeam(selectedTeam.id, selectedTeam.name)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                {t("coach.deleteTeam")}
+              </Button>
+            )}
             <Button
               className="bg-primary hover:bg-primary/90 text-black font-bold"
               onClick={() => setShowCreateModal(true)}
