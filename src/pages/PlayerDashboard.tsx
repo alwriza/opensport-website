@@ -80,8 +80,6 @@ export default function PlayerDashboard() {
   // Metadata state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [cameraAngle, setCameraAngle] = useState<string>("unknown");
-  const [shotType, setShotType] = useState<string>("unknown");
-  const [footPart, setFootPart] = useState<string>("unknown");
   const [kickingFoot, setKickingFoot] = useState<string>("unknown");
 
 
@@ -458,8 +456,6 @@ export default function PlayerDashboard() {
           body: {
             video_id: (newVideo as any).id,
             camera_angle: cameraAngle,
-            shot_type: shotType,
-            foot_part: footPart,
             kicking_foot: kickingFoot
           }
         });
@@ -1370,37 +1366,6 @@ export default function PlayerDashboard() {
                             <SelectItem value="side">Side</SelectItem>
                             <SelectItem value="diagonal">Diagonal</SelectItem>
                             <SelectItem value="behind">Behind</SelectItem>
-                            <SelectItem value="unknown">Unknown</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Shot Type</label>
-                        <Select value={shotType} onValueChange={setShotType}>
-                          <SelectTrigger className="bg-white/5 border-white/10">
-                            <SelectValue placeholder="Select type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="power">Power</SelectItem>
-                            <SelectItem value="curl">Curl / Finesse</SelectItem>
-                            <SelectItem value="chip">Chip</SelectItem>
-                            <SelectItem value="unknown">Unknown</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Foot Part</label>
-                        <Select value={footPart} onValueChange={setFootPart}>
-                          <SelectTrigger className="bg-white/5 border-white/10">
-                            <SelectValue placeholder="Select part" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="instep">Instep (Laces)</SelectItem>
-                            <SelectItem value="inside">Inside</SelectItem>
-                            <SelectItem value="outside">Outside</SelectItem>
-                            <SelectItem value="toe">Toe</SelectItem>
                             <SelectItem value="unknown">Unknown</SelectItem>
                           </SelectContent>
                         </Select>
