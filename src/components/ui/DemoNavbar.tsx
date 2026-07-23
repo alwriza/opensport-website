@@ -37,6 +37,9 @@ export default function DemoNavbar() {
           </Link>
 
           <nav className="hidden lg:flex items-center gap-12 flex-1 justify-center">
+            <Link to="/demo/home" className={`text-lg font-medium transition-colors whitespace-nowrap ${isActive('/demo/home') ? 'text-white' : 'text-gray-400 hover:text-white'}`}>
+              {t("nav.home")}
+            </Link>
             <Link to="/demo" className={`text-lg font-medium transition-colors whitespace-nowrap ${isActive('/demo') ? 'text-white' : 'text-gray-400 hover:text-white'}`}>
               {t("nav.playerDashboard")}
             </Link>
@@ -71,11 +74,6 @@ export default function DemoNavbar() {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-            <Link to="/demo/home">
-              <Button variant="outline" className="border-gray-600 text-gray-300 hover:text-white hover:border-white h-12 rounded-full">
-                На главную
-              </Button>
-            </Link>
             <Link to="/">
               <Button variant="outline" className="border-gray-600 text-gray-300 hover:text-white hover:border-white h-12 rounded-full">
                 Выйти с демо
@@ -91,6 +89,9 @@ export default function DemoNavbar() {
         {mobileMenuOpen && (
           <div className="lg:hidden py-6 border-t border-gray-800">
             <nav className="flex flex-col gap-4">
+              <Link to="/demo/home" onClick={() => setMobileMenuOpen(false)} className={`text-base font-medium py-2 ${isActive('/demo/home') ? 'text-white' : 'text-gray-400'}`}>
+                {t("nav.home")}
+              </Link>
               <Link to="/demo" onClick={() => setMobileMenuOpen(false)} className={`text-base font-medium py-2 ${isActive('/demo') ? 'text-white' : 'text-gray-400'}`}>
                 {t("nav.playerDashboard")}
               </Link>
@@ -110,12 +111,7 @@ export default function DemoNavbar() {
                   </button>
                 ))}
               </div>
-              <div className="pt-4 flex flex-col gap-3">
-                <Link to="/demo/home" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="outline" className="w-full border-gray-600 text-gray-300 hover:text-white hover:border-white rounded-full">
-                    На главную
-                  </Button>
-                </Link>
+              <div className="pt-4">
                 <Link to="/" onClick={() => setMobileMenuOpen(false)}>
                   <Button variant="outline" className="w-full border-gray-600 text-gray-300 hover:text-white hover:border-white rounded-full">
                     Выйти с демо
