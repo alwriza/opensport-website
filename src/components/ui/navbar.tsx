@@ -105,6 +105,10 @@ export default function Navbar() {
               </DropdownMenuContent>
             </DropdownMenu>
 
+            <Link to="/demo" className="text-sm font-medium text-gray-400 hover:text-[#9FE870] transition-colors whitespace-nowrap">
+              {t("nav.demo", "Demo")}
+            </Link>
+
             <div className="h-8 w-px bg-gray-800" /> {/* Divider */}
 
             <SignedOut>
@@ -192,13 +196,17 @@ export default function Navbar() {
               </div>
 
               <div className="pt-4">
-                <SignedOut>
-                  <SignInButton mode="modal" forceRedirectUrl="/player-dashboard">
-                    <Button className="w-full bg-[#9FE870] hover:bg-[#8DD760] text-black font-semibold h-11 rounded-full">
-                      {t("buttons.getStarted")}
-                    </Button>
-                  </SignInButton>
-                </SignedOut>
+                  <Link to="/demo" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium py-2 text-gray-400">
+                    {t("nav.demo", "Demo")}
+                  </Link>
+
+                  <SignedOut>
+                    <Link to="/register" onClick={() => setMobileMenuOpen(false)}>
+                      <Button className="w-full bg-[#9FE870] hover:bg-[#8DD760] text-black font-bold rounded-full">
+                        {t("buttons.getStarted")}
+                      </Button>
+                    </Link>
+                  </SignedOut>
                 <SignedIn>
                   <div className="flex justify-center">
                     <UserButton afterSignOutUrl="/" />

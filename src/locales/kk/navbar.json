@@ -5,7 +5,8 @@
         "playerDashboard": "Ойыншы",
         "coachDashboard": "Жаттықтырушы",
         "training": "Жаттығу",
-        "leaderboard": "Рейтинг"
+        "leaderboard": "Рейтинг",
+        "demo": "Демо"
     },
     "buttons": {
         "getStarted": "Бастау"

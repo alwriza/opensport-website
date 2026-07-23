@@ -5,7 +5,8 @@
         "playerDashboard": "Player",
         "coachDashboard": "Coach",
         "training": "Training",
-        "leaderboard": "Ranking"
+        "leaderboard": "Ranking",
+        "demo": "Demo"
     },
     "buttons": {
         "getStarted": "Get Started"
