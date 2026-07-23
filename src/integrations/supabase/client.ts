@@ -7,10 +7,27 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    storage: localStorage,
-    persistSession: true,
-    autoRefreshToken: true,
+let client: ReturnType<typeof createClient<Database>> | null = null;
+
+function getClient() {
+  if (!client) {
+    client = createClient<Database>(
+      SUPABASE_URL || 'https://placeholder.supabase.co',
+      SUPABASE_ANON_KEY || 'placeholder-key',
+      {
+        auth: {
+          storage: localStorage,
+          persistSession: true,
+          autoRefreshToken: true,
+        }
+      }
+    );
+  }
+  return client;
+}
+
+export const supabase = new Proxy({} as ReturnType<typeof createClient<Database>>, {
+  get(_, prop) {
+    return (getClient() as any)[prop];
   }
 });

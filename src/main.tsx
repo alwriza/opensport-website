@@ -4,15 +4,16 @@ import "./index.css";
 import "./i18n";
 import { ClerkProvider } from "@clerk/clerk-react";
 
-// Import your publishable key
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 
-if (!PUBLISHABLE_KEY) {
-    throw new Error("Missing Publishable Key")
-}
+const root = createRoot(document.getElementById("root")!);
 
-createRoot(document.getElementById("root")!).render(
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
-        <App />
-    </ClerkProvider>
-);
+if (PUBLISHABLE_KEY) {
+    root.render(
+        <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
+            <App />
+        </ClerkProvider>
+    );
+} else {
+    root.render(<App />);
+}
