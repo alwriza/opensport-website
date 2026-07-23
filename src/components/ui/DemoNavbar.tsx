@@ -71,9 +71,14 @@ export default function DemoNavbar() {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-            <Link to="/">
+            <Link to="/demo/home">
               <Button variant="outline" className="border-gray-600 text-gray-300 hover:text-white hover:border-white h-12 rounded-full">
                 На главную
+              </Button>
+            </Link>
+            <Link to="/">
+              <Button variant="outline" className="border-gray-600 text-gray-300 hover:text-white hover:border-white h-12 rounded-full">
+                Выйти с демо
               </Button>
             </Link>
           </div>
@@ -105,10 +110,15 @@ export default function DemoNavbar() {
                   </button>
                 ))}
               </div>
-              <div className="pt-4">
-                <Link to="/" onClick={() => setMobileMenuOpen(false)}>
+              <div className="pt-4 flex flex-col gap-3">
+                <Link to="/demo/home" onClick={() => setMobileMenuOpen(false)}>
                   <Button variant="outline" className="w-full border-gray-600 text-gray-300 hover:text-white hover:border-white rounded-full">
                     На главную
+                  </Button>
+                </Link>
+                <Link to="/" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="outline" className="w-full border-gray-600 text-gray-300 hover:text-white hover:border-white rounded-full">
+                    Выйти с демо
                   </Button>
                 </Link>
               </div>

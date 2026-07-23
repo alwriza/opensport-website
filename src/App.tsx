@@ -65,6 +65,7 @@ const App = () => (
             {/* Demo Routes (no Clerk auth required) */}
             <Route path="/demo" element={<DemoProvider><Outlet /></DemoProvider>}>
               <Route index element={<PlayerDashboard />} />
+              <Route path="home" element={<Home />} />
               <Route path="coach-dashboard" element={<CoachDashboard />} />
               <Route path="training" element={<Training />} />
               <Route path="ranking" element={<Ranking />} />
