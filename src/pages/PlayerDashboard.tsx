@@ -361,6 +361,7 @@ export default function PlayerDashboard() {
   }, [latestCompletedVideoId, demo]);
 
   const updateProfile = async (field: string, value: any) => {
+    if (guardMutation()) return;
     if (!dbUser?.id) return;
 
     try {
