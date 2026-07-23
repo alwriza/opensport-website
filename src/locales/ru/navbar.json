@@ -4,7 +4,8 @@
         "ranking": "Рейтинг",
         "playerDashboard": "Игрок",
         "coachDashboard": "Тренер",
-        "training": "Тренировки"
+        "training": "Тренировки",
+        "leaderboard": "Рейтинг"
     },
     "buttons": {
         "getStarted": "Начать"

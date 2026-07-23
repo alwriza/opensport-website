@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import { useUser } from "@clerk/clerk-react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useDemoContext, useDemoMutationGuard } from "@/demo";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,7 +45,9 @@ import { useTranslation } from "react-i18next";
 
 export default function CoachDashboard() {
   const { t } = useTranslation("dashboard");
-  const { user, isLoaded } = useUser();
+  const { user, isLoaded } = useCurrentUser();
+  const demo = useDemoContext();
+  const { guard: guardMutation } = useDemoMutationGuard();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -94,6 +97,7 @@ export default function CoachDashboard() {
   const { data: coachProfile } = useQuery({
     queryKey: ['coach-profile', user?.id],
     queryFn: async () => {
+      if (demo) return demo.coachProfile;
       if (!user) return null;
       const { data, error } = await supabase
         .from('users')
@@ -104,7 +108,7 @@ export default function CoachDashboard() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user,
+    enabled: !!user || !!demo,
   });
 
   // Check for terms acceptance
@@ -125,6 +129,7 @@ export default function CoachDashboard() {
   const { data: teams = [], isLoading: loadingTeams } = useQuery({
     queryKey: ['coach-teams', coachDbId],
     queryFn: async () => {
+      if (demo) return demo.teams;
       const { data, error } = await supabase
         .from('team_coaches')
         .select(`
@@ -145,7 +150,7 @@ export default function CoachDashboard() {
       if (!data) return [];
       return data.map((ct: any) => ct.teams);
     },
-    enabled: !!coachDbId,
+    enabled: !!coachDbId || !!demo,
   });
 
   // Derived state to handle auto-selection of the first team
@@ -160,6 +165,7 @@ export default function CoachDashboard() {
   const { data: roster = [], isLoading: loadingRoster } = useQuery({
     queryKey: ['team-roster', activeTeamId],
     queryFn: async () => {
+      if (demo) return demo.roster;
       if (!activeTeamId) return [];
 
       // Fetch roster members
@@ -228,8 +234,8 @@ export default function CoachDashboard() {
         };
       });
     },
-    enabled: !!activeTeamId,
-    refetchInterval: 7000,
+    enabled: !!activeTeamId || !!demo,
+    refetchInterval: demo ? false : 7000,
   });
 
   const isLoading = !isLoaded || loadingTeams || loadingRoster;
@@ -527,7 +533,7 @@ export default function CoachDashboard() {
             )}
             <Button
               className="bg-primary hover:bg-primary/90 text-black font-bold"
-              onClick={() => setShowCreateModal(true)}
+              onClick={() => { if (guardMutation()) return; setShowCreateModal(true); }}
             >
               <Plus className="h-4 w-4 mr-2" />
               {t("coach.createTeam")}

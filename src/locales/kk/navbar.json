@@ -4,7 +4,8 @@
         "ranking": "Рейтинг",
         "playerDashboard": "Ойыншы",
         "coachDashboard": "Жаттықтырушы",
-        "training": "Жаттығу"
+        "training": "Жаттығу",
+        "leaderboard": "Рейтинг"
     },
     "buttons": {
         "getStarted": "Бастау"

@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useUser } from "@clerk/clerk-react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useDemoContext } from "@/demo";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useSearchParams } from "react-router-dom";
 import { Play, Target, Loader2, Filter, Lock, CheckCircle, Circle, Trophy, Flame, Star, Zap, ChevronRight, ExternalLink, Footprints, Crosshair, Shield, Dumbbell, Brain, Swords, Goal, CircleDot, Gauge, HeartPulse, type LucideIcon } from "lucide-react";
@@ -117,7 +118,8 @@ const SkillIcon = ({ icon, size = 'lg' }: { icon: string; size?: 'sm' | 'lg' | '
 
 const Training = () => {
   const { t } = useTranslation(["training", "common"]);
-  const { user, isLoaded } = useUser();
+  const { user, isLoaded } = useCurrentUser();
+  const demo = useDemoContext();
   const { toast } = useToast();
 
   // Existing state for library and analysis
@@ -187,6 +189,18 @@ const Training = () => {
     }
   }, [searchParams, skills, skillLevels]);
 
+  // Demo mode: fill all state from demo data
+  useEffect(() => {
+    if (!demo) return;
+    setSkills(demo.skills);
+    setSkillLevels(demo.skillLevels);
+    setPlayerProgress(demo.trainingStats.progress as any);
+    setSkillProgress(demo.trainingStats.skills as any[]);
+    setDbUserId("demo-user-id");
+    setIsLoadingTraining(false);
+    setIsLoadingExercises(false);
+  }, [demo]);
+
   // Pre-calculated stats for UI
   const userXP = playerProgress?.total_xp || 0;
   const userLevel = playerProgress?.level || 1;
@@ -196,6 +210,7 @@ const Training = () => {
 
   // 1. Fetch DB User ID from Clerk ID
   useEffect(() => {
+    if (demo) return;
     const getDbUserId = async () => {
       if (!isLoaded || !user) return;
       try {
@@ -216,6 +231,7 @@ const Training = () => {
 
   // 2. Fetch all Training Data
   useEffect(() => {
+    if (demo) return;
     const fetchTrainingData = async () => {
       if (!dbUserId) return;
       setIsLoadingTraining(true);
@@ -333,6 +349,7 @@ const Training = () => {
 
   // Complete level function
   const completeLevel = async (skillLevelId: string, skillId: string, levelName: string) => {
+    if (demo) { toast({ title: "Demo Mode", description: "Not available in demo", variant: "destructive" }); return; }
     if (!dbUserId) return;
 
     try {
@@ -461,6 +478,7 @@ const Training = () => {
   };
 
   const handleAnalyzeExercise = async (exercise: Exercise) => {
+    if (demo) { toast({ title: "Demo Mode", description: "Not available in demo", variant: "destructive" }); return; }
     setSelectedExercise(exercise);
     setIsAnalyzing(true);
     setAnalysisResult(null);
@@ -493,6 +511,7 @@ const Training = () => {
   };
 
   const fetchRecommendations = async () => {
+    if (demo) { toast({ title: "Demo Mode", description: "Not available in demo", variant: "destructive" }); return; }
     try {
       const { data, error } = await supabase.functions.invoke('generate-recommendations', {
         body: {

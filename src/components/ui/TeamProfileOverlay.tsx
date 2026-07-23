@@ -1,6 +1,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useDemoContext } from "@/demo";
 import {
     Dialog,
     DialogContent,
@@ -50,6 +51,7 @@ export const TeamProfileOverlay: React.FC<TeamProfileOverlayProps> = ({
     onClose,
 }) => {
     const { t } = useTranslation("team");
+    const demo = useDemoContext();
 
     // Helper functions for styling (aligned with new dark theme)
     const getScoreColor = (score: number) => {
@@ -69,6 +71,10 @@ export const TeamProfileOverlay: React.FC<TeamProfileOverlayProps> = ({
         queryKey: ['team-details', teamId],
         queryFn: async () => {
             if (!teamId) return null;
+            if (demo) {
+                const found = demo.teams.find((t: any) => t.id === teamId);
+                return found || null;
+            }
             const { data, error } = await supabase
                 .from('teams')
                 .select(`
@@ -88,6 +94,9 @@ export const TeamProfileOverlay: React.FC<TeamProfileOverlayProps> = ({
         queryKey: ['team-coaches-list', teamId],
         queryFn: async () => {
             if (!teamId) return [];
+            if (demo) {
+                return [{ role: 'head', users: { name: 'Coach Alex', email: 'coach@demo.com' } }];
+            }
             const { data, error } = await supabase
                 .from('team_coaches')
                 .select(`
@@ -106,6 +115,21 @@ export const TeamProfileOverlay: React.FC<TeamProfileOverlayProps> = ({
         queryKey: ['team-roster-list-coach-style', teamId],
         queryFn: async () => {
             if (!teamId) return [];
+            if (demo) {
+                return demo.roster
+                    .filter((r: any) => r.status === 'active')
+                    .map((r: any) => ({
+                        player_id: r.id,
+                        name: r.name,
+                        position: r.position,
+                        age: r.age,
+                        jersey_number: r.jersey_number,
+                        latest_score: r.latest_score || 0,
+                        recent_scores: r.recent_scores || [],
+                        trend: r.trend || 0,
+                        last_upload: r.last_upload,
+                    })) as any[];
+            }
 
             const { data: rosterData, error: rosterError } = await supabase
                 .from('team_rosters')

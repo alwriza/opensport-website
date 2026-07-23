@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useUser } from "@clerk/clerk-react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardFooter, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { Info } from "lucide-react";
 import { TermsAcceptanceModal } from "@/components/ui/TermsAcceptanceModal";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDemoContext, useDemoMutationGuard } from "@/demo";
 
 const emojiToIcon: Record<string, LucideIcon> = {
   '⚽': Goal, '🎯': Crosshair, '🏃': Footprints, '🦶': CircleDot,
@@ -56,10 +57,13 @@ interface Analysis {
 
 export default function PlayerDashboard() {
   const { t } = useTranslation("dashboard");
-  const { user, isLoaded } = useUser();
+  const { user, isLoaded } = useCurrentUser();
+  const demo = useDemoContext();
+  const { isDemo, guard: guardMutation } = useDemoMutationGuard();
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const demoNav = (path: string) => isDemo ? `/demo${path}` : path;
 
   // State
   const [uploading, setUploading] = useState(false);
@@ -88,6 +92,7 @@ export default function PlayerDashboard() {
   const { data: dbUser, isLoading: loadingUser } = useQuery({
     queryKey: ['db-user', user?.id],
     queryFn: async () => {
+      if (demo) return demo.coachProfile;
       if (!user) return null;
 
       const { data: existingUser, error: fetchError } = await supabase
@@ -115,13 +120,14 @@ export default function PlayerDashboard() {
       }
       return existingUser;
     },
-    enabled: !!user,
+    enabled: !!user || !!demo,
   });
 
   // 2. Fetch Videos
   const { data: videos = [] } = useQuery({
     queryKey: ['videos', dbUser?.id],
     queryFn: async () => {
+      if (demo) return demo.videos;
       if (!dbUser?.id) return [];
       const { data, error } = await supabase
         .from('videos')
@@ -147,6 +153,7 @@ export default function PlayerDashboard() {
   const { data: latestAnalysis } = useQuery({
     queryKey: ['analysis', latestCompletedVideoId],
     queryFn: async () => {
+      if (demo) return demo.latestAnalysis;
       if (!latestCompletedVideoId) return null;
       const { data, error } = await supabase
         .from('analyses')
@@ -156,13 +163,14 @@ export default function PlayerDashboard() {
       if (error) throw error;
       return data as any;
     },
-    enabled: !!latestCompletedVideoId,
+    enabled: !!latestCompletedVideoId || !!demo,
   });
 
   // 4. Fetch Training Progress
   const { data: trainingStats } = useQuery({
     queryKey: ['training-stats', dbUser?.id],
     queryFn: async () => {
+      if (demo) return demo.trainingStats;
       if (!dbUser?.id) return null;
       const { data: progress } = await supabase
         .from('player_progress')
@@ -177,7 +185,7 @@ export default function PlayerDashboard() {
 
       return { progress, skills: skills || [] };
     },
-    enabled: !!dbUser?.id
+    enabled: !!dbUser?.id || !!demo
   });
 
   const analyses = useMemo(() => videos.filter((v: any) => v.status === 'completed'), [videos]);
@@ -186,6 +194,7 @@ export default function PlayerDashboard() {
   const { data: latestRecommendations = [] } = useQuery({
     queryKey: ['latest-recommendations', latestAnalysis?.id],
     queryFn: async () => {
+      if (demo) return demo.latestRecommendations as any[];
       if (!latestAnalysis || !dbUser?.id) return [];
 
       const scores = {
@@ -270,13 +279,14 @@ export default function PlayerDashboard() {
         return [];
       }
     },
-    enabled: !!latestAnalysis && !!dbUser?.id,
+    enabled: (!!latestAnalysis && !!dbUser?.id) || !!demo,
   });
 
   // 4. Fetch My Teams
   const { data: myTeams = [], isLoading: loadingTeams } = useQuery({
     queryKey: ['my-teams', dbUser?.id],
     queryFn: async () => {
+      if (demo) return demo.myTeams;
       if (!dbUser?.id) return [];
       const { data, error } = await supabase
         .from('team_rosters')
@@ -305,8 +315,8 @@ export default function PlayerDashboard() {
         status: item.status
       })) || [];
     },
-    enabled: !!dbUser?.id,
-    refetchInterval: 3000,
+    enabled: !!dbUser?.id || !!demo,
+    refetchInterval: demo ? false : 3000,
   });
 
   // Sync local editing state and check for terms acceptance
@@ -326,6 +336,11 @@ export default function PlayerDashboard() {
 
   // Fetch signed URL for latest video
   useEffect(() => {
+    if (demo && latestCompletedVideoId) {
+      const video = demo.videos.find((v: any) => v.id === latestCompletedVideoId);
+      setLatestVideoUrl(video ? `/${video.storage_path}` : "");
+      return;
+    }
     if (!latestCompletedVideoId) return;
 
     const fetchUrl = async () => {
@@ -343,7 +358,7 @@ export default function PlayerDashboard() {
       }
     };
     fetchUrl();
-  }, [latestCompletedVideoId]);
+  }, [latestCompletedVideoId, demo]);
 
   const updateProfile = async (field: string, value: any) => {
     if (!dbUser?.id) return;
@@ -372,6 +387,7 @@ export default function PlayerDashboard() {
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (guardMutation()) return;
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -605,6 +621,19 @@ export default function PlayerDashboard() {
 
     const fetchResultsData = async () => {
       setLoadingResults(true);
+
+      if (demo) {
+        const demoAnalysis = demo.analyses.find(a => a.video_id === selectedVideoId);
+        if (demoAnalysis) {
+          setSelectedAnalysis(demoAnalysis);
+          const video = demo.videos.find((v: any) => v.id === selectedVideoId);
+          setSelectedVideoUrl(video ? `/${video.storage_path}` : "");
+          setRecommendedTraining([]);
+        }
+        setLoadingResults(false);
+        return;
+      }
+
       try {
         // Fetch analysis
         const { data: analysisData, error: analysisError } = await supabase
@@ -664,6 +693,7 @@ export default function PlayerDashboard() {
   };
 
   const handleLeaveTeam = async (rosterId: string, teamName: string) => {
+    if (guardMutation()) return;
     if (!confirm(`Are you sure you want to leave ${teamName}?`)) {
       return;
     }
@@ -923,7 +953,7 @@ export default function PlayerDashboard() {
                           key={level.id}
                           className="cursor-pointer hover:border-primary/50 transition-all group bg-card border-primary/5 overflow-hidden shadow-lg shadow-black/20"
                           onClick={() => {
-                            navigate(`/training?tab=exercises&skill=${level.skill_id}&level=${level.level_name}`);
+                            navigate(demoNav(`/training?tab=exercises&skill=${level.skill_id}&level=${level.level_name}`));
                           }}
                         >
                           <CardContent className="p-4 text-white">
@@ -1173,7 +1203,7 @@ export default function PlayerDashboard() {
               <Button
                 variant="outline"
                 className="w-full rounded-xl border-primary/20 hover:bg-primary/5 hover:text-primary transition-all font-bold"
-                onClick={() => navigate('/join-team')}
+                onClick={() => navigate(demoNav('/join-team'))}
               >
                 <Users className="h-4 w-4 mr-2" />
                 {t("player.teams.join")}
@@ -1240,7 +1270,7 @@ export default function PlayerDashboard() {
                 <div className="text-center py-10 bg-muted/20 rounded-2xl border border-dashed">
                   <Users className="h-10 w-10 mx-auto mb-3 opacity-20" />
                   <p className="text-xs font-medium text-muted-foreground">{t("player.teams.notJoined")}</p>
-                  <Button variant="link" size="sm" className="mt-1 text-primary text-xs" onClick={() => navigate('/join-team')}>
+                  <Button variant="link" size="sm" className="mt-1 text-primary text-xs" onClick={() => navigate(demoNav('/join-team'))}>
                     {t("player.teams.findClub")}
                   </Button>
                 </div>
@@ -1306,7 +1336,7 @@ export default function PlayerDashboard() {
               {/* Button to Training */}
               <Button
                 className="w-full rounded-2xl h-12 font-bold group shadow-md hover:shadow-primary/20"
-                onClick={() => navigate('/training')}
+                onClick={() => navigate(demoNav('/training'))}
               >
                 {t("player.training.goToCenter")}
                 <ChevronRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -1518,7 +1548,7 @@ export default function PlayerDashboard() {
                         className="cursor-pointer hover:border-primary transition-colors group bg-card border-primary/10 overflow-hidden shadow-lg shadow-black/20"
                         onClick={() => {
                           setResultsModalOpen(false);
-                          navigate(`/training?tab=exercises&skill=${level.skill_id}&level=${level.level_name}`);
+                          navigate(demoNav(`/training?tab=exercises&skill=${level.skill_id}&level=${level.level_name}`));
                         }}
                       >
                         <CardContent className="p-4">

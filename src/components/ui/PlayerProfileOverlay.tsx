@@ -1,6 +1,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useDemoContext } from "@/demo";
 import {
     Dialog,
     DialogContent,
@@ -73,6 +74,7 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
     teamName
 }) => {
     const { t } = useTranslation("player");
+    const demo = useDemoContext();
     const playerId = player?.player_id || player?.id;
     const [selectedVideoIndex, setSelectedVideoIndex] = React.useState<number>(0);
     const [selectedVideoUrl, setSelectedVideoUrl] = React.useState<string | null>(null);
@@ -88,6 +90,21 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
         queryKey: ['player-recent-videos-detailed', playerId],
         queryFn: async () => {
             if (!playerId) return [];
+            if (demo) {
+                return demo.videos.map(v => ({
+                    ...v,
+                    analyses: demo.analyses.map(a => ({
+                        id: a.id,
+                        overall: a.overall,
+                        stability: a.stability,
+                        power: a.power,
+                        technique: a.technique,
+                        balance: a.balance,
+                        feedback: a.feedback,
+                        tags: a.tags,
+                    })),
+                }));
+            }
             const { data, error } = await supabase
                 .from('videos')
                 .select(`
@@ -122,6 +139,10 @@ export const PlayerProfileOverlay: React.FC<PlayerProfileOverlayProps> = ({
     React.useEffect(() => {
         const fetchSignedUrl = async () => {
             if (selectedVideo?.storage_path) {
+                if (demo) {
+                    setSelectedVideoUrl(`/${selectedVideo.storage_path}`);
+                    return;
+                }
                 try {
                     const { data, error } = await supabase.storage
                         .from('videos')
