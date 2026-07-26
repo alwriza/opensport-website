@@ -13,7 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useNavigate } from "react-router-dom";
 import { TeamProfileOverlay } from "@/components/ui/TeamProfileOverlay";
 import { Info } from "lucide-react";
-import { TermsAcceptanceModal } from "@/components/ui/TermsAcceptanceModal";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDemoContext, useDemoMutationGuard } from "@/demo";
@@ -78,7 +77,6 @@ export default function PlayerDashboard() {
   const [selectedTeamProfileId, setSelectedTeamProfileId] = useState<string | null>(null);
   const [teamProfileOpen, setTeamProfileOpen] = useState(false);
   const [recommendedTraining, setRecommendedTraining] = useState<any[]>([]);
-  const [showTermsModal, setShowTermsModal] = useState(false);
   const [showAllVideos, setShowAllVideos] = useState(false);
 
   // Metadata state
@@ -303,18 +301,11 @@ export default function PlayerDashboard() {
     refetchInterval: demo ? false : 3000,
   });
 
-  // Sync local editing state and check for terms acceptance
+  // Sync local editing state
   useEffect(() => {
     const userProfile = dbUser as any;
     if (userProfile) {
       setLocalUser(userProfile);
-
-      // Check if user accepted terms
-      if (!userProfile.terms_accepted_at || !userProfile.privacy_accepted_at) {
-        setShowTermsModal(true);
-      } else {
-        setShowTermsModal(false);
-      }
     }
   }, [dbUser]);
 
@@ -738,22 +729,6 @@ export default function PlayerDashboard() {
             </Button>
           </CardContent>
         </Card>
-      </div>
-    );
-  }
-
-  // Block all dashboard content if terms are not accepted
-  if (showTermsModal && dbUser) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-card">
-        <TermsAcceptanceModal
-          open={true}
-          userId={(dbUser as any).id}
-          onAccept={() => {
-            setShowTermsModal(false);
-            queryClient.invalidateQueries({ queryKey: ['db-user', user?.id] });
-          }}
-        />
       </div>
     );
   }

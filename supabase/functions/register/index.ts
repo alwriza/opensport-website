@@ -12,11 +12,18 @@ serve(async (req) => {
   }
 
   try {
-    const { email, password, phone, nickname } = await req.json();
+    const { email, password, phone, nickname, terms_accepted, privacy_accepted } = await req.json();
 
     if (!email || !password || !phone || !nickname) {
       return new Response(
         JSON.stringify({ error: "email, password, phone and nickname are required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!terms_accepted || !privacy_accepted) {
+      return new Response(
+        JSON.stringify({ error: "You must accept Terms of Service and Privacy Policy" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -72,6 +79,21 @@ serve(async (req) => {
       type: 'signup',
       email: email,
     });
+
+    if (authUser?.user) {
+      const now = new Date().toISOString();
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({
+          terms_accepted_at: now,
+          privacy_accepted_at: now,
+        })
+        .eq("auth_user_id", authUser.user.id);
+
+      if (updateError) {
+        console.error("Failed to set terms acceptance:", updateError);
+      }
+    }
 
     if (resendError) {
       console.error("Resend confirmation email error:", resendError);

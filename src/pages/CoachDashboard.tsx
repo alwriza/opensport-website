@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useDemoContext, useDemoMutationGuard } from "@/demo";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -37,7 +37,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TermsAcceptanceModal } from "@/components/ui/TermsAcceptanceModal";
 import { NumberInput } from "@/components/ui/NumberInput";
 import { useTranslation } from "react-i18next";
 
@@ -63,7 +62,6 @@ export default function CoachDashboard() {
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [selectedPlayerProfileId, setSelectedPlayerProfileId] = useState<string | null>(null);
-  const [showTermsModal, setShowTermsModal] = useState(false);
 
   const POSITIONS = ['All', 'Forward', 'Midfielder', 'Defender', 'Goalkeeper'];
 
@@ -110,18 +108,6 @@ export default function CoachDashboard() {
     },
     enabled: !!user || !!demo,
   });
-
-  // Check for terms acceptance
-  useEffect(() => {
-    const profile = coachProfile as any;
-    if (profile) {
-      if (!profile.terms_accepted_at || !profile.privacy_accepted_at) {
-        setShowTermsModal(true);
-      } else {
-        setShowTermsModal(false);
-      }
-    }
-  }, [coachProfile]);
 
   const coachDbId = (coachProfile as any)?.id;
 
@@ -475,22 +461,6 @@ export default function CoachDashboard() {
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
           <p className="text-sm font-black uppercase tracking-widest opacity-40">{t("coach.loading")}</p>
         </div>
-      </div>
-    );
-  }
-
-  // Block all dashboard content if terms are not accepted
-  if (showTermsModal && coachProfile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-card">
-        <TermsAcceptanceModal
-          open={true}
-          userId={(coachProfile as any).id}
-          onAccept={() => {
-            setShowTermsModal(false);
-            queryClient.invalidateQueries({ queryKey: ['coach-profile', user?.id] });
-          }}
-        />
       </div>
     );
   }
