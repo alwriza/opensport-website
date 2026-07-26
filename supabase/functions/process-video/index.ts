@@ -15,7 +15,7 @@ serve(async (req) => {
         const { video_id, camera_angle, shot_type, foot_part, kicking_foot } = await req.json()
         const supabaseClient = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
-            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+            Deno.env.get('SERVICE_ROLE_SECRET_KEY') ?? ''
         )
 
         // 1. Get video record

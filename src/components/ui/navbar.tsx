@@ -91,6 +91,14 @@ export default function Navbar() {
             >
               {t("nav.ranking")}
             </Link>
+
+            <Link
+              to="/duels"
+              className={`text-lg font-medium transition-colors whitespace-nowrap ${isActive('/duels') ? 'text-white' : 'text-gray-400 hover:text-white'
+                }`}
+            >
+              {t("nav.duels")}
+            </Link>
           </nav>
 
           {/* CTA Button & Language Switcher & User/Auth */}
@@ -196,6 +204,14 @@ export default function Navbar() {
                 className={`text-base font-medium py-2 ${isActive('/ranking') ? 'text-white' : 'text-gray-400'}`}
               >
                 {t("nav.ranking")}
+              </Link>
+
+              <Link
+                to="/duels"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`text-base font-medium py-2 ${isActive('/duels') ? 'text-white' : 'text-gray-400'}`}
+              >
+                {t("nav.duels")}
               </Link>
 
               {/* Mobile Language Switcher */}

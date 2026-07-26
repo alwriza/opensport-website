@@ -6,7 +6,8 @@
         "coachDashboard": "Тренер",
         "training": "Тренировки",
         "leaderboard": "Рейтинг",
-        "demo": "Демо"
+        "demo": "Демо",
+        "duels": "Дуэли"
     },
     "buttons": {
         "getStarted": "Начать"

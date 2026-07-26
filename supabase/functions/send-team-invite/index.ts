@@ -19,7 +19,7 @@ serve(async (req) => {
     // 2. Инициализация Supabase Admin (Service Role)
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SERVICE_ROLE_SECRET_KEY') ?? ''
     )
 
     // 3. Поиск пользователя (Используем ilike для игнорирования регистра)

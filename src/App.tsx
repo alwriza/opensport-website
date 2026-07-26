@@ -13,6 +13,7 @@ import PlayerDashboard from "./pages/PlayerDashboard";
 import CoachDashboard from "./pages/CoachDashboard";
 import Training from "./pages/Training";
 import Ranking from "./pages/Ranking";
+import Duels from "./pages/Duels";
 import About from "./pages/About";
 
 import NotFound from "./pages/NotFound";
@@ -69,6 +70,7 @@ const App = () => (
             <Route path="/coach-dashboard" element={<ProtectedRoute><CoachDashboard /></ProtectedRoute>} />
             <Route path="/training" element={<ProtectedRoute><Training /></ProtectedRoute>} />
             <Route path="/ranking" element={<ProtectedRoute><Ranking /></ProtectedRoute>} />
+            <Route path="/duels" element={<ProtectedRoute><Duels /></ProtectedRoute>} />
             <Route path="/join-team" element={<ProtectedRoute><JoinTeam /></ProtectedRoute>} />
 
             {/* <Route path="/about" element={<About />} /> */}
@@ -82,6 +84,7 @@ const App = () => (
               <Route path="coach-dashboard" element={<CoachDashboard />} />
               <Route path="training" element={<Training />} />
               <Route path="ranking" element={<Ranking />} />
+              <Route path="duels" element={<Duels />} />
               <Route path="join-team" element={<DemoJoinTeam />} />
             </Route>
 

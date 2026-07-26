@@ -6,7 +6,8 @@
         "coachDashboard": "Жаттықтырушы",
         "training": "Жаттығу",
         "leaderboard": "Рейтинг",
-        "demo": "Демо"
+        "demo": "Демо",
+        "duels": "Дуэльдер"
     },
     "buttons": {
         "getStarted": "Бастау"

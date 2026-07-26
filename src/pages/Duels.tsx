@@ -1,0 +1,422 @@
+import { useEffect, useState } from "react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { Loader2, Swords, Upload, Trophy, Clock, X, Check } from "lucide-react";
+
+interface Duel {
+  id: string;
+  challenger_id: string;
+  opponent_id: string;
+  challenger_video_id: string | null;
+  opponent_video_id: string | null;
+  challenger_score: number | null;
+  opponent_score: number | null;
+  status: "pending" | "active" | "completed" | "declined" | "expired";
+  winner_id: string | null;
+  deadline_at: string | null;
+  created_at: string;
+  completed_at: string | null;
+}
+
+async function getAccessToken() {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token;
+}
+
+export default function Duels() {
+  const { user } = useCurrentUser();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const [challengeOpen, setChallengeOpen] = useState(false);
+  const [challengeNickname, setChallengeNickname] = useState("");
+  const [challengeLoading, setChallengeLoading] = useState(false);
+
+  const [uploadDuelId, setUploadDuelId] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [cameraAngle, setCameraAngle] = useState("unknown");
+  const [kickingFoot, setKickingFoot] = useState("unknown");
+  const [uploading, setUploading] = useState(false);
+
+  const { data: dbUserId } = useQuery({
+    queryKey: ["db-user-id", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await supabase
+        .from("users")
+        .select("id")
+        .eq("auth_user_id", user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.id ?? null;
+    },
+    enabled: !!user,
+  });
+
+  const { data: duels = [], refetch } = useQuery({
+    queryKey: ["duels", dbUserId],
+    queryFn: async () => {
+      if (!dbUserId) return [];
+      const { data, error } = await supabase
+        .from("duels")
+        .select("*")
+        .or(`challenger_id.eq.${dbUserId},opponent_id.eq.${dbUserId}`)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as Duel[];
+    },
+    enabled: !!dbUserId,
+  });
+
+  useEffect(() => {
+    if (!dbUserId) return;
+    const channel = supabase
+      .channel("duels-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "duels" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["duels", dbUserId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [dbUserId, queryClient]);
+
+  const handleChallenge = async () => {
+    if (!challengeNickname.trim()) return;
+    setChallengeLoading(true);
+    try {
+      const token = await getAccessToken();
+      const { data, error } = await supabase.functions.invoke("create-duel", {
+        headers: { Authorization: `Bearer ${token}` },
+        body: { opponentNickname: challengeNickname.trim() },
+      });
+      if (error) throw new Error((error as any)?.context?.error || error.message);
+      if ((data as any)?.error) throw new Error((data as any).error);
+
+      toast({ title: "Challenge sent", description: `Waiting for ${challengeNickname} to respond.` });
+      setChallengeOpen(false);
+      setChallengeNickname("");
+      refetch();
+    } catch (err: any) {
+      const msg = err.message || "";
+      let description = "Something went wrong.";
+      if (msg.includes("user_not_found")) description = "No player found with that nickname.";
+      else if (msg.includes("cannot_challenge_yourself")) description = "You can't challenge yourself.";
+      else if (msg.includes("duel_already_pending")) description = "You already have a pending challenge with this player.";
+      toast({ title: "Could not send challenge", description, variant: "destructive" });
+    } finally {
+      setChallengeLoading(false);
+    }
+  };
+
+  const handleRespond = async (duelId: string, action: "accept" | "decline") => {
+    try {
+      const token = await getAccessToken();
+      const { data, error } = await supabase.functions.invoke("respond-duel", {
+        headers: { Authorization: `Bearer ${token}` },
+        body: { duelId, action },
+      });
+      if (error) throw new Error((error as any)?.context?.error || error.message);
+      if ((data as any)?.error) throw new Error((data as any).error);
+
+      toast({ title: action === "accept" ? "Duel accepted" : "Duel declined" });
+      refetch();
+    } catch (err: any) {
+      toast({ title: "Could not respond", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleUploadForDuel = async () => {
+    if (!file || !uploadDuelId || !dbUserId) return;
+    setUploading(true);
+    try {
+      const filePath = `${dbUserId}/${Date.now()}_${file.name}`;
+      const { error: uploadError } = await supabase.storage.from("videos").upload(filePath, file);
+      if (uploadError) throw uploadError;
+
+      const { data: videoRow, error: insertError } = await supabase
+        .from("videos")
+        .insert({
+          user_id: dbUserId,
+          storage_path: filePath,
+          filename: file.name,
+          file_size_mb: file.size / (1024 * 1024),
+          status: "processing",
+        })
+        .select()
+        .single();
+      if (insertError) throw insertError;
+
+      const token = await getAccessToken();
+      const { data: submitData, error: submitError } = await supabase.functions.invoke(
+        "submit-duel-video",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          body: { duelId: uploadDuelId, videoId: videoRow.id },
+        }
+      );
+      if (submitError) throw new Error((submitError as any)?.context?.error || submitError.message);
+      if ((submitData as any)?.error) throw new Error((submitData as any).error);
+
+      const { error: processError } = await supabase.functions.invoke("process-video", {
+        body: { video_id: videoRow.id, camera_angle: cameraAngle, kicking_foot: kickingFoot },
+      });
+      if (processError) {
+        await supabase.from("videos").update({ status: "failed" }).eq("id", videoRow.id);
+        throw processError;
+      }
+
+      toast({ title: "Video submitted", description: "We'll notify you when your opponent finishes." });
+      setUploadDuelId(null);
+      setFile(null);
+      setCameraAngle("unknown");
+      setKickingFoot("unknown");
+      refetch();
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  if (!dbUserId) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  const incoming = duels.filter((d) => d.status === "pending" && d.opponent_id === dbUserId);
+  const sentPending = duels.filter((d) => d.status === "pending" && d.challenger_id === dbUserId);
+  const active = duels.filter((d) => d.status === "active");
+  const completed = duels.filter((d) => d.status === "completed");
+
+  const mySide = (d: Duel) => (d.challenger_id === dbUserId ? "challenger" : "opponent");
+  const myVideoSubmitted = (d: Duel) =>
+    mySide(d) === "challenger" ? !!d.challenger_video_id : !!d.opponent_video_id;
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-10 space-y-10">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <Swords className="h-7 w-7 text-[#9FE870]" />
+            Duels
+          </h1>
+          <p className="text-muted-foreground mt-1">Challenge other players and compare your best shots.</p>
+        </div>
+        <Dialog open={challengeOpen} onOpenChange={setChallengeOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-[#9FE870] hover:bg-[#8DD760] text-black font-semibold">
+              Challenge someone
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Challenge a player</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2">
+              <Label htmlFor="nickname">Nickname</Label>
+              <Input
+                id="nickname"
+                value={challengeNickname}
+                onChange={(e) => setChallengeNickname(e.target.value)}
+                placeholder="Enter their nickname"
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setChallengeOpen(false)} disabled={challengeLoading}>
+                Cancel
+              </Button>
+              <Button onClick={handleChallenge} disabled={challengeLoading}>
+                {challengeLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Send challenge
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {incoming.length > 0 && (
+        <section>
+          <h2 className="text-lg font-semibold mb-3">Incoming challenges</h2>
+          <div className="space-y-3">
+            {incoming.map((d) => (
+              <Card key={d.id}>
+                <CardContent className="flex items-center justify-between py-4">
+                  <div>
+                    <p className="font-medium">You've been challenged</p>
+                    <p className="text-sm text-muted-foreground">
+                      Respond before {d.deadline_at ? new Date(d.deadline_at).toLocaleDateString() : "the deadline"}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => handleRespond(d.id, "decline")}>
+                      <X className="h-4 w-4 mr-1" /> Decline
+                    </Button>
+                    <Button size="sm" onClick={() => handleRespond(d.id, "accept")}>
+                      <Check className="h-4 w-4 mr-1" /> Accept
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {sentPending.length > 0 && (
+        <section>
+          <h2 className="text-lg font-semibold mb-3">Sent challenges</h2>
+          <div className="space-y-3">
+            {sentPending.map((d) => (
+              <Card key={d.id}>
+                <CardContent className="flex items-center justify-between py-4">
+                  <p className="text-sm text-muted-foreground flex items-center gap-2">
+                    <Clock className="h-4 w-4" /> Waiting for a response
+                  </p>
+                  <Badge variant="secondary">Pending</Badge>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section>
+        <h2 className="text-lg font-semibold mb-3">Active duels</h2>
+        {active.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No active duels right now.</p>
+        ) : (
+          <div className="space-y-3">
+            {active.map((d) => {
+              const submitted = myVideoSubmitted(d);
+              return (
+                <Card key={d.id}>
+                  <CardContent className="flex items-center justify-between py-4">
+                    <div>
+                      <p className="font-medium">Active duel</p>
+                      <p className="text-sm text-muted-foreground">
+                        {submitted ? "Waiting for your opponent's video" : "Upload your video to compete"}
+                      </p>
+                    </div>
+                    {!submitted && (
+                      <Dialog open={uploadDuelId === d.id} onOpenChange={(open) => setUploadDuelId(open ? d.id : null)}>
+                        <DialogTrigger asChild>
+                          <Button size="sm">
+                            <Upload className="h-4 w-4 mr-1" /> Upload video
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Submit your duel video</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="duel-video">Video file</Label>
+                              <Input
+                                id="duel-video"
+                                type="file"
+                                accept="video/*"
+                                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Camera angle</Label>
+                              <Select value={cameraAngle} onValueChange={setCameraAngle}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="side">Side</SelectItem>
+                                  <SelectItem value="diagonal">Diagonal</SelectItem>
+                                  <SelectItem value="behind">Behind</SelectItem>
+                                  <SelectItem value="unknown">Unknown</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Kicking foot</Label>
+                              <Select value={kickingFoot} onValueChange={setKickingFoot}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="right">Right</SelectItem>
+                                  <SelectItem value="left">Left</SelectItem>
+                                  <SelectItem value="unknown">Unknown</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button variant="outline" onClick={() => setUploadDuelId(null)} disabled={uploading}>
+                              Cancel
+                            </Button>
+                            <Button onClick={handleUploadForDuel} disabled={uploading || !file}>
+                              {uploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                              Submit
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      <section>
+        <h2 className="text-lg font-semibold mb-3">Completed</h2>
+        {completed.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No completed duels yet.</p>
+        ) : (
+          <div className="space-y-3">
+            {completed.map((d) => {
+              const iWon = d.winner_id === dbUserId;
+              const isDraw = d.winner_id === null;
+              const myScore = mySide(d) === "challenger" ? d.challenger_score : d.opponent_score;
+              const theirScore = mySide(d) === "challenger" ? d.opponent_score : d.challenger_score;
+              return (
+                <Card key={d.id}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      {isDraw ? (
+                        <Badge variant="secondary">Draw</Badge>
+                      ) : iWon ? (
+                        <Badge className="bg-[#9FE870] text-black"><Trophy className="h-3 w-3 mr-1" /> You won</Badge>
+                      ) : (
+                        <Badge variant="destructive">You lost</Badge>
+                      )}
+                    </CardTitle>
+                    <CardDescription>
+                      Your score: {myScore?.toFixed(1) ?? "—"} · Opponent: {theirScore?.toFixed(1) ?? "—"}
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
