@@ -19,6 +19,7 @@ function getClient() {
           storage: localStorage,
           persistSession: true,
           autoRefreshToken: true,
+          detectSessionInUrl: true,
         }
       }
     );

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { useUser } from "@clerk/clerk-react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ export default function JoinTeam() {
     const { t } = useTranslation("team");
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const { user, isLoaded } = useUser();
+    const { user, isLoaded } = useCurrentUser();
     const { toast } = useToast();
 
     const [inviteCode, setInviteCode] = useState(searchParams.get('code') || "");
@@ -31,7 +31,7 @@ export default function JoinTeam() {
                 description: t("join.toasts.signIn.description"),
                 variant: "destructive"
             });
-            navigate('/sign-in');
+            navigate('/login');
             return;
         }
 
@@ -44,7 +44,7 @@ export default function JoinTeam() {
         const { data } = await supabase
             .from('users')
             .select('id')
-            .eq('clerk_id', user.id)
+            .eq('auth_user_id', user.id)
             .single();
 
         setDbUserId(data ? (data as any).id : null);

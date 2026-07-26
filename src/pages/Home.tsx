@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { SignInButton, SignedIn, SignedOut } from "@clerk/clerk-react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { ArrowRight, UserPlus, Video, TrendingUp, Sprout, CheckCircle2, Loader, Cloud, Cpu, BarChart3, GraduationCap } from "lucide-react";
 import AutoScroll from "embla-carousel-auto-scroll";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
@@ -9,6 +9,7 @@ import { useScrollReveal } from "@/hooks/useScrollReveal";
 
 export default function Home() {
   const { t } = useTranslation(["home", "navbar", "buttons"]);
+  const { user } = useCurrentUser();
 
   const aboutRef = useScrollReveal();
   const tractionRef = useScrollReveal();
@@ -46,32 +47,32 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4">
-            <SignedOut>
-              <SignInButton mode="modal" forceRedirectUrl="/player-dashboard">
-                <Button size="lg" className="bg-[#9FE870] hover:bg-[#8DD760] text-black font-semibold px-8 h-14 text-lg rounded-full">
-                  {t("hero.cta.start")}
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </SignInButton>
-              <SignInButton mode="modal" forceRedirectUrl="/coach-dashboard">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="border-2 border-[#9FE870] text-[#9FE870] hover:bg-[#9FE870] hover:text-black font-semibold px-8 h-14 text-lg rounded-full"
-                >
-                  {t("hero.cta.coaches")}
-                </Button>
-              </SignInButton>
-            </SignedOut>
-
-            <SignedIn>
+            {user ? (
               <Link to="/player-dashboard">
                 <Button size="lg" className="bg-[#9FE870] hover:bg-[#8DD760] text-black font-semibold px-8 h-14 text-lg rounded-full">
                   {t("hero.cta.dashboard")}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-            </SignedIn>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button size="lg" className="bg-[#9FE870] hover:bg-[#8DD760] text-black font-semibold px-8 h-14 text-lg rounded-full">
+                    {t("hero.cta.start")}
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+                <Link to="/login">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="border-2 border-[#9FE870] text-[#9FE870] hover:bg-[#9FE870] hover:text-black font-semibold px-8 h-14 text-lg rounded-full"
+                  >
+                    {t("hero.cta.coaches")}
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </section>

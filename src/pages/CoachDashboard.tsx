@@ -102,7 +102,7 @@ export default function CoachDashboard() {
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('clerk_id', user.id)
+        .eq('auth_user_id', user.id)
         .maybeSingle();
 
       if (error) throw error;

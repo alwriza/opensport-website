@@ -13,35 +13,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useSearchParams } from "react-router-dom";
 import { Play, Target, Loader2, Filter, Lock, CheckCircle, Circle, Trophy, Flame, Star, Zap, ChevronRight, ExternalLink, Footprints, Crosshair, Shield, Dumbbell, Brain, Swords, Goal, CircleDot, Gauge, HeartPulse, type LucideIcon } from "lucide-react";
 
-interface Exercise {
-  id: string;
-  exercise_type: string;
-  difficulty: string;
-  video_url: string | null;
-  created_at: string;
-}
 
-interface ExerciseResult {
-  technique_score: number;
-  speed_score: number;
-  control_score: number;
-  overall_score: number;
-  feedback: {
-    strengths: string[];
-    improvements: string[];
-    coaching_tips: string[];
-  };
-}
-
-interface Recommendation {
-  id: string;
-  recommendation_type: string;
-  title: string;
-  description: string;
-  priority: string;
-  status: string;
-  created_at: string;
-}
 
 interface Skill {
   id: string;
@@ -123,14 +95,6 @@ const Training = () => {
   const { toast } = useToast();
 
   // Existing state for library and analysis
-  const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
-  const [analysisResult, setAnalysisResult] = useState<ExerciseResult | null>(null);
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [isLoadingExercises, setIsLoadingExercises] = useState(true);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [filterDifficulty, setFilterDifficulty] = useState<string>("all");
-  const [filterType, setFilterType] = useState<string>("all");
 
   // New Training System state
   const [skills, setSkills] = useState<Skill[]>([]);
@@ -198,7 +162,6 @@ const Training = () => {
     setSkillProgress(demo.trainingStats.skills as any[]);
     setDbUserId("demo-user-id");
     setIsLoadingTraining(false);
-    setIsLoadingExercises(false);
   }, [demo]);
 
   // Pre-calculated stats for UI
@@ -217,7 +180,7 @@ const Training = () => {
         const { data, error } = await supabase
           .from('users')
           .select('id')
-          .eq('clerk_id', user.id)
+          .eq('auth_user_id', user.id)
           .single();
 
         if (error) throw error;
@@ -293,31 +256,6 @@ const Training = () => {
 
     fetchTrainingData();
   }, [dbUserId, toast]);
-
-  // Existing library fetch
-  useEffect(() => {
-    fetchExercises();
-  }, []);
-
-  const fetchExercises = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('training_exercises')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setExercises(data || []);
-    } catch (error: any) {
-      toast({
-        title: "Error loading exercises",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoadingExercises(false);
-    }
-  };
 
   // Helper: Get levels for a skill
   const getLevelsForSkill = (skillId: string) => {
@@ -476,66 +414,6 @@ const Training = () => {
       });
     }
   };
-
-  const handleAnalyzeExercise = async (exercise: Exercise) => {
-    if (demo) { toast({ title: "Demo Mode", description: "Not available in demo", variant: "destructive" }); return; }
-    setSelectedExercise(exercise);
-    setIsAnalyzing(true);
-    setAnalysisResult(null);
-
-    try {
-      const { data, error } = await supabase.functions.invoke('analyze-exercise', {
-        body: {
-          exerciseId: exercise.id,
-          videoUrl: exercise.video_url,
-          exerciseType: exercise.exercise_type
-        }
-      });
-
-      if (error) throw error;
-
-      setAnalysisResult(data.analysis);
-      toast({
-        title: t("toasts.analysisComplete.title"),
-        description: t("toasts.analysisComplete.description"),
-      });
-    } catch (error: any) {
-      toast({
-        title: "Analysis Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
-  const fetchRecommendations = async () => {
-    if (demo) { toast({ title: "Demo Mode", description: "Not available in demo", variant: "destructive" }); return; }
-    try {
-      const { data, error } = await supabase.functions.invoke('generate-recommendations', {
-        body: {
-          playerId: 'demo-player',
-          exerciseResults: analysisResult ? [analysisResult] : []
-        }
-      });
-
-      if (error) throw error;
-      setRecommendations(data.recommendations || []);
-    } catch (error: any) {
-      toast({
-        title: "Error fetching recommendations",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const filteredExercises = exercises.filter(ex => {
-    const matchesDifficulty = filterDifficulty === "all" || ex.difficulty === filterDifficulty;
-    const matchesType = filterType === "all" || ex.exercise_type === filterType;
-    return matchesDifficulty && matchesType;
-  });
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {

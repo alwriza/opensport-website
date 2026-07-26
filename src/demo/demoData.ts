@@ -12,7 +12,7 @@ export type DemoPlayerStat = { id: string; user_id: string; highest_rating: numb
 
 export interface DemoData {
   user: { id: string; email: string; firstName: string; lastName: string; username: string; imageUrl: string };
-  coachProfile: { id: string; clerk_id: string; name: string; email: string; role: string; weight: number; terms_accepted_at: string; privacy_accepted_at: string };
+  coachProfile: { id: string; auth_user_id: string; name: string; email: string; role: string; weight: number; terms_accepted_at: string; privacy_accepted_at: string };
   videos: DemoVideo[];
   analyses: DemoAnalysis[];
   latestAnalysis: DemoAnalysis;
@@ -83,7 +83,7 @@ export const DEMO_DATA: DemoData = {
   },
   coachProfile: {
     id: "coach-demo-id",
-    clerk_id: "demo-user-id",
+    auth_user_id: "demo-user-id",
     name: "Demo Coach",
     email: "coach@demo.com",
     role: "head_coach",

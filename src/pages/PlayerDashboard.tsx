@@ -88,7 +88,7 @@ export default function PlayerDashboard() {
 
 
 
-  // 1. Sync & Fetch DB User
+  // 1. Fetch DB User
   const { data: dbUser, isLoading: loadingUser } = useQuery({
     queryKey: ['db-user', user?.id],
     queryFn: async () => {
@@ -98,26 +98,10 @@ export default function PlayerDashboard() {
       const { data: existingUser, error: fetchError } = await supabase
         .from('users')
         .select('*')
-        .eq('clerk_id', user.id)
+        .eq('auth_user_id', user.id)
         .maybeSingle();
 
       if (fetchError) throw fetchError;
-
-      if (!existingUser) {
-        const { data: newUser, error: insertError } = await (supabase
-          .from('users') as any)
-          .insert({
-            clerk_id: user.id,
-            email: user.primaryEmailAddress?.emailAddress || '',
-            name: user.fullName || user.firstName || 'Player',
-            role: 'player'
-          })
-          .select()
-          .single();
-
-        if (insertError) throw insertError;
-        return newUser;
-      }
       return existingUser;
     },
     enabled: !!user || !!demo,

@@ -1,344 +1,121 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Upload, CheckCircle, User, Video } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function Register() {
-  const [formData, setFormData] = useState({
-    name: "",
-    dateOfBirth: "",
-    nationality: "",
-    position: "",
-    academy: "",
-    height: "",
-    weight: "",
-    email: ""
-  });
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const { t } = useTranslation("auth");
+  const navigate = useNavigate();
   const { toast } = useToast();
-
-  const positions = ["Forward", "Midfielder", "Defender", "Goalkeeper"];
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.size > 100 * 1024 * 1024) { // 100MB limit
-        toast({
-          title: "File too large",
-          description: "Please upload a video file smaller than 100MB",
-          variant: "destructive"
-        });
-        return;
-      }
-      setVideoFile(file);
-    }
-  };
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({ email: "", password: "", phone: "", nickname: "" });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-
+    setLoading(true);
     try {
-      let videoUrl = null;
+      const { data, error } = await supabase.functions.invoke("register", {
+        body: form,
+      });
 
-      // Upload video if provided
-      if (videoFile) {
-        const fileExt = videoFile.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('player-videos')
-          .upload(filePath, videoFile);
-
-        if (uploadError) {
-          throw uploadError;
-        }
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('player-videos')
-          .getPublicUrl(filePath);
-
-        videoUrl = publicUrl;
+      if (error) {
+        const message = (error as any)?.context?.error || error.message || "Registration failed";
+        throw new Error(message);
       }
 
-      // Insert player registration
-      const { error: insertError } = await supabase
-        .from('player_registrations')
-        .insert({
-          full_name: formData.name,
-          email: formData.email,
-          date_of_birth: formData.dateOfBirth,
-          nationality: formData.nationality,
-          position: formData.position,
-          academy: formData.academy,
-          height: parseFloat(formData.height),
-          weight: parseFloat(formData.weight),
-          video_url: videoUrl
-        });
-
-      if (insertError) {
-        throw insertError;
+      if ((data as any)?.error) {
+        throw new Error((data as any).error);
       }
 
-      setIsSuccess(true);
       toast({
-        title: "Registration successful!",
-        description: "Your profile has been created and video is being analyzed.",
+        title: t("accountCreated"),
+        description: t("verificationSent"),
       });
-    } catch (error: any) {
-      toast({
-        title: "Registration failed",
-        description: error.message || "An error occurred. Please try again.",
-        variant: "destructive"
-      });
+
+      navigate("/verify-email", { state: { email: form.email } });
+    } catch (err: any) {
+      const msg = err.message || "";
+      let description = t("somethingWentWrong");
+      if (msg.includes("nickname")) description = t("nicknameTaken");
+      else if (msg.includes("phone")) description = t("phoneTaken");
+      else if (msg) description = msg;
+
+      toast({ title: t("registrationFailed"), description, variant: "destructive" });
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
-  if (isSuccess) {
-    return (
-      <div className="min-h-screen bg-gradient-card flex items-center justify-center">
-        <Card className="w-full max-w-md shadow-card">
-          <CardContent className="pt-6 text-center space-y-4">
-            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mx-auto">
-              <CheckCircle className="h-8 w-8 text-green-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-foreground">Welcome to AI Scout!</h2>
-            <p className="text-muted-foreground">
-              Your profile has been created successfully. Our AI is now analyzing your video.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              You'll receive your detailed skill assessment within 24 hours.
-            </p>
-            <Button className="w-full" onClick={() => window.location.href = "/player-dashboard"}>
-              View Dashboard
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-card py-12">
-      <div className="container mx-auto px-4">
-        <div className="max-w-2xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-4">Join AI Scout</h1>
-            <p className="text-muted-foreground">
-              Create your player profile and get AI-powered skill evaluation
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Personal Information */}
-            <Card className="shadow-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Personal Information
-                </CardTitle>
-                <CardDescription>Tell us about yourself</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name *</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => handleInputChange("name", e.target.value)}
-                      placeholder="Enter your full name"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange("email", e.target.value)}
-                      placeholder="your.email@example.com"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="dateOfBirth">Date of Birth *</Label>
-                    <Input
-                      id="dateOfBirth"
-                      type="date"
-                      value={formData.dateOfBirth}
-                      onChange={(e) => handleInputChange("dateOfBirth", e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="nationality">Nationality *</Label>
-                    <Input
-                      id="nationality"
-                      value={formData.nationality}
-                      onChange={(e) => handleInputChange("nationality", e.target.value)}
-                      placeholder="Your nationality"
-                      required
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Football Information */}
-            <Card className="shadow-card">
-              <CardHeader>
-                <CardTitle>Football Profile</CardTitle>
-                <CardDescription>Your football background and physical attributes</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="position">Position *</Label>
-                    <Select value={formData.position} onValueChange={(value) => handleInputChange("position", value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select your position" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {positions.map(position => (
-                          <SelectItem key={position} value={position}>{position}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="academy">Academy/Club *</Label>
-                    <Input
-                      id="academy"
-                      value={formData.academy}
-                      onChange={(e) => handleInputChange("academy", e.target.value)}
-                      placeholder="Your current academy or club"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="height">Height (cm) *</Label>
-                    <Input
-                      id="height"
-                      type="number"
-                      min="150"
-                      max="220"
-                      value={formData.height}
-                      onChange={(e) => handleInputChange("height", e.target.value)}
-                      placeholder="Height in centimeters"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="weight">Weight (kg) *</Label>
-                    <Input
-                      id="weight"
-                      type="number"
-                      min="40"
-                      max="120"
-                      value={formData.weight}
-                      onChange={(e) => handleInputChange("weight", e.target.value)}
-                      placeholder="Weight in kilograms"
-                      required
-                    />
-                  </div>
-                </div>
-
-              </CardContent>
-            </Card>
-
-            {/* Video Upload */}
-            <Card className="shadow-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Video className="h-5 w-5" />
-                  Training Video Upload
-                </CardTitle>
-                <CardDescription>
-                  Upload a short video (max 100MB) showing your skills in training or match situations
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-                  {videoFile ? (
-                    <div className="space-y-4">
-                      <CheckCircle className="h-12 w-12 text-green-600 mx-auto" />
-                      <div>
-                        <p className="font-medium text-foreground">{videoFile.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {(videoFile.size / (1024 * 1024)).toFixed(2)} MB
-                        </p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setVideoFile(null)}
-                      >
-                        Remove File
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <Upload className="h-12 w-12 text-muted-foreground mx-auto" />
-                      <div>
-                        <p className="text-lg font-medium text-foreground mb-2">Upload Your Video</p>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Supported formats: MP4, AVI, MOV (max 100MB)
-                        </p>
-                        <input
-                          type="file"
-                          accept="video/*"
-                          onChange={handleVideoUpload}
-                          className="hidden"
-                          id="video-upload"
-                        />
-                        <Button type="button" asChild>
-                          <label htmlFor="video-upload" className="cursor-pointer">
-                            Choose Video File
-                          </label>
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              size="lg"
-              className="w-full"
-              disabled={isSubmitting || !formData.name || !formData.dateOfBirth || !formData.nationality || !formData.position || !formData.academy || !formData.height || !formData.weight || !formData.email}
-            >
-              {isSubmitting ? "Creating Profile..." : "Create Profile & Analyze Video"}
+    <div className="flex items-center justify-center min-h-screen bg-background px-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>{t("createYourAccount")}</CardTitle>
+          <CardDescription>{t("joinDescription")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">{t("emailLabel")}</Label>
+              <Input
+                id="email"
+                type="email"
+                required
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                placeholder={t("emailPlaceholder")}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">{t("passwordLabel")}</Label>
+              <Input
+                id="password"
+                type="password"
+                required
+                minLength={8}
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                placeholder={t("passwordPlaceholder")}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">{t("phoneLabel")}</Label>
+              <Input
+                id="phone"
+                type="tel"
+                required
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                placeholder={t("phonePlaceholder")}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="nickname">{t("nicknameLabel")}</Label>
+              <Input
+                id="nickname"
+                required
+                value={form.nickname}
+                onChange={(e) => setForm({ ...form, nickname: e.target.value })}
+                placeholder={t("nicknamePlaceholder")}
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t("createAccount")}
             </Button>
           </form>
-        </div>
-      </div>
+          <p className="text-sm text-muted-foreground text-center mt-4">
+            {t("alreadyHaveAccount")}{" "}
+            <a href="/login" className="text-primary underline">{t("signIn")}</a>
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

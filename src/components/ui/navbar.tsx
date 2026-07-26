@@ -1,20 +1,24 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
 import { Menu, X, Globe } from "lucide-react";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export default function Navbar() {
   const { t, i18n } = useTranslation("navbar");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, isSignedIn } = useCurrentUser();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -23,11 +27,18 @@ export default function Navbar() {
     setMobileMenuOpen(false);
   };
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
+  };
+
   const languages = [
     { code: 'en', label: 'EN' },
     { code: 'ru', label: 'RU' },
     { code: 'kk', label: 'KZ' }
   ];
+
+  const initials = (user?.email || "?").slice(0, 2).toUpperCase();
 
   return (
     <header className="sticky top-0 z-50 w-full bg-black/95 backdrop-blur-sm border-b border-gray-800">
@@ -111,23 +122,31 @@ export default function Navbar() {
 
             <div className="h-8 w-px bg-gray-800" /> {/* Divider */}
 
-            <SignedOut>
-              <SignInButton mode="modal" forceRedirectUrl="/player-dashboard">
-                <Button className="bg-[#9FE870] hover:bg-[#8DD760] text-black font-semibold px-8 h-12 text-base rounded-full whitespace-nowrap">
-                  {t("buttons.getStarted")}
-                </Button>
-              </SignInButton>
-            </SignedOut>
-            <SignedIn>
-              <UserButton
-                afterSignOutUrl="/"
-                appearance={{
-                  elements: {
-                    avatarBox: "w-10 h-10"
-                  }
-                }}
-              />
-            </SignedIn>
+            {!isSignedIn ? (
+              <Button
+                onClick={() => navigate("/login")}
+                className="bg-[#9FE870] hover:bg-[#8DD760] text-black font-semibold px-8 h-12 text-base rounded-full whitespace-nowrap"
+              >
+                {t("buttons.getStarted")}
+              </Button>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="rounded-full">
+                    <Avatar className="w-10 h-10">
+                      <AvatarFallback className="bg-[#9FE870]/20 text-[#9FE870] font-semibold">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-black/95 border-gray-800 text-gray-200">
+                  <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer hover:bg-white/10 hover:text-white">
+                    Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -196,22 +215,17 @@ export default function Navbar() {
               </div>
 
               <div className="pt-4">
-                  <Link to="/demo" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium py-2 text-gray-400">
-                    {t("nav.demo", "Demo")}
-                  </Link>
+                <Link to="/demo" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium py-2 text-gray-400">
+                  {t("nav.demo", "Demo")}
+                </Link>
 
-                  <SignedOut>
-                    <Link to="/register" onClick={() => setMobileMenuOpen(false)}>
-                      <Button className="w-full bg-[#9FE870] hover:bg-[#8DD760] text-black font-bold rounded-full">
-                        {t("buttons.getStarted")}
-                      </Button>
-                    </Link>
-                  </SignedOut>
-                <SignedIn>
-                  <div className="flex justify-center">
-                    <UserButton afterSignOutUrl="/" />
+                {isSignedIn && (
+                  <div className="flex justify-center pt-4">
+                    <Button variant="outline" onClick={handleSignOut}>
+                      Sign out
+                    </Button>
                   </div>
-                </SignedIn>
+                )}
               </div>
             </nav>
           </div>

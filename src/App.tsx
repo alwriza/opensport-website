@@ -2,8 +2,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Outlet, useLocation } from "react-router-dom";
-import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
+import { BrowserRouter, Routes, Route, Outlet, useLocation, Navigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import Navbar from "@/components/ui/navbar";
 import DemoNavbar from "@/components/ui/DemoNavbar";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -13,18 +14,28 @@ import CoachDashboard from "./pages/CoachDashboard";
 import Training from "./pages/Training";
 import Ranking from "./pages/Ranking";
 import About from "./pages/About";
-import Register from "./pages/Register";
+
 import NotFound from "./pages/NotFound";
-import SignInPage from "./pages/SignIn";
-import SignUpPage from "./pages/SignUp";
 import JoinTeam from "./pages/JoinTeam";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import DemoJoinTeam from "./pages/DemoJoinTeam";
+import Register from "./pages/Register";
+import VerifyEmail from "./pages/VerifyEmail";
+import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Footer from "@/components/ui/Footer";
 import { DemoProvider } from "@/demo/DemoContext";
 
 const queryClient = new QueryClient();
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, isLoaded } = useCurrentUser();
+  if (!isLoaded) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-8 w-8 animate-spin text-[#9FE870]" /></div>;
+  if (!user) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+}
 
 function AppNavbar() {
   const location = useLocation();
@@ -46,19 +57,21 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Home />} />
 
-            {/* Public Auth Routes */}
-            <Route path="/sign-in/*" element={<SignInPage />} />
-            <Route path="/sign-up/*" element={<SignUpPage />} />
+            {/* Auth Routes */}
+            <Route path="/register" element={<Register />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* Protected Routes */}
-            <Route path="/player-dashboard" element={<><SignedIn><PlayerDashboard /></SignedIn><SignedOut><RedirectToSignIn /></SignedOut></>} />
-            <Route path="/coach-dashboard" element={<><SignedIn><CoachDashboard /></SignedIn><SignedOut><RedirectToSignIn /></SignedOut></>} />
-            <Route path="/training" element={<><SignedIn><Training /></SignedIn><SignedOut><RedirectToSignIn /></SignedOut></>} />
-            <Route path="/ranking" element={<><SignedIn><Ranking /></SignedIn><SignedOut><RedirectToSignIn /></SignedOut></>} />
-            <Route path="/join-team" element={<><SignedIn><JoinTeam /></SignedIn><SignedOut><RedirectToSignIn /></SignedOut></>} />
+            <Route path="/player-dashboard" element={<ProtectedRoute><PlayerDashboard /></ProtectedRoute>} />
+            <Route path="/coach-dashboard" element={<ProtectedRoute><CoachDashboard /></ProtectedRoute>} />
+            <Route path="/training" element={<ProtectedRoute><Training /></ProtectedRoute>} />
+            <Route path="/ranking" element={<ProtectedRoute><Ranking /></ProtectedRoute>} />
+            <Route path="/join-team" element={<ProtectedRoute><JoinTeam /></ProtectedRoute>} />
 
             {/* <Route path="/about" element={<About />} /> */}
-            <Route path="/register" element={<Register />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
 

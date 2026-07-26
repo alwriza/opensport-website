@@ -19,7 +19,7 @@ export function useScoreboard() {
     const fetchLeaderboard = async () => {
       try {
         const { data, error } = await (supabase as any)
-          .from("player_stats")
+          .from("global_rankings")
           .select("*")
           .order("highest_rating", { ascending: false })
           .limit(50);
