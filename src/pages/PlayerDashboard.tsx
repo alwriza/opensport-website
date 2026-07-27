@@ -316,7 +316,10 @@ export default function PlayerDashboard() {
       setLatestVideoUrl(video ? `/${video.storage_path}` : "");
       return;
     }
-    if (!latestCompletedVideoId) return;
+    if (!latestCompletedVideoId) {
+      console.log('latestCompletedVideoId is null — no completed video found among:', videos.map((v: any) => ({ id: v.id, status: v.status })));
+      return;
+    }
 
     const fetchUrl = async () => {
       const { data: videoData } = await supabase
@@ -326,9 +329,11 @@ export default function PlayerDashboard() {
         .single();
 
       if (videoData) {
-        const { data: urlData } = await supabase.storage
+        console.log('Found storage_path:', (videoData as any).storage_path, 'for video id:', latestCompletedVideoId);
+        const { data: urlData, error: urlError } = await supabase.storage
           .from('videos')
           .createSignedUrl((videoData as any).storage_path, 3600);
+        if (urlError) console.error('createSignedUrl failed:', urlError, 'bucket: videos', 'path:', (videoData as any).storage_path);
         if (urlData) setLatestVideoUrl(urlData.signedUrl);
       }
     };
