@@ -1,6 +1,4 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Outlet, useLocation, Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
@@ -10,11 +8,13 @@ import DemoNavbar from "@/components/ui/DemoNavbar";
 import ScrollToTop from "@/components/ScrollToTop";
 import Home from "./pages/Home";
 import PlayerDashboard from "./pages/PlayerDashboard";
-import CoachDashboard from "./pages/CoachDashboard";
 import Training from "./pages/Training";
 import Ranking from "./pages/Ranking";
 import Duels from "./pages/Duels";
 import About from "./pages/About";
+
+const PlayerProfile = lazy(() => import("./pages/PlayerProfile"));
+const CoachDashboard = lazy(() => import("./pages/CoachDashboard"));
 
 import NotFound from "./pages/NotFound";
 import JoinTeam from "./pages/JoinTeam";
@@ -67,7 +67,8 @@ const App = () => (
 
             {/* Protected Routes */}
             <Route path="/player-dashboard" element={<ProtectedRoute><PlayerDashboard /></ProtectedRoute>} />
-            <Route path="/coach-dashboard" element={<ProtectedRoute><CoachDashboard /></ProtectedRoute>} />
+            <Route path="/coach-dashboard" element={<ProtectedRoute><Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>}><CoachDashboard /></Suspense></ProtectedRoute>} />
+            <Route path="/player/:id" element={<ProtectedRoute><Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>}><PlayerProfile /></Suspense></ProtectedRoute>} />
             <Route path="/training" element={<ProtectedRoute><Training /></ProtectedRoute>} />
             <Route path="/ranking" element={<ProtectedRoute><Ranking /></ProtectedRoute>} />
             <Route path="/duels" element={<ProtectedRoute><Duels /></ProtectedRoute>} />
@@ -81,7 +82,8 @@ const App = () => (
             <Route path="/demo" element={<DemoProvider><Outlet /></DemoProvider>}>
               <Route index element={<PlayerDashboard />} />
               <Route path="home" element={<Home />} />
-              <Route path="coach-dashboard" element={<CoachDashboard />} />
+              <Route path="coach-dashboard" element={<Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>}><CoachDashboard /></Suspense>} />
+              <Route path="player/:id" element={<Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>}><PlayerProfile /></Suspense>} />
               <Route path="training" element={<Training />} />
               <Route path="ranking" element={<Ranking />} />
               <Route path="duels" element={<Duels />} />

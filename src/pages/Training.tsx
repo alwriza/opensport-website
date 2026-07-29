@@ -11,7 +11,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useDemoContext } from "@/demo";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useSearchParams } from "react-router-dom";
-import { Play, Target, Loader2, Filter, Lock, CheckCircle, Circle, Trophy, Flame, Star, Zap, ChevronRight, ExternalLink, Footprints, Crosshair, Shield, Dumbbell, Brain, Swords, Goal, CircleDot, Gauge, HeartPulse, type LucideIcon } from "lucide-react";
+import { Play, Target, Loader2, Filter, Lock, CheckCircle, Circle, Trophy, Flame, Star, Zap, ChevronRight, ExternalLink, Footprints, Crosshair, Shield, Dumbbell, Brain, Swords, Goal, CircleDot, Gauge, HeartPulse, Clock, Users, type LucideIcon } from "lucide-react";
 
 
 
@@ -107,6 +107,8 @@ const Training = () => {
   const [selectedLevel, setSelectedLevel] = useState<SkillLevel | null>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [activeTab, setActiveTab] = useState("interactive");
+  const [coachAssignments, setCoachAssignments] = useState<any[]>([]);
+  const [isLoadingAssignments, setIsLoadingAssignments] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [searchParams] = useSearchParams();
   const skillDetailsRef = useRef<HTMLDivElement>(null);
@@ -256,6 +258,27 @@ const Training = () => {
 
     fetchTrainingData();
   }, [dbUserId, toast]);
+
+  // 3. Fetch Coach Assignments
+  useEffect(() => {
+    if (demo) return;
+    const fetchAssignments = async () => {
+      if (!dbUserId) return;
+      setIsLoadingAssignments(true);
+      try {
+        const { data, error } = await supabase
+          .from("training_session_players")
+          .select("*, training_sessions(*)")
+          .eq("player_id", dbUserId)
+          .eq("status", "assigned")
+          .order("created_at", { ascending: false });
+        if (!error && data) setCoachAssignments(data);
+      } catch { /* ignore */ } finally {
+        setIsLoadingAssignments(false);
+      }
+    };
+    fetchAssignments();
+  }, [dbUserId, demo]);
 
   // Helper: Get levels for a skill
   const getLevelsForSkill = (skillId: string) => {
@@ -497,6 +520,38 @@ const Training = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Coach Assignments */}
+      {coachAssignments.length > 0 && (
+        <Card className="glass-card border-primary/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              {t("coachAssignments.title", "Тренировки от тренера")}
+            </CardTitle>
+            <CardDescription>
+              {t("coachAssignments.description", "У вас есть назначенные тренером тренировки")}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {coachAssignments.map((a: any) => (
+              <div key={a.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-white/5">
+                <div className="flex items-center gap-3">
+                  <Clock className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium text-sm">{a.training_sessions?.title || `Session #${a.session_id?.slice(0, 8)}`}</p>
+                    <p className="text-xs text-muted-foreground">{a.training_sessions?.description || ""}</p>
+                  </div>
+                </div>
+                <Button size="sm" variant="outline" className="gap-1">
+                  <Play className="h-3.5 w-3.5" />
+                  {t("coachAssignments.start", "Начать")}
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-2 h-14 p-1 bg-card border border-white/5 rounded-xl">

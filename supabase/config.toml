@@ -11,3 +11,24 @@ verify_jwt = false
 
 [functions.register]
 verify_jwt = false
+
+[functions.get-team-squad]
+verify_jwt = false
+
+[functions.get-team-matches]
+verify_jwt = false
+
+[functions.upsert-match-stats]
+verify_jwt = false
+
+[functions.upsert-evaluation]
+verify_jwt = false
+
+[functions.create-training-session]
+verify_jwt = false
+
+[functions.get-player-evaluations]
+verify_jwt = false
+
+[functions.complete-training-session]
+verify_jwt = false

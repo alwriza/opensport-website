@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -7,6 +7,7 @@ import { RankingFilters } from "@/components/ranking/RankingFilters";
 import { RankingTable } from "@/components/ranking/RankingTable";
 import { PlayerPreviewModal } from "@/components/ranking/PlayerPreviewModal";
 import { Trophy } from "lucide-react";
+import { useDemoContext } from "@/demo/DemoContext";
 
 interface RankingPlayer {
     user_id: string;
@@ -59,10 +60,55 @@ export default function Ranking() {
         setSearchParams(newParams);
     };
 
+    const demo = useDemoContext();
+
+    const DEMO_RANKING: RankingPlayer[] = [
+        { user_id: "demo-other-1", name: "Marcus Silva", avatar_url: null, age: 17, position: "FWD", city: "Barcelona", country: "Spain", best_score: 94.2, total_analyses: 28 },
+        { user_id: "demo-other-2", name: "Amelia Johnson", avatar_url: null, age: 16, position: "MID", city: "London", country: "UK", best_score: 91.5, total_analyses: 22 },
+        { user_id: "demo-other-3", name: "Carlos Rodriguez", avatar_url: null, age: 18, position: "DEF", city: "Madrid", country: "Spain", best_score: 88.7, total_analyses: 19 },
+        { user_id: "demo-other-4", name: "Sofia Andersson", avatar_url: null, age: 17, position: "GK", city: "Stockholm", country: "Sweden", best_score: 85.3, total_analyses: 31 },
+        { user_id: "demo-other-5", name: "Kwame Asante", avatar_url: null, age: 16, position: "MID", city: "Accra", country: "Ghana", best_score: 82.1, total_analyses: 15 },
+        { user_id: "demo-6", name: "Luca Ferrari", avatar_url: null, age: 19, position: "FWD", city: "Milan", country: "Italy", best_score: 79.8, total_analyses: 24 },
+        { user_id: "demo-7", name: "Yuki Tanaka", avatar_url: null, age: 15, position: "MID", city: "Tokyo", country: "Japan", best_score: 77.4, total_analyses: 20 },
+        { user_id: "demo-8", name: "Oliver Schmidt", avatar_url: null, age: 18, position: "DEF", city: "Munich", country: "Germany", best_score: 76.2, total_analyses: 17 },
+        { user_id: "demo-9", name: "Emma Dubois", avatar_url: null, age: 16, position: "FWD", city: "Paris", country: "France", best_score: 74.9, total_analyses: 26 },
+        { user_id: "demo-10", name: "Rafael Santos", avatar_url: null, age: 17, position: "MID", city: "Rio de Janeiro", country: "Brazil", best_score: 73.5, total_analyses: 23 },
+        { user_id: "demo-11", name: "James Murphy", avatar_url: null, age: 15, position: "DEF", city: "Dublin", country: "Ireland", best_score: 71.8, total_analyses: 14 },
+        { user_id: "demo-12", name: "Aisha Patel", avatar_url: null, age: 18, position: "GK", city: "Mumbai", country: "India", best_score: 70.2, total_analyses: 18 },
+        { user_id: "demo-13", name: "Noah van Dijk", avatar_url: null, age: 16, position: "FWD", city: "Amsterdam", country: "Netherlands", best_score: 68.6, total_analyses: 21 },
+        { user_id: "demo-14", name: "Ivan Petrov", avatar_url: null, age: 17, position: "MID", city: "Moscow", country: "Russia", best_score: 67.1, total_analyses: 16 },
+        { user_id: "demo-15", name: "Chen Wei", avatar_url: null, age: 15, position: "DEF", city: "Shanghai", country: "China", best_score: 65.8, total_analyses: 12 },
+        { user_id: "demo-16", name: "Hugo Morales", avatar_url: null, age: 20, position: "MID", city: "Mexico City", country: "Mexico", best_score: 64.3, total_analyses: 29 },
+        { user_id: "demo-17", name: "Oscar Johansson", avatar_url: null, age: 18, position: "FWD", city: "Oslo", country: "Norway", best_score: 62.9, total_analyses: 13 },
+        { user_id: "demo-18", name: "Fatima Al-Rashid", avatar_url: null, age: 16, position: "MID", city: "Dubai", country: "UAE", best_score: 61.4, total_analyses: 19 },
+        { user_id: "demo-19", name: "David Kim", avatar_url: null, age: 17, position: "DEF", city: "Seoul", country: "South Korea", best_score: 60.0, total_analyses: 25 },
+        { user_id: "demo-20", name: "Liam O'Brien", avatar_url: null, age: 19, position: "GK", city: "New York", country: "USA", best_score: 58.7, total_analyses: 11 },
+    ];
+
     // Data Fetching
     const { data: players = [], isLoading } = useQuery({
         queryKey: ['global-rankings', page, position, ageGroup, country, city],
         queryFn: async () => {
+            if (demo) {
+                let filtered = [...DEMO_RANKING];
+                if (position && position !== "all") filtered = filtered.filter(p => p.position === position);
+                if (ageGroup && ageGroup !== "all") {
+                    switch (ageGroup) {
+                        case "U14": filtered = filtered.filter(p => p.age !== null && p.age <= 14); break;
+                        case "U15": filtered = filtered.filter(p => p.age === 15); break;
+                        case "U16": filtered = filtered.filter(p => p.age === 16); break;
+                        case "U17": filtered = filtered.filter(p => p.age === 17); break;
+                        case "U18": filtered = filtered.filter(p => p.age === 18); break;
+                        case "U19+": filtered = filtered.filter(p => p.age !== null && p.age >= 19); break;
+                    }
+                }
+                if (country) filtered = filtered.filter(p => p.country?.toLowerCase().includes(country.toLowerCase()));
+                if (city) filtered = filtered.filter(p => p.city?.toLowerCase().includes(city.toLowerCase()));
+                filtered.sort((a, b) => b.best_score - a.best_score);
+                const from = (page - 1) * PAGE_SIZE;
+                return filtered.slice(from, from + PAGE_SIZE);
+            }
+
             let query = supabase
                 .from('global_rankings')
                 .select('*');

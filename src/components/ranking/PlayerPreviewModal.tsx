@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
+import { useDemoContext } from "@/demo/DemoContext";
 
 interface PlayerPreviewModalProps {
     player: any; // Using any for now to avoid duplicate interface, or import shared one
@@ -23,10 +24,23 @@ interface Analysis {
 export function PlayerPreviewModal({ player, isOpen, onClose }: PlayerPreviewModalProps) {
     const { t } = useTranslation("ranking");
 
+    const demo = useDemoContext();
+
+    const DEMO_ANALYSES: Record<string, Analysis> = {
+        "demo-other-1": { stability: 82, power: 91, technique: 85, balance: 78 },
+        "demo-other-2": { stability: 79, power: 74, technique: 94, balance: 82 },
+        "demo-other-3": { stability: 92, power: 70, technique: 76, balance: 88 },
+        "demo-other-4": { stability: 95, power: 66, technique: 72, balance: 84 },
+        "demo-other-5": { stability: 70, power: 78, technique: 88, balance: 76 },
+    };
+
     const { data: bestAnalysis, isLoading } = useQuery<Analysis | null>({
         queryKey: ['best-analysis', player?.user_id],
         queryFn: async () => {
             if (!player?.user_id) return null;
+            if (demo) {
+                return DEMO_ANALYSES[player.user_id] ?? { stability: 75, power: 75, technique: 75, balance: 75 };
+            }
             const { data, error } = await supabase
                 .from('analyses')
                 .select('*')
