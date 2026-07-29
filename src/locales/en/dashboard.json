@@ -35,6 +35,72 @@
         "deleteTeam": "Delete Team",
         "invitePlayers": "Invite Players",
         "searchPlayers": "Search players...",
+        "tabs": {
+            "overview": "Overview",
+            "squad": "Squad",
+            "statistics": "Statistics",
+            "matches": "Matches",
+            "evaluations": "Evaluations",
+            "training": "Training"
+        },
+        "overview": {
+            "upcoming": "Upcoming",
+            "training": "Training",
+            "match": "Match",
+            "noUpcoming": "No upcoming events",
+            "attention": "Needs Attention",
+            "noFlags": "All players looking good"
+        },
+        "matches": {
+            "title": "Matches",
+            "newMatch": "New Match",
+            "date": "Date",
+            "time": "Time",
+            "opponent": "Opponent",
+            "competition": "Competition",
+            "score": "Score",
+            "status": "Status",
+            "actions": "Actions",
+            "startingXI": "Starting XI",
+            "substitutes": "Substitutes",
+            "playerStats": "Player Stats",
+            "location": "Location",
+            "cancel": "Cancel",
+            "create": "Create"
+        },
+        "squad": {
+            "player": "Player",
+            "rating": "Rating",
+            "video": "Video",
+            "pos": "Pos"
+        },
+        "evaluations": {
+            "title": "Evaluations",
+            "newEval": "New Evaluation",
+            "notes": "Notes",
+            "save": "Save Evaluation"
+        },
+        "training": {
+            "calendar": "Calendar",
+            "sessions": "Sessions",
+            "plans": "Plans",
+            "exercises": "Exercises",
+            "newSession": "New Session",
+            "name": "Name",
+            "duration": "Duration (min)",
+            "date": "Date",
+            "time": "Time",
+            "location": "Location",
+            "objective": "Objective",
+            "players": "Players",
+            "dragExercises": "Drag exercises here or click Add Exercise",
+            "save": "Save Session",
+            "newPlan": "New Plan",
+            "addToTraining": "Add to Training",
+            "addExercise": "Add Exercise",
+            "min": "min",
+            "noExercises": "No exercises yet"
+        },
         "filters": {
             "title": "Filters",
             "position": "Position",

@@ -35,6 +35,72 @@
         "deleteTeam": "Команданы жою",
         "invitePlayers": "Ойыншыларды шақыру",
         "searchPlayers": "Ойыншыларды іздеу...",
+        "tabs": {
+            "overview": "Шолу",
+            "squad": "Құрам",
+            "statistics": "Статистика",
+            "matches": "Матчтар",
+            "evaluations": "Бағалау",
+            "training": "Жаттығу"
+        },
+        "overview": {
+            "upcoming": "Алдағы",
+            "training": "Жаттығу",
+            "match": "Матч",
+            "noUpcoming": "Алдағы оқиғалар жоқ",
+            "attention": "Назар қажет",
+            "noFlags": "Барлық ойыншылар жақсы"
+        },
+        "matches": {
+            "title": "Матчтар",
+            "newMatch": "Жаңа матч",
+            "date": "Күні",
+            "time": "Уақыты",
+            "opponent": "Қарсылас",
+            "competition": "Турнир",
+            "score": "Есеп",
+            "status": "Күйі",
+            "actions": "Әрекеттер",
+            "startingXI": "Негізгі құрам",
+            "substitutes": "Алмастырушы",
+            "playerStats": "Ойыншы статистикасы",
+            "location": "Орны",
+            "cancel": "Бас тарту",
+            "create": "Құру"
+        },
+        "squad": {
+            "player": "Ойыншы",
+            "rating": "Рейтинг",
+            "video": "Бейне",
+            "pos": "Поз"
+        },
+        "evaluations": {
+            "title": "Бағалау",
+            "newEval": "Жаңа бағалау",
+            "notes": "Ескертпелер",
+            "save": "Сақтау"
+        },
+        "training": {
+            "calendar": "Күнтізбе",
+            "sessions": "Жаттығулар",
+            "plans": "Жоспарлар",
+            "exercises": "Жаттығулар",
+            "newSession": "Жаңа жаттығу",
+            "name": "Аты",
+            "duration": "Ұзақтығы (мин)",
+            "date": "Күні",
+            "time": "Уақыты",
+            "location": "Орны",
+            "objective": "Мақсаты",
+            "players": "Ойыншылар",
+            "dragExercises": "Жаттығуларды осы жерге апарыңыз",
+            "save": "Сақтау",
+            "newPlan": "Жаңа жоспар",
+            "addToTraining": "Қосу",
+            "addExercise": "Жаттығу қосу",
+            "min": "мин",
+            "noExercises": "Әзірге жаттығулар жоқ"
+        },
         "filters": {
             "title": "Сүзгілер",
             "position": "Позиция",

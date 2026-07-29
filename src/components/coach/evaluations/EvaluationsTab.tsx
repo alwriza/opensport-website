@@ -123,7 +123,7 @@ export function EvaluationsTab({ teamId }: { teamId?: string }) {
                             <DialogHeader>
                                 <DialogTitle className="flex items-center gap-3 text-xl">
                                     <ClipboardCheck className="h-6 w-6 text-primary" />
-                                    {(evalData as any).player?.name ?? "Player"}
+{(selectedEval as any).player?.name ?? "Player"}
                                     <Badge variant="outline" className="border-white/10 ml-2">{selectedEval.date}</Badge>
                                 </DialogTitle>
                             </DialogHeader>

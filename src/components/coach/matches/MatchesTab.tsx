@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+﻿import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCoachMatches, useCoachSquad, useCreateMatch, useUpsertMatchStats } from "@/hooks/useCoachData";
 import type { Match } from "@/types/coach";
@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Eye, X, Trophy, Loader2, Shield } from "lucide-react";
 
 export function MatchesTab({ teamId }: { teamId?: string }) {
-const { t } = useTranslation("dashboard");
+    const { t } = useTranslation("dashboard");
     const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
     const [showNew, setShowNew] = useState(false);
 
@@ -21,6 +21,20 @@ const { t } = useTranslation("dashboard");
     const createMatch = useCreateMatch();
     const upsertStats = useUpsertMatchStats();
     const [startingXI, setStartingXI] = useState<string[]>([]);
+    const [newMatch, setNewMatch] = useState({ date: "", time: "", opponent: "", home_away: "home", competition: "league", location: "" });
+
+    const handleCreate = async () => {
+        if (!teamId || !newMatch.date || !newMatch.opponent) return;
+        await createMatch.mutateAsync({
+            team_id: teamId, date: newMatch.date, time: newMatch.time,
+            opponent: newMatch.opponent, home_away: newMatch.home_away,
+            competition: newMatch.competition, location: newMatch.location,
+            starting_xi: startingXI,
+        });
+        setShowNew(false);
+        setNewMatch({ date: "", time: "", opponent: "", home_away: "home", competition: "league", location: "" });
+        setStartingXI([]);
+    };
 
     const statusColor = (status: string) => {
         switch (status) {
@@ -42,7 +56,6 @@ const { t } = useTranslation("dashboard");
                 </Button>
             </div>
 
-            {/* Match List */}
             <Card className="bg-card border-white/5 shadow-xl shadow-black/20 overflow-hidden">
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
@@ -74,9 +87,7 @@ const { t } = useTranslation("dashboard");
                                         <td className="p-3 text-sm text-muted-foreground">{match.competition}</td>
                                         <td className="p-3 text-center">
                                             {match.status === "completed" ? (
-                                                <span className="text-lg font-black text-white">
-                                                    {match.score_home} – {match.score_away}
-                                                </span>
+                                                <span className="text-lg font-black text-white">{match.score_home} – {match.score_away}</span>
                                             ) : <span className="text-muted-foreground">–</span>}
                                         </td>
                                         <td className="p-3 text-center">
@@ -108,43 +119,38 @@ const { t } = useTranslation("dashboard");
                                 <DialogDescription className="text-muted-foreground">
                                     {selectedMatch.competition} · {selectedMatch.home_away === "home" ? "Home" : "Away"} · {selectedMatch.location}
                                     {selectedMatch.status === "completed" && (
-                                        <span className="text-white font-bold ml-4">
-                                            Score: {selectedMatch.score_home} – {selectedMatch.score_away}
-                                        </span>
+                                        <span className="text-white font-bold ml-4">Score: {selectedMatch.score_home} – {selectedMatch.score_away}</span>
                                     )}
                                 </DialogDescription>
                             </DialogHeader>
 
-                            {/* Starting XI */}
-                            <div className="space-y-3">
-                                <h3 className="text-sm font-bold text-white uppercase tracking-wider">{t("coach.matches.startingXI")}</h3>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                    {selectedMatch.starting_xi.map(pid => (
-                                        <div key={pid} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
-                                            <Avatar className="h-8 w-8 border border-white/10">
-                                                <AvatarFallback className="bg-primary/20 text-primary text-xs">{getPlayerName(pid).charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <span className="text-sm font-medium text-white">{getPlayerName(pid)}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Substitutes */}
-                            {selectedMatch.substitutes.length > 0 && (
+                            {selectedMatch.starting_xi.length > 0 && (
                                 <div className="space-y-3">
-                                    <h3 className="text-sm font-bold text-white uppercase tracking-wider">{t("coach.matches.substitutes")}</h3>
-                                    <div className="flex flex-wrap gap-3">
-                                        {selectedMatch.substitutes.map(pid => (
-                                            <Badge key={pid} variant="outline" className="border-white/10 bg-white/5 text-white px-3 py-2">
-                                                {getPlayerName(pid)}
-                                            </Badge>
+                                    <h3 className="text-sm font-bold text-white uppercase tracking-wider">{t("coach.matches.startingXI")}</h3>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                        {selectedMatch.starting_xi.map(pid => (
+                                            <div key={pid} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
+                                                <Avatar className="h-8 w-8 border border-white/10">
+                                                    <AvatarFallback className="bg-primary/20 text-primary text-xs">{getPlayerName(pid).charAt(0)}</AvatarFallback>
+                                                </Avatar>
+                                                <span className="text-sm font-medium text-white">{getPlayerName(pid)}</span>
+                                            </div>
                                         ))}
                                     </div>
                                 </div>
                             )}
 
-                            {/* Player Match Stats */}
+                            {selectedMatch.substitutes.length > 0 && (
+                                <div className="space-y-3">
+                                    <h3 className="text-sm font-bold text-white uppercase tracking-wider">{t("coach.matches.substitutes")}</h3>
+                                    <div className="flex flex-wrap gap-3">
+                                        {selectedMatch.substitutes.map(pid => (
+                                            <Badge key={pid} variant="outline" className="border-white/10 bg-white/5 text-white px-3 py-2">{getPlayerName(pid)}</Badge>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             {selectedMatch.status === "completed" && (
                                 <div className="space-y-3">
                                     <h3 className="text-sm font-bold text-white uppercase tracking-wider">{t("coach.matches.playerStats")}</h3>
@@ -163,7 +169,7 @@ const { t } = useTranslation("dashboard");
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {selectedMatch.status === "completed" && (selectedMatch.player_stats ?? []).map(stat => (
+                                                    {(selectedMatch.player_stats ?? []).map(stat => (
                                                         <tr key={stat.id} className="border-b border-white/5">
                                                             <td className="p-2 font-medium text-white">{(stat as any).users?.name ?? stat.player_id}</td>
                                                             <td className="p-2 text-center">
@@ -193,7 +199,6 @@ const { t } = useTranslation("dashboard");
                                 </div>
                             )}
 
-                            {/* Notes */}
                             {selectedMatch.notes && (
                                 <div className="p-4 rounded-xl bg-white/5 border border-white/5">
                                     <p className="text-sm text-muted-foreground">{selectedMatch.notes}</p>
@@ -216,19 +221,19 @@ const { t } = useTranslation("dashboard");
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-xs font-medium text-muted-foreground">{t("coach.matches.date")}</label>
-                            <Input type="date" className="bg-background/50 border-white/5" />
+                            <Input type="date" value={newMatch.date} onChange={e => setNewMatch(p => ({ ...p, date: e.target.value }))} className="bg-background/50 border-white/5" />
                         </div>
                         <div className="space-y-2">
                             <label className="text-xs font-medium text-muted-foreground">{t("coach.matches.time")}</label>
-                            <Input type="time" className="bg-background/50 border-white/5" />
+                            <Input type="time" value={newMatch.time} onChange={e => setNewMatch(p => ({ ...p, time: e.target.value }))} className="bg-background/50 border-white/5" />
                         </div>
                         <div className="space-y-2 col-span-2">
                             <label className="text-xs font-medium text-muted-foreground">{t("coach.matches.opponent")}</label>
-                            <Input placeholder="Opponent name" className="bg-background/50 border-white/5" />
+                            <Input placeholder="Opponent name" value={newMatch.opponent} onChange={e => setNewMatch(p => ({ ...p, opponent: e.target.value }))} className="bg-background/50 border-white/5" />
                         </div>
                         <div className="space-y-2">
                             <label className="text-xs font-medium text-muted-foreground">H/A</label>
-                            <Select defaultValue="home">
+                            <Select value={newMatch.home_away} onValueChange={v => setNewMatch(p => ({ ...p, home_away: v }))}>
                                 <SelectTrigger className="bg-background/50 border-white/5"><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="home">Home</SelectItem>
@@ -238,7 +243,7 @@ const { t } = useTranslation("dashboard");
                         </div>
                         <div className="space-y-2">
                             <label className="text-xs font-medium text-muted-foreground">{t("coach.matches.competition")}</label>
-                            <Select defaultValue="league">
+                            <Select value={newMatch.competition} onValueChange={v => setNewMatch(p => ({ ...p, competition: v }))}>
                                 <SelectTrigger className="bg-background/50 border-white/5"><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="league">League</SelectItem>
@@ -249,13 +254,12 @@ const { t } = useTranslation("dashboard");
                         </div>
                         <div className="space-y-2 col-span-2">
                             <label className="text-xs font-medium text-muted-foreground">{t("coach.matches.location")}</label>
-                            <Input placeholder="Location" className="bg-background/50 border-white/5" />
+                            <Input placeholder="Location" value={newMatch.location} onChange={e => setNewMatch(p => ({ ...p, location: e.target.value }))} className="bg-background/50 border-white/5" />
                         </div>
-                        {/* Starting XI */}
                         <div className="space-y-2 col-span-2">
                             <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
                                 <Shield className="h-3.5 w-3.5 text-primary" />
-                                {t("coach.matches.startingXI", "Starting XI")}
+                                {t("coach.matches.startingXI")}
                                 <span className="text-xs text-muted-foreground">({startingXI.length}/11)</span>
                             </label>
                             <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 rounded-lg bg-background/30 border border-white/5">
@@ -263,11 +267,7 @@ const { t } = useTranslation("dashboard");
                                     const pid = p.player_id || p.id;
                                     const selected = startingXI.includes(pid);
                                     return (
-                                        <Badge
-                                            key={pid}
-                                            variant={selected ? "default" : "outline"}
-                                            className={`cursor-pointer transition-all text-xs ${selected ? "bg-primary text-black" : "border-white/10 text-muted-foreground hover:text-white"}
-                                            `}
+                                        <Badge key={pid} variant={selected ? "default" : "outline"} className={`cursor-pointer transition-all text-xs ${selected ? "bg-primary text-black" : "border-white/10 text-muted-foreground hover:text-white"}`}
                                             onClick={() => {
                                                 if (selected) setStartingXI(prev => prev.filter(id => id !== pid));
                                                 else if (startingXI.length < 11) setStartingXI(prev => [...prev, pid]);
@@ -283,7 +283,10 @@ const { t } = useTranslation("dashboard");
                     </div>
                     <div className="flex justify-end gap-3 pt-4">
                         <Button variant="outline" onClick={() => setShowNew(false)} className="border-white/5">{t("coach.matches.cancel")}</Button>
-                        <Button className="bg-primary text-black hover:bg-primary/90">{t("coach.matches.create")}</Button>
+                        <Button className="bg-primary text-black hover:bg-primary/90 gap-2" onClick={handleCreate} disabled={createMatch.isPending || !newMatch.date || !newMatch.opponent}>
+                            {createMatch.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                            {t("coach.matches.create")}
+                        </Button>
                     </div>
                 </DialogContent>
             </Dialog>

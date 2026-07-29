@@ -35,6 +35,72 @@
         "deleteTeam": "Удалить команду",
         "invitePlayers": "Пригласить игроков",
         "searchPlayers": "Поиск игроков...",
+        "tabs": {
+            "overview": "Обзор",
+            "squad": "Состав",
+            "statistics": "Статистика",
+            "matches": "Матчи",
+            "evaluations": "Оценки",
+            "training": "Тренировки"
+        },
+        "overview": {
+            "upcoming": "Предстоящее",
+            "training": "Тренировка",
+            "match": "Матч",
+            "noUpcoming": "Нет предстоящих событий",
+            "attention": "Требуют внимания",
+            "noFlags": "Все игроки в порядке"
+        },
+        "matches": {
+            "title": "Матчи",
+            "newMatch": "Новый матч",
+            "date": "Дата",
+            "time": "Время",
+            "opponent": "Соперник",
+            "competition": "Турнир",
+            "score": "Счет",
+            "status": "Статус",
+            "actions": "Действия",
+            "startingXI": "Стартовый состав",
+            "substitutes": "Запасные",
+            "playerStats": "Статистика игрока",
+            "location": "Место",
+            "cancel": "Отмена",
+            "create": "Создать"
+        },
+        "squad": {
+            "player": "Игрок",
+            "rating": "Рейтинг",
+            "video": "Видео",
+            "pos": "Поз"
+        },
+        "evaluations": {
+            "title": "Оценки",
+            "newEval": "Новая оценка",
+            "notes": "Заметки",
+            "save": "Сохранить оценку"
+        },
+        "training": {
+            "calendar": "Календарь",
+            "sessions": "Тренировки",
+            "plans": "Планы",
+            "exercises": "Упражнения",
+            "newSession": "Новая тренировка",
+            "name": "Название",
+            "duration": "Длительность (мин)",
+            "date": "Дата",
+            "time": "Время",
+            "location": "Место",
+            "objective": "Цель",
+            "players": "Игроки",
+            "dragExercises": "Перетащите упражнения или нажмите Добавить",
+            "save": "Сохранить",
+            "newPlan": "Новый план",
+            "addToTraining": "Добавить",
+            "addExercise": "Добавить упражнение",
+            "min": "мин",
+            "noExercises": "Упражнений пока нет"
+        },
         "filters": {
             "title": "Фильтры",
             "position": "Позиция",
