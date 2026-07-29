@@ -1,8 +1,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { User, Trophy, Medal, GitCompare } from "lucide-react";
+import { User, Trophy, GitCompare } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -73,7 +72,9 @@ export function RankingTable({ players, isLoading, onPlayerClick, page, pageSize
                 <TableHeader className="bg-white/5">
                     <TableRow className="border-white/5 hover:bg-white/5">
                         <TableHead className="w-[80px] text-center">{t("table.rank")}</TableHead>
-                        <TableHead className="w-[40px]"></TableHead>
+                        <TableHead className="w-[40px] text-center">
+                            <GitCompare className="h-3.5 w-3.5 mx-auto text-muted-foreground" />
+                        </TableHead>
                         <TableHead>{t("table.player")}</TableHead>
                         <TableHead className="w-[80px] text-center">{t("table.age")}</TableHead>
                         <TableHead className="w-[100px] text-center">{t("table.position")}</TableHead>
@@ -83,81 +84,89 @@ export function RankingTable({ players, isLoading, onPlayerClick, page, pageSize
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {players.map((player, index) => (
-                        <TableRow
-                            key={player.user_id}
-                            className="border-white/5 hover:bg-white/5 cursor-pointer transition-colors"
-                            onClick={() => onPlayerClick(player)}
-                        >
-                            <TableCell className="text-center font-medium">
-                                {getRankIcon(index)}
-                            </TableCell>
+                    {players.map((player, index) => {
+                        const isSelected = selectedForCompare.includes(player.user_id);
+                        return (
+                            <TableRow
+                                key={player.user_id}
+                                className={`border-white/5 hover:bg-white/5 cursor-pointer transition-colors ${isSelected ? "bg-primary/5 border-l-2 border-l-primary" : ""}`}
+                                onClick={() => onPlayerClick(player)}
+                            >
+                                <TableCell className="text-center font-medium">
+                                    {getRankIcon(index)}
+                                </TableCell>
 
-                            <TableCell className="text-center">
-                                <Checkbox
-                                    checked={selectedForCompare.includes(player.user_id)}
-                                    onCheckedChange={() => onToggleCompare(player.user_id)}
-                                    disabled={!selectedForCompare.includes(player.user_id) && selectedForCompare.length >= 2}
-                                />
-                            </TableCell>
+                                <TableCell className="text-center">
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); onToggleCompare(player.user_id); }}
+                                        className={`w-5 h-5 rounded border transition-all flex items-center justify-center ${
+                                            isSelected
+                                                ? "bg-primary border-primary text-black"
+                                                : "border-white/20 hover:border-primary/50"
+                                        }`}
+                                    >
+                                        {isSelected && <span className="text-[10px] font-bold">✓</span>}
+                                    </button>
+                                </TableCell>
 
-                            <TableCell>
-                                <div className="flex items-center gap-3">
-                                    <Avatar className="h-10 w-10 border border-white/10">
-                                        <AvatarImage src={player.avatar_url || ""} />
-                                        <AvatarFallback className="bg-primary/20 text-primary">
-                                            {player.name?.charAt(0) || <User className="h-5 w-5" />}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex flex-col">
-                                        <span className="font-semibold text-foreground">{player.name}</span>
-                                        <span className="text-xs text-muted-foreground md:hidden">
-                                            {player.city && player.country ? `${player.city}, ${player.country}` : t("location.unknown")}
-                                        </span>
+                                <TableCell>
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="h-10 w-10 border border-white/10">
+                                            <AvatarImage src={player.avatar_url || ""} />
+                                            <AvatarFallback className="bg-primary/20 text-primary">
+                                                {player.name?.charAt(0) || <User className="h-5 w-5" />}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex flex-col">
+                                            <span className="font-semibold text-foreground">{player.name}</span>
+                                            <span className="text-xs text-muted-foreground md:hidden">
+                                                {player.city && player.country ? `${player.city}, ${player.country}` : t("location.unknown")}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                            </TableCell>
+                                </TableCell>
 
-                            <TableCell className="text-center text-muted-foreground">
-                                {player.age ? `U${player.age}` : "-"}
-                            </TableCell>
+                                <TableCell className="text-center text-muted-foreground">
+                                    {player.age ? `U${player.age}` : "-"}
+                                </TableCell>
 
-                            <TableCell className="text-center">
-                                {player.position ? (
-                                    <span className="px-2 py-1 rounded-md bg-white/5 text-xs font-medium border border-white/10">
-                                        {player.position}
+                                <TableCell className="text-center">
+                                    {player.position ? (
+                                        <span className="px-2 py-1 rounded-md bg-white/5 text-xs font-medium border border-white/10">
+                                            {player.position}
+                                        </span>
+                                    ) : "-"}
+                                </TableCell>
+
+                                <TableCell className="hidden md:table-cell text-muted-foreground">
+                                    {player.city && player.country
+                                        ? `${player.city}, ${player.country}`
+                                        : <span className="text-muted-foreground/50">-</span>
+                                    }
+                                </TableCell>
+
+                                <TableCell className="text-center">
+                                    <span className={`text-lg ${getScoreColor(player.best_score)}`}>
+                                        {player.best_score.toFixed(1)}
                                     </span>
-                                ) : "-"}
-                            </TableCell>
+                                </TableCell>
 
-                            <TableCell className="hidden md:table-cell text-muted-foreground">
-                                {player.city && player.country
-                                    ? `${player.city}, ${player.country}`
-                                    : <span className="text-muted-foreground/50">-</span>
-                                }
-                            </TableCell>
-
-                            <TableCell className="text-center">
-                                <span className={`text-lg ${getScoreColor(player.best_score)}`}>
-                                    {player.best_score.toFixed(1)}
-                                </span>
-                            </TableCell>
-
-                            <TableCell className="text-center">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onPlayerClick(player);
-                                    }}
-                                    className="hover:bg-primary/20 hover:text-primary"
-                                >
-                                    {t("table.view")}
-                                </Button>
-                            </TableCell>
-                        </TableRow>
-                    ))}
+                                <TableCell className="text-center">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onPlayerClick(player);
+                                        }}
+                                        className="hover:bg-primary/20 hover:text-primary"
+                                    >
+                                        {t("table.view")}
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        );
+                    })}
                 </TableBody>
             </Table>
         </div>

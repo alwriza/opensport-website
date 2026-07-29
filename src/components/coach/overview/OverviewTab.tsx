@@ -117,7 +117,7 @@ export function OverviewTab({ teamId }: { teamId?: string }) {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-muted-foreground">{t("stats.topPerformer")}</p>
-                                <p className="text-lg font-bold">{roster.reduce((max, p) => p.coach_rating > max.coach_rating ? p : max).name}</p>
+                                <p className="text-lg font-bold">{roster.length > 0 ? roster.reduce((max, p) => p.coach_rating > max.coach_rating ? p : max).name : "—"}</p>
                             </div>
                             <Award className="h-8 w-8 text-yellow-500" />
                         </div>

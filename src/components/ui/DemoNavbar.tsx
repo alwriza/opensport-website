@@ -52,6 +52,9 @@ export default function DemoNavbar() {
             <Link to="/demo/ranking" className={`text-lg font-medium transition-colors whitespace-nowrap ${isActive('/demo/ranking') ? 'text-white' : 'text-gray-400 hover:text-white'}`}>
               {t("nav.leaderboard")}
             </Link>
+            <Link to="/demo/duels" className={`text-lg font-medium transition-colors whitespace-nowrap ${isActive('/demo/duels') ? 'text-white' : 'text-gray-400 hover:text-white'}`}>
+              {t("nav.duels")}
+            </Link>
           </nav>
 
           <div className="hidden lg:flex items-center gap-6 shrink-0">
@@ -103,6 +106,9 @@ export default function DemoNavbar() {
               </Link>
               <Link to="/demo/ranking" onClick={() => setMobileMenuOpen(false)} className={`text-base font-medium py-2 ${isActive('/demo/ranking') ? 'text-white' : 'text-gray-400'}`}>
                 {t("nav.leaderboard")}
+              </Link>
+              <Link to="/demo/duels" onClick={() => setMobileMenuOpen(false)} className={`text-base font-medium py-2 ${isActive('/demo/duels') ? 'text-white' : 'text-gray-400'}`}>
+                {t("nav.duels")}
               </Link>
               <div className="py-4 border-t border-b border-gray-800 flex gap-4 justify-center">
                 {languages.map((lang) => (
