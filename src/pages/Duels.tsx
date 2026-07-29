@@ -440,14 +440,30 @@ export default function Duels() {
                       <div className={`p-4 rounded-xl border ${iWon && !isDraw ? "bg-[#9FE870]/10 border-[#9FE870]/30" : "bg-white/5 border-white/10"}`}>
                         <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><User className="h-3 w-3" /> You</p>
                         <p className="text-3xl font-black">{myScore?.toFixed(1) ?? "—"}</p>
-                        {demo && <p className="text-[10px] text-muted-foreground mt-1">Same video · Side angle</p>}
                       </div>
                       <div className={`p-4 rounded-xl border ${!iWon && !isDraw ? "bg-destructive/10 border-destructive/30" : "bg-white/5 border-white/10"}`}>
                         <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><User className="h-3 w-3" /> {opponentName}</p>
                         <p className="text-3xl font-black">{theirScore?.toFixed(1) ?? "—"}</p>
-                        {demo && <p className="text-[10px] text-muted-foreground mt-1">Same video · Side angle</p>}
                       </div>
                     </div>
+
+                    {/* Video preview for demo */}
+                    {demo && d.id === "demo-duel-1" && (
+                      <div className="mb-4 p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
+                        <div className="w-16 h-12 rounded-lg bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center border border-white/10 shrink-0">
+                          <Video className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-white/80">Shared kick video</p>
+                          <p className="text-[10px] text-muted-foreground">Side angle · Both players analyzed the same source</p>
+                        </div>
+                        <div className="ml-auto flex items-center gap-2 text-[10px]">
+                          <span className="text-emerald-400 font-bold">87.3</span>
+                          <span className="text-muted-foreground">vs</span>
+                          <span className="text-red-400 font-bold">82.1</span>
+                        </div>
+                      </div>
+                    )}
 
                     <p className="text-[10px] text-muted-foreground">
                       Winner: {isDraw ? "Draw" : iWon ? "You" : opponentName}
