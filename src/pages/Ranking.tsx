@@ -1,10 +1,10 @@
-﻿import { useState, useEffect, useMemo, useCallback } from "react";
+﻿import { useState, useMemo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useDemoContext } from "@/demo";
-import { MockPlayer } from "@/data/mockRanking";
+import type { MockPlayer } from "@/data/mockRanking";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +31,39 @@ interface Filters {
     search: string;
 }
 
+const DEMO_RANKING = [
+    { id: "demo-r1", rank: 1, name: "Marcus Silva", age: 17, position: "FWD", team: "Kaizer Chiefs", city: "Barcelona", country: "Spain", avatarUrl: null, aiScore: 94.2, growth: 5.8, totalVideos: 28, lastActive: "today", trend: "up" },
+    { id: "demo-r2", rank: 2, name: "Amelia Johnson", age: 16, position: "MID", team: "Arsenal Youth", city: "London", country: "UK", avatarUrl: null, aiScore: 91.5, growth: 3.2, totalVideos: 22, lastActive: "today", trend: "up" },
+    { id: "demo-r3", rank: 3, name: "Carlos Rodriguez", age: 18, position: "DEF", team: "Real Madrid B", city: "Madrid", country: "Spain", avatarUrl: null, aiScore: 88.7, growth: -1.4, totalVideos: 19, lastActive: "1 day ago", trend: "stable" },
+    { id: "demo-r4", rank: 4, name: "Sofia Andersson", age: 17, position: "GK", team: "AIK Youth", city: "Stockholm", country: "Sweden", avatarUrl: null, aiScore: 85.3, growth: 7.1, totalVideos: 31, lastActive: "today", trend: "up" },
+    { id: "demo-r5", rank: 5, name: "Kwame Asante", age: 16, position: "MID", team: "Accra Lions", city: "Accra", country: "Ghana", avatarUrl: null, aiScore: 82.1, growth: 2.5, totalVideos: 15, lastActive: "2 days ago", trend: "stable" },
+    { id: "demo-r6", rank: 6, name: "Luca Ferrari", age: 19, position: "FWD", team: "AC Milan U19", city: "Milan", country: "Italy", avatarUrl: null, aiScore: 79.8, growth: -3.2, totalVideos: 24, lastActive: "3 days ago", trend: "down" },
+    { id: "demo-r7", rank: 7, name: "Yuki Tanaka", age: 15, position: "MID", team: "FC Tokyo U18", city: "Tokyo", country: "Japan", avatarUrl: null, aiScore: 77.4, growth: 6.3, totalVideos: 20, lastActive: "today", trend: "up" },
+    { id: "demo-r8", rank: 8, name: "Oliver Schmidt", age: 18, position: "DEF", team: "Bayern U19", city: "Munich", country: "Germany", avatarUrl: null, aiScore: 76.2, growth: 1.8, totalVideos: 17, lastActive: "1 day ago", trend: "stable" },
+    { id: "demo-r9", rank: 9, name: "Emma Dubois", age: 16, position: "FWD", team: "PSG Youth", city: "Paris", country: "France", avatarUrl: null, aiScore: 74.9, growth: 4.1, totalVideos: 26, lastActive: "today", trend: "up" },
+    { id: "demo-r10", rank: 10, name: "Rafael Santos", age: 17, position: "MID", team: "Flamengo U20", city: "Rio de Janeiro", country: "Brazil", avatarUrl: null, aiScore: 73.5, growth: -0.5, totalVideos: 23, lastActive: "2 days ago", trend: "stable" },
+    { id: "demo-r11", rank: 11, name: "James Murphy", age: 15, position: "DEF", team: null, city: "Dublin", country: "Ireland", avatarUrl: null, aiScore: 71.8, growth: 8.2, totalVideos: 14, lastActive: "today", trend: "up" },
+    { id: "demo-r12", rank: 12, name: "Aisha Patel", age: 18, position: "GK", team: "Mumbai FC", city: "Mumbai", country: "India", avatarUrl: null, aiScore: 70.2, growth: -2.1, totalVideos: 18, lastActive: "3 days ago", trend: "down" },
+    { id: "demo-r13", rank: 13, name: "Noah van Dijk", age: 16, position: "FWD", team: "Ajax U17", city: "Amsterdam", country: "Netherlands", avatarUrl: null, aiScore: 68.6, growth: 3.9, totalVideos: 21, lastActive: "1 day ago", trend: "stable" },
+    { id: "demo-r14", rank: 14, name: "Ivan Petrov", age: 17, position: "MID", team: "Spartak U19", city: "Moscow", country: "Russia", avatarUrl: null, aiScore: 67.1, growth: 1.2, totalVideos: 16, lastActive: "2 days ago", trend: "stable" },
+    { id: "demo-r15", rank: 15, name: "Chen Wei", age: 15, position: "DEF", team: "Shanghai U18", city: "Shanghai", country: "China", avatarUrl: null, aiScore: 65.8, growth: 5.5, totalVideos: 12, lastActive: "today", trend: "up" },
+    { id: "demo-r16", rank: 16, name: "Hugo Morales", age: 20, position: "MID", team: null, city: "Mexico City", country: "Mexico", avatarUrl: null, aiScore: 64.3, growth: -4.8, totalVideos: 29, lastActive: "1 week ago", trend: "down" },
+    { id: "demo-r17", rank: 17, name: "Oscar Johansson", age: 18, position: "FWD", team: "Malmö Youth", city: "Oslo", country: "Norway", avatarUrl: null, aiScore: 62.9, growth: 0.3, totalVideos: 13, lastActive: "3 days ago", trend: "stable" },
+    { id: "demo-r18", rank: 18, name: "Fatima Al-Rashid", age: 16, position: "MID", team: "Al-Ahli U19", city: "Dubai", country: "UAE", avatarUrl: null, aiScore: 61.4, growth: 2.7, totalVideos: 19, lastActive: "1 day ago", trend: "up" },
+    { id: "demo-r19", rank: 19, name: "David Kim", age: 17, position: "DEF", team: "Seoul FC U18", city: "Seoul", country: "South Korea", avatarUrl: null, aiScore: 60.0, growth: -1.1, totalVideos: 25, lastActive: "2 days ago", trend: "down" },
+    { id: "demo-r20", rank: 20, name: "Liam O'Brien", age: 19, position: "GK", team: "NYC Academy", city: "New York", country: "USA", avatarUrl: null, aiScore: 58.7, growth: 4.3, totalVideos: 11, lastActive: "today", trend: "up" },
+    { id: "demo-r21", rank: 21, name: "Петр Соколов", age: 16, position: "FWD", team: "Локомотив U17", city: "Москва", country: "Россия", avatarUrl: null, aiScore: 57.2, growth: 6.1, totalVideos: 9, lastActive: "today", trend: "up" },
+    { id: "demo-r22", rank: 22, name: "Juan Martinez", age: 17, position: "MID", team: "Boca Juniors U20", city: "Buenos Aires", country: "Argentina", avatarUrl: null, aiScore: 55.8, growth: -0.8, totalVideos: 14, lastActive: "3 days ago", trend: "stable" },
+    { id: "demo-r23", rank: 23, name: "Ahmed Hassan", age: 15, position: "DEF", team: "Al Ahly Youth", city: "Cairo", country: "Egypt", avatarUrl: null, aiScore: 54.3, growth: 7.5, totalVideos: 8, lastActive: "today", trend: "up" },
+    { id: "demo-r24", rank: 24, name: "Mia Larsen", age: 18, position: "FWD", team: "FC Copenhagen U19", city: "Copenhagen", country: "Denmark", avatarUrl: null, aiScore: 52.9, growth: 2.2, totalVideos: 16, lastActive: "1 day ago", trend: "stable" },
+    { id: "demo-r25", rank: 25, name: "Omar Farouk", age: 16, position: "GK", team: "Zamalek U18", city: "Cairo", country: "Egypt", avatarUrl: null, aiScore: 51.5, growth: -3.5, totalVideos: 22, lastActive: "4 days ago", trend: "down" },
+    { id: "demo-r26", rank: 26, name: "Elena Torres", age: 17, position: "MID", team: null, city: "Bogotá", country: "Colombia", avatarUrl: null, aiScore: 50.0, growth: 1.5, totalVideos: 7, lastActive: "2 days ago", trend: "stable" },
+    { id: "demo-r27", rank: 27, name: "Tommy Chen", age: 15, position: "FWD", team: "HKFC Youth", city: "Hong Kong", country: "China", avatarUrl: null, aiScore: 48.6, growth: 8.9, totalVideos: 6, lastActive: "today", trend: "up" },
+    { id: "demo-r28", rank: 28, name: "Sara Johansson", age: 19, position: "DEF", team: "Hammarby U20", city: "Stockholm", country: "Sweden", avatarUrl: null, aiScore: 47.2, growth: -2.0, totalVideos: 20, lastActive: "5 days ago", trend: "down" },
+    { id: "demo-r29", rank: 29, name: "Khalid Al-Rashid", age: 16, position: "MID", team: "Al-Hilal U19", city: "Riyadh", country: "Saudi Arabia", avatarUrl: null, aiScore: 45.8, growth: 3.0, totalVideos: 10, lastActive: "1 day ago", trend: "up" },
+    { id: "demo-r30", rank: 30, name: "Leo Fischer", age: 17, position: "FWD", team: "RB Leipzig U19", city: "Berlin", country: "Germany", avatarUrl: null, aiScore: 44.3, growth: 0.0, totalVideos: 13, lastActive: "3 days ago", trend: "stable" },
+];
+
 export default function Ranking() {
     const { t } = useTranslation("ranking");
     const navigate = useNavigate();
@@ -40,10 +73,7 @@ export default function Ranking() {
     const { data: rankingPlayers = [] } = useQuery({
         queryKey: ["global-ranking"],
         queryFn: async () => {
-            if (demo) {
-                const { MOCK_PLAYERS } = await import("@/data/mockRanking");
-                return MOCK_PLAYERS;
-            }
+            if (demo) return DEMO_RANKING;
             const { data, error } = await supabase.from("global_rankings").select("*").order("best_score", { ascending: false }).limit(200);
             if (error) throw error;
             return (data || []).map((r: any, i: number) => ({
@@ -63,6 +93,7 @@ export default function Ranking() {
                 trend: "stable",
             })) as MockPlayer[];
         },
+        placeholderData: (prev) => prev ?? (demo ? DEMO_RANKING : undefined),
     });
 
     const [compareDialogOpen, setCompareDialogOpen] = useState(false);

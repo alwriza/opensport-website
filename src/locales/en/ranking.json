@@ -1,7 +1,22 @@
 {
     "title": "Global Ranking",
     "subtitle": "Top performers from around the world",
+    "tabs": {
+        "rankings": "Rankings",
+        "saved": "Saved",
+        "alerts": "Alerts"
+    },
+    "sub": {
+        "global": "Global",
+        "improved": "Most Improved",
+        "gems": "Hidden Gems",
+        "trending": "Trending"
+    },
+    "search": {
+        "placeholder": "Search players..."
+    },
     "filters": {
+        "title": "Filters",
         "position": "Position",
         "allPositions": "All Positions",
         "ageGroup": "Age Group",
@@ -17,10 +32,47 @@
         "player": "Player",
         "age": "Age",
         "position": "Pos",
+        "team": "Team",
         "location": "Location",
         "score": "Score",
+        "growth": "Growth",
+        "videos": "Videos",
+        "lastActive": "Last Active",
         "actions": "Actions",
         "view": "View"
+    },
+    "tooltip": {
+        "score": "AI Score",
+        "viewProfile": "View Profile"
+    },
+    "pagination": {
+        "showing": "Showing {{from}}-{{to}} of {{total}}",
+        "prev": "Prev",
+        "next": "Next"
+    },
+    "compare": {
+        "selected": "selected",
+        "clear": "Clear",
+        "button": "Compare",
+        "title": "Player Comparison"
+    },
+    "preview": {
+        "score": "Best Score",
+        "rank": "Global Rank",
+        "stats": "Statistics",
+        "growth": "Growth",
+        "videos": "Total Videos",
+        "skills": "Skill Breakdown",
+        "close": "Close",
+        "viewProfile": "View Full Profile"
+    },
+    "saved": {
+        "empty": "No saved players",
+        "description": "Save interesting players to track their progress over time."
+    },
+    "alerts": {
+        "empty": "No alerts",
+        "description": "Get notified when players you follow improve their scores."
     },
     "location": {
         "unknown": "Unknown"
