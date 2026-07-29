@@ -1,7 +1,8 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { User, Trophy, Medal } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { User, Trophy, Medal, GitCompare } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -23,9 +24,11 @@ interface RankingTableProps {
     onPlayerClick: (player: RankingPlayer) => void;
     page: number;
     pageSize: number;
+    selectedForCompare: string[];
+    onToggleCompare: (userId: string) => void;
 }
 
-export function RankingTable({ players, isLoading, onPlayerClick, page, pageSize }: RankingTableProps) {
+export function RankingTable({ players, isLoading, onPlayerClick, page, pageSize, selectedForCompare, onToggleCompare }: RankingTableProps) {
     const { t } = useTranslation("ranking");
 
     const getRankIcon = (index: number) => {
@@ -70,6 +73,7 @@ export function RankingTable({ players, isLoading, onPlayerClick, page, pageSize
                 <TableHeader className="bg-white/5">
                     <TableRow className="border-white/5 hover:bg-white/5">
                         <TableHead className="w-[80px] text-center">{t("table.rank")}</TableHead>
+                        <TableHead className="w-[40px]"></TableHead>
                         <TableHead>{t("table.player")}</TableHead>
                         <TableHead className="w-[80px] text-center">{t("table.age")}</TableHead>
                         <TableHead className="w-[100px] text-center">{t("table.position")}</TableHead>
@@ -87,6 +91,14 @@ export function RankingTable({ players, isLoading, onPlayerClick, page, pageSize
                         >
                             <TableCell className="text-center font-medium">
                                 {getRankIcon(index)}
+                            </TableCell>
+
+                            <TableCell className="text-center">
+                                <Checkbox
+                                    checked={selectedForCompare.includes(player.user_id)}
+                                    onCheckedChange={() => onToggleCompare(player.user_id)}
+                                    disabled={!selectedForCompare.includes(player.user_id) && selectedForCompare.length >= 2}
+                                />
                             </TableCell>
 
                             <TableCell>

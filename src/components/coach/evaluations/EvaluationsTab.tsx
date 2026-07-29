@@ -10,7 +10,6 @@ import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Plus, ClipboardCheck, Loader2 } from "lucide-react";
 
 const CATEGORY_GROUPS: { label: string; key: keyof PlayerEvaluation["categories"]; fields: string[] }[] = [
@@ -32,6 +31,9 @@ const FIELD_LABELS: Record<string, string> = {
     work_rate: "Work Rate", teamwork: "Teamwork",
 };
 
+const DEFAULT_SCORES: Record<string, number> = {};
+CATEGORY_GROUPS.forEach(g => g.fields.forEach(f => { DEFAULT_SCORES[f] = 5; }));
+
 export function EvaluationsTab({ teamId }: { teamId?: string }) {
     const { t } = useTranslation("dashboard");
     const [selectedEval, setSelectedEval] = useState<PlayerEvaluation | null>(null);
@@ -39,7 +41,27 @@ export function EvaluationsTab({ teamId }: { teamId?: string }) {
 
     const { data: evaluations = [] } = usePlayerEvaluations(undefined, teamId);
     const { data: squad = [] } = useCoachSquad(teamId);
+    const upsertEval = useUpsertEvaluation();
+
     const [newEvalPlayer, setNewEvalPlayer] = useState("");
+    const [newEvalScores, setNewEvalScores] = useState<Record<string, number>>({ ...DEFAULT_SCORES });
+    const [newEvalNotes, setNewEvalNotes] = useState("");
+
+    const handleSaveEvaluation = async () => {
+        if (!newEvalPlayer || !teamId) return;
+        const categories: any = {};
+        CATEGORY_GROUPS.forEach(g => {
+            categories[g.key] = {};
+            g.fields.forEach(f => { categories[g.key][f] = newEvalScores[f]; });
+        });
+        await upsertEval.mutateAsync({
+            player_id: newEvalPlayer, team_id: teamId, categories, notes: newEvalNotes,
+        });
+        setShowNew(false);
+        setNewEvalPlayer("");
+        setNewEvalScores({ ...DEFAULT_SCORES });
+        setNewEvalNotes("");
+    };
 
     const avgRating = (evalData: PlayerEvaluation) => {
         const all = CATEGORY_GROUPS.flatMap(g => g.fields.map(f => (evalData.categories[g.key] as any)[f] ?? 0));
@@ -190,9 +212,9 @@ export function EvaluationsTab({ teamId }: { teamId?: string }) {
                                             <div key={field} className="space-y-2">
                                                 <div className="flex justify-between text-xs">
                                                     <span className="text-muted-foreground">{FIELD_LABELS[field] || field}</span>
-                                                    <span className="font-bold text-white">5</span>
+                                                    <span className="font-bold text-white">{newEvalScores[field]}</span>
                                                 </div>
-                                                <Slider defaultValue={[5]} max={10} step={1} className="[&_[role=slider]]:bg-primary" />
+                                                <Slider value={[newEvalScores[field]]} onValueChange={([v]) => setNewEvalScores(prev => ({ ...prev, [field]: v }))} max={10} step={1} className="[&_[role=slider]]:bg-primary" />
                                             </div>
                                         ))}
                                     </div>
@@ -201,12 +223,15 @@ export function EvaluationsTab({ teamId }: { teamId?: string }) {
 
                             <div className="space-y-2">
                                 <label className="text-xs font-medium text-muted-foreground">{t("coach.evaluations.notes")}</label>
-                                <Textarea placeholder="Coach notes..." className="bg-background/50 border-white/5 min-h-[100px]" />
+                                <Textarea placeholder="Coach notes..." value={newEvalNotes} onChange={e => setNewEvalNotes(e.target.value)} className="bg-background/50 border-white/5 min-h-[100px]" />
                             </div>
 
                             <div className="flex justify-end gap-3">
                                 <Button variant="outline" onClick={() => setShowNew(false)} className="border-white/5">{t("coach.matches.cancel")}</Button>
-                                <Button className="bg-primary text-black hover:bg-primary/90">{t("coach.evaluations.save")}</Button>
+                                <Button className="bg-primary text-black hover:bg-primary/90" onClick={handleSaveEvaluation} disabled={upsertEval.isPending || !newEvalPlayer}>
+                                {upsertEval.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                                {t("coach.evaluations.save")}
+                            </Button>
                             </div>
                         </div>
                     </ScrollArea>

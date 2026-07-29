@@ -3,6 +3,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useDemoContext } from "@/demo";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +15,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Swords, Upload, Trophy, Clock, X, Check } from "lucide-react";
+import { Loader2, Swords, Upload, Trophy, Clock, X, Check, Video, User } from "lucide-react";
 
 interface Duel {
   id: string;
@@ -40,6 +41,26 @@ export default function Duels() {
   const { user } = useCurrentUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const demo = useDemoContext();
+
+  const DEMO_DUELS: Duel[] = [
+    {
+      id: "demo-duel-1",
+      challenger_id: "demo-user-id",
+      opponent_id: "demo-opponent-1",
+      challenger_video_id: "demo-video-1",
+      opponent_video_id: "demo-video-2",
+      challenger_score: 87.3,
+      opponent_score: 82.1,
+      status: "completed",
+      winner_id: "demo-user-id",
+      deadline_at: null,
+      created_at: new Date().toISOString(),
+      completed_at: new Date().toISOString(),
+    },
+  ];
+
+  const DEMO_OPPONENT_NAME = "Marcus Silva";
 
   const [challengeOpen, setChallengeOpen] = useState(false);
   const [challengeNickname, setChallengeNickname] = useState("");
@@ -54,6 +75,7 @@ export default function Duels() {
   const { data: dbUserId } = useQuery({
     queryKey: ["db-user-id", user?.id],
     queryFn: async () => {
+      if (demo) return "demo-user-id";
       if (!user) return null;
       const { data, error } = await supabase
         .from("users")
@@ -63,12 +85,13 @@ export default function Duels() {
       if (error) throw error;
       return data?.id ?? null;
     },
-    enabled: !!user,
+    enabled: !!user || !!demo,
   });
 
   const { data: duels = [], refetch } = useQuery({
     queryKey: ["duels", dbUserId],
     queryFn: async () => {
+      if (demo) return DEMO_DUELS;
       if (!dbUserId) return [];
       const { data, error } = await supabase
         .from("duels")
@@ -78,7 +101,7 @@ export default function Duels() {
       if (error) throw error;
       return (data || []) as Duel[];
     },
-    enabled: !!dbUserId,
+    enabled: !!dbUserId || !!demo,
   });
 
   useEffect(() => {
@@ -395,22 +418,41 @@ export default function Duels() {
               const isDraw = d.winner_id === null;
               const myScore = mySide(d) === "challenger" ? d.challenger_score : d.opponent_score;
               const theirScore = mySide(d) === "challenger" ? d.opponent_score : d.challenger_score;
+              const opponentName = demo && d.id === "demo-duel-1" ? DEMO_OPPONENT_NAME : "Opponent";
               return (
-                <Card key={d.id}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      {isDraw ? (
-                        <Badge variant="secondary">Draw</Badge>
-                      ) : iWon ? (
-                        <Badge className="bg-[#9FE870] text-black"><Trophy className="h-3 w-3 mr-1" /> You won</Badge>
-                      ) : (
-                        <Badge variant="destructive">You lost</Badge>
-                      )}
-                    </CardTitle>
-                    <CardDescription>
-                      Your score: {myScore?.toFixed(1) ?? "—"} · Opponent: {theirScore?.toFixed(1) ?? "—"}
-                    </CardDescription>
-                  </CardHeader>
+                <Card key={d.id} className="border-white/10">
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        {isDraw ? (
+                          <Badge variant="secondary" className="text-sm">Draw</Badge>
+                        ) : iWon ? (
+                          <Badge className="bg-[#9FE870] text-black text-sm px-3 py-1"><Trophy className="h-4 w-4 mr-1" /> You won</Badge>
+                        ) : (
+                          <Badge variant="destructive" className="text-sm">You lost</Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{d.created_at ? new Date(d.created_at).toLocaleDateString() : ""}</p>
+                    </div>
+
+                    {/* Score comparison */}
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div className={`p-4 rounded-xl border ${iWon && !isDraw ? "bg-[#9FE870]/10 border-[#9FE870]/30" : "bg-white/5 border-white/10"}`}>
+                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><User className="h-3 w-3" /> You</p>
+                        <p className="text-3xl font-black">{myScore?.toFixed(1) ?? "—"}</p>
+                        {demo && <p className="text-[10px] text-muted-foreground mt-1">Same video · Side angle</p>}
+                      </div>
+                      <div className={`p-4 rounded-xl border ${!iWon && !isDraw ? "bg-destructive/10 border-destructive/30" : "bg-white/5 border-white/10"}`}>
+                        <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><User className="h-3 w-3" /> {opponentName}</p>
+                        <p className="text-3xl font-black">{theirScore?.toFixed(1) ?? "—"}</p>
+                        {demo && <p className="text-[10px] text-muted-foreground mt-1">Same video · Side angle</p>}
+                      </div>
+                    </div>
+
+                    <p className="text-[10px] text-muted-foreground">
+                      Winner: {isDraw ? "Draw" : iWon ? "You" : opponentName}
+                    </p>
+                  </CardContent>
                 </Card>
               );
             })}

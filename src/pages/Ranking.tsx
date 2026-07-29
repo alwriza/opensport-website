@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -6,8 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { RankingFilters } from "@/components/ranking/RankingFilters";
 import { RankingTable } from "@/components/ranking/RankingTable";
 import { PlayerPreviewModal } from "@/components/ranking/PlayerPreviewModal";
-import { Trophy } from "lucide-react";
+import { CompareView } from "@/components/ranking/CompareView";
+import { Trophy, GitCompare, X } from "lucide-react";
 import { useDemoContext } from "@/demo/DemoContext";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface RankingPlayer {
     user_id: string;
@@ -35,8 +38,22 @@ export default function Ranking() {
     // Local State
     const [selectedPlayer, setSelectedPlayer] = useState<RankingPlayer | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedForCompare, setSelectedForCompare] = useState<string[]>([]);
+    const [showCompare, setShowCompare] = useState(false);
 
     const PAGE_SIZE = 50;
+
+    const handleToggleCompare = (userId: string) => {
+        setSelectedForCompare(prev => {
+            if (prev.includes(userId)) return prev.filter(id => id !== userId);
+            if (prev.length >= 2) return [prev[1], userId];
+            return [...prev, userId];
+        });
+    };
+
+    const comparePlayers: RankingPlayer[] = selectedForCompare.map(id =>
+        players.find(p => p.user_id === id)
+    ).filter(Boolean) as RankingPlayer[];
 
     // Filter handlers
     const handleFilterChange = (key: string, value: string) => {
@@ -189,7 +206,24 @@ export default function Ranking() {
                 }}
                 page={page}
                 pageSize={PAGE_SIZE}
+                selectedForCompare={selectedForCompare}
+                onToggleCompare={handleToggleCompare}
             />
+
+            {/* Compare Button */}
+            {selectedForCompare.length === 2 && (
+                <div className="flex justify-center">
+                    <Button onClick={() => setShowCompare(true)} className="bg-primary text-black hover:bg-primary/90 gap-2">
+                        <GitCompare className="h-4 w-4" />
+                        Compare selected players
+                    </Button>
+                </div>
+            )}
+            {selectedForCompare.length === 1 && (
+                <p className="text-center text-xs text-muted-foreground">
+                    Select one more player to compare
+                </p>
+            )}
 
             {/* Pagination Controls */}
             <div className="flex justify-center gap-4 mt-8">
@@ -217,6 +251,13 @@ export default function Ranking() {
                 player={selectedPlayer}
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
+            />
+
+            {/* Compare View */}
+            <CompareView
+                players={comparePlayers}
+                open={showCompare}
+                onClose={() => setShowCompare(false)}
             />
         </div>
     );
