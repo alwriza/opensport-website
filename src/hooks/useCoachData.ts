@@ -211,6 +211,7 @@ export function useTeamFlags(teamId: string | undefined) {
 }
 
 export function useCreateMatch() {
+  const demo = useDemoContext()
   const queryClient = useQueryClient()
   const coach = useCoachIdentity()
 
@@ -219,6 +220,7 @@ export function useCreateMatch() {
       team_id: string, date: string, time: string, opponent: string,
       home_away: "home" | "away", competition?: string, location?: string
     }) => {
+      if (demo) return { id: "demo-match-id", ...match, created_by: coach?.id }
       const { data, error } = await supabase
         .from("matches")
         .insert({ ...match, created_by: coach?.id })
@@ -228,6 +230,7 @@ export function useCreateMatch() {
       return data
     },
     onSuccess: (data) => {
+      if (demo) return
       queryClient.invalidateQueries({ queryKey: ["coach-matches", data.team_id] })
       queryClient.invalidateQueries({ queryKey: ["upcoming-events", data.team_id] })
     },
@@ -251,6 +254,7 @@ export function useUpsertMatchStats() {
 }
 
 export function useUpsertEvaluation() {
+  const demo = useDemoContext()
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -258,17 +262,20 @@ export function useUpsertEvaluation() {
       id?: string, player_id: string, team_id: string,
       date?: string, categories: any, notes?: string
     }) => {
+      if (demo) return { success: true, evaluation: { id: "demo-eval-id", ...evalData } }
       const { data, error } = await supabase.functions.invoke("upsert-evaluation", { body: evalData })
       if (error) throw error
       return data
     },
     onSuccess: () => {
+      if (demo) return
       queryClient.invalidateQueries({ queryKey: ["player-evaluations"] })
     },
   })
 }
 
 export function useCreateTrainingSession() {
+  const demo = useDemoContext()
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -277,11 +284,13 @@ export function useCreateTrainingSession() {
       duration_minutes: number, location?: string, objective?: string,
       player_ids?: string[], exercises?: any[]
     }) => {
+      if (demo) return { session: { id: "demo-session-id", ...session } }
       const { data, error } = await supabase.functions.invoke("create-training-session", { body: session })
       if (error) throw error
       return data
     },
     onSuccess: (data) => {
+      if (demo) return
       queryClient.invalidateQueries({ queryKey: ["training-sessions", data.session?.team_id] })
     },
   })

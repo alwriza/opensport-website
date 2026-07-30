@@ -20,6 +20,7 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
     const [selectedCategory, setSelectedCategory] = useState("all");
 
     const [form, setForm] = useState({ name: "", duration_minutes: 60, date: "", time: "", location: "", objective: "", player_ids: [] as string[] });
+    const [planForm, setPlanForm] = useState({ name: "", start_date: "", end_date: "", assigned_to: "team" as "team" | "selected" | "individual" });
 
     const { data: trainingSessions = [] } = useTrainingSessions(teamId);
     const { data: trainingPlans = [] } = useTrainingPlans(teamId);
@@ -50,6 +51,12 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
         setShowCreateSession(false);
         setForm({ name: "", duration_minutes: 60, date: "", time: "", location: "", objective: "", player_ids: [] });
         setSessionExercises([]);
+    };
+
+    const handleSavePlan = () => {
+        if (!planForm.name || !planForm.start_date) return;
+        setShowCreatePlan(false);
+        setPlanForm({ name: "", start_date: "", end_date: "", assigned_to: "team" });
     };
 
     const addExerciseToSession = (ex: any) => {
@@ -313,21 +320,21 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <label className="text-xs font-medium text-muted-foreground">{t("coach.training.name")}</label>
-                                <Input placeholder="Plan name" className="bg-background/50 border-white/5" />
+                                <Input placeholder="Plan name" value={planForm.name} onChange={e => setPlanForm(p => ({ ...p, name: e.target.value }))} className="bg-background/50 border-white/5" />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <label className="text-xs font-medium text-muted-foreground">{t("coach.training.date")}</label>
-                                    <Input type="date" className="bg-background/50 border-white/5" />
+                                    <Input type="date" value={planForm.start_date} onChange={e => setPlanForm(p => ({ ...p, start_date: e.target.value }))} className="bg-background/50 border-white/5" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-medium text-muted-foreground">{t("coach.training.date")}</label>
-                                    <Input type="date" className="bg-background/50 border-white/5" />
+                                    <Input type="date" value={planForm.end_date} onChange={e => setPlanForm(p => ({ ...p, end_date: e.target.value }))} className="bg-background/50 border-white/5" />
                                 </div>
                             </div>
                             <div className="flex justify-end gap-3 pt-2">
                                 <Button variant="outline" onClick={() => setShowCreatePlan(false)} className="border-white/5">{t("coach.matches.cancel")}</Button>
-                                <Button className="bg-primary text-black hover:bg-primary/90">{t("coach.training.save")}</Button>
+                                <Button className="bg-primary text-black hover:bg-primary/90" onClick={handleSavePlan}>{t("coach.training.save")}</Button>
                             </div>
                         </div>
                     </DialogContent>
