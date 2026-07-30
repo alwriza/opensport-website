@@ -255,6 +255,26 @@ export default function PlayerDashboard() {
           }
         }
 
+        // Always show something: if no metric was weak enough to trigger a specific
+        // recommendation above, fall back to a generic skill so the section never sits empty.
+        if (recommendations.length === 0) {
+          const { data: fallbackSkill } = await supabase
+            .from('skills')
+            .select('id')
+            .order('order_index')
+            .limit(1)
+            .maybeSingle();
+          if (fallbackSkill) {
+            const { data } = await supabase
+              .from('skill_levels' as any)
+              .select(`*, skills (name, icon)`)
+              .eq('skill_id', (fallbackSkill as any).id)
+              .eq('level_name', 'beginner')
+              .order('level_order');
+            if (data) recommendations.push(...(data as any[]));
+          }
+        }
+
         return recommendations.slice(0, 3);
       } catch (error) {
         console.error('Error getting recommendations:', error);

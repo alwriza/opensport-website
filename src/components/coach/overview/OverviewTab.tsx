@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
     Users, TrendingUp, Clock, Award, Search, Filter, UserPlus,
-    ChevronDown, Star, Stethoscope, AlertCircle, Trophy, Loader2, CalendarDays,
+    ChevronDown, ChevronUp, Star, Stethoscope, AlertCircle, Trophy, Loader2, CalendarDays,
     Footprints, AlertTriangle,
 } from "lucide-react";
 import { useState, useMemo } from "react";
@@ -18,8 +18,12 @@ export function OverviewTab({ teamId, team }: { teamId?: string; team?: { id: st
     const { t } = useTranslation("dashboard");
     const [searchQuery, setSearchQuery] = useState("");
     const [filterPosition, setFilterPosition] = useState("All");
+    const [filterAgeRange, setFilterAgeRange] = useState<[number, number]>([0, 100]);
+    const [filterScoreRange, setFilterScoreRange] = useState<[number, number]>([0, 100]);
     const [showFilters, setShowFilters] = useState(false);
     const [showInvite, setShowInvite] = useState(false);
+    const [sortBy, setSortBy] = useState<"name" | "age" | "performance">("name");
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
     const { data: squad = [], isLoading: squadLoading } = useCoachSquad(teamId);
     const { data: upcoming = [] } = useUpcomingEvents(teamId);
@@ -43,12 +47,37 @@ export function OverviewTab({ teamId, team }: { teamId?: string; team?: { id: st
     };
 
     const filteredRoster = useMemo(() => {
-        return squad.filter(p => {
+        const filtered = squad.filter(p => {
             const matchesSearch = searchQuery === "" || p.name.toLowerCase().includes(searchQuery.toLowerCase());
             const matchesPosition = filterPosition === "All" || positionsMap[p.position] === filterPosition;
-            return matchesSearch && matchesPosition;
+            const age = p.age || 0;
+            const matchesAge = age >= filterAgeRange[0] && age <= filterAgeRange[1];
+            const score = (p.coach_rating || 0) * 10;
+            const matchesScore = score >= filterScoreRange[0] && score <= filterScoreRange[1];
+            return matchesSearch && matchesPosition && matchesAge && matchesScore;
         });
-    }, [squad, searchQuery, filterPosition]);
+
+        return [...filtered].sort((a, b) => {
+            let valA: any, valB: any;
+            switch (sortBy) {
+                case "name": valA = a.name.toLowerCase(); valB = b.name.toLowerCase(); break;
+                case "age": valA = a.age || 0; valB = b.age || 0; break;
+                case "performance": valA = a.coach_rating || 0; valB = b.coach_rating || 0; break;
+            }
+            if (valA < valB) return sortOrder === "asc" ? -1 : 1;
+            if (valA > valB) return sortOrder === "asc" ? 1 : -1;
+            return 0;
+        });
+    }, [squad, searchQuery, filterPosition, filterAgeRange, filterScoreRange, sortBy, sortOrder]);
+
+    const resetFilters = () => {
+        setSearchQuery("");
+        setFilterPosition("All");
+        setFilterAgeRange([0, 100]);
+        setFilterScoreRange([0, 100]);
+        setSortBy("name");
+        setSortOrder("asc");
+    };
 
     const roster = squad;
     const avgScore = roster.length > 0 ? (roster.reduce((a, p) => a + p.coach_rating, 0) / roster.length * 10).toFixed(1) : "0.0";
@@ -214,7 +243,7 @@ export function OverviewTab({ teamId, team }: { teamId?: string; team?: { id: st
                         </div>
 
                         {showFilters && (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-white/5 rounded-lg bg-white/5">
+                            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4 border border-white/5 rounded-lg bg-white/5">
                                 <div className="space-y-2">
                                     <label className="text-xs font-medium uppercase text-muted-foreground">{t("coach.filters.position")}</label>
                                     <Select value={filterPosition} onValueChange={setFilterPosition}>
@@ -227,6 +256,56 @@ export function OverviewTab({ teamId, team }: { teamId?: string; team?: { id: st
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-xs font-medium uppercase text-muted-foreground">{t("coach.filters.ageRange")}</label>
+                                    <div className="flex gap-2">
+                                        <Input type="number" placeholder={t("coach.filters.min")} className="w-1/2 bg-background border-white/5"
+                                            value={filterAgeRange[0]} min={0} max={100}
+                                            onChange={e => setFilterAgeRange([Number(e.target.value) || 0, filterAgeRange[1]])} />
+                                        <Input type="number" placeholder={t("coach.filters.max")} className="w-1/2 bg-background border-white/5"
+                                            value={filterAgeRange[1]} min={0} max={100}
+                                            onChange={e => setFilterAgeRange([filterAgeRange[0], Number(e.target.value) || 100])} />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-xs font-medium uppercase text-muted-foreground">{t("coach.filters.performance")}</label>
+                                    <div className="flex gap-2">
+                                        <Input type="number" placeholder={t("coach.filters.minScore")} className="w-1/2 bg-background border-white/5"
+                                            value={filterScoreRange[0]} min={0} max={100}
+                                            onChange={e => setFilterScoreRange([Number(e.target.value) || 0, filterScoreRange[1]])} />
+                                        <Input type="number" placeholder={t("coach.filters.maxScore")} className="w-1/2 bg-background border-white/5"
+                                            value={filterScoreRange[1]} min={0} max={100}
+                                            onChange={e => setFilterScoreRange([filterScoreRange[0], Number(e.target.value) || 100])} />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-xs font-medium uppercase text-muted-foreground">{t("coach.filters.sortBy")}</label>
+                                    <div className="flex gap-2">
+                                        <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+                                            <SelectTrigger className="bg-background border-white/5">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="name">{t("coach.filters.sorting.name")}</SelectItem>
+                                                <SelectItem value="age">{t("coach.filters.sorting.age")}</SelectItem>
+                                                <SelectItem value="performance">{t("coach.filters.sorting.overall")}</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <Button variant="outline" size="icon" className="shrink-0 border-white/5 bg-background"
+                                            onClick={() => setSortOrder(o => o === "asc" ? "desc" : "asc")}>
+                                            {sortOrder === "asc" ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col justify-end space-y-2">
+                                    <Button variant="ghost" onClick={resetFilters} className="text-xs font-bold uppercase tracking-widest h-10 px-4 border border-white/5">
+                                        {t("coach.filters.reset")}
+                                    </Button>
                                 </div>
                             </div>
                         )}
