@@ -37,6 +37,43 @@ async function getAccessToken() {
   return data.session?.access_token;
 }
 
+function CompletedDuelVideos({ challengerVideoId, opponentVideoId }: { challengerVideoId: string | null; opponentVideoId: string | null }) {
+  const [urls, setUrls] = useState<{ challenger: string | null; opponent: string | null }>({ challenger: null, opponent: null });
+
+  useEffect(() => {
+    let cancelled = false;
+    async function resolve(videoId: string | null) {
+      if (!videoId) return null;
+      const { data } = await supabase.from("videos").select("storage_path").eq("id", videoId).maybeSingle();
+      if (!data?.storage_path) return null;
+      const { data: signed } = await supabase.storage.from("videos").createSignedUrl(data.storage_path, 3600);
+      return signed?.signedUrl ?? null;
+    }
+    Promise.all([resolve(challengerVideoId), resolve(opponentVideoId)]).then(([c, o]) => {
+      if (!cancelled) setUrls({ challenger: c, opponent: o });
+    });
+    return () => { cancelled = true; };
+  }, [challengerVideoId, opponentVideoId]);
+
+  if (!urls.challenger && !urls.opponent) return null;
+
+  return (
+    <div className="grid grid-cols-2 gap-3 mb-4">
+      {[urls.challenger, urls.opponent].map((url, i) => (
+        <div key={i} className="rounded-xl overflow-hidden border border-white/10 bg-black/40 aspect-video">
+          {url ? (
+            <video src={url} controls className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+              <Video className="h-5 w-5 mr-2 opacity-50" /> No video
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function Duels() {
   const { user } = useCurrentUser();
   const { toast } = useToast();
@@ -463,6 +500,11 @@ export default function Duels() {
                           <span className="text-red-400 font-bold">82.1</span>
                         </div>
                       </div>
+                    )}
+
+                    {/* Real video playback for actual duels */}
+                    {!demo && (d.challenger_video_id || d.opponent_video_id) && (
+                      <CompletedDuelVideos challengerVideoId={d.challenger_video_id} opponentVideoId={d.opponent_video_id} />
                     )}
 
                     <p className="text-[10px] text-muted-foreground">

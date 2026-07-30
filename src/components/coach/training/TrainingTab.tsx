@@ -142,7 +142,7 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
                                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
                                     <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {session.time}</span>
                                     <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {session.location}</span>
-                                    <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {(session as any).assigned_player_ids?.length ?? 0}</span>
+                                    <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {session.assigned_players?.length ?? 0}</span>
                                 </div>
                                 <p className="text-xs text-muted-foreground line-clamp-2">{session.objective}</p>
                                 <div className="space-y-1">

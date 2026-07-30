@@ -88,7 +88,7 @@ export function SquadTab({ teamId }: { teamId?: string }) {
     const renderCell = (player: TeamMember, field: string) => {
         const value = (player as any)[field] ?? 0;
         const isEditing = editingCell?.pid === player.id && editingCell?.field === field;
-        const source = player.stat_sources[field] as MetricSource | undefined;
+        const source = player.stat_sources?.[field] as MetricSource | undefined;
         return (
             <div className="flex items-center justify-center gap-1.5">
                 {isEditing ? (

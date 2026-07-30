@@ -6,18 +6,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-    Users, TrendingUp, Clock, Award, Plus, Search, Filter, UserPlus,
+    Users, TrendingUp, Clock, Award, Search, Filter, UserPlus,
     ChevronDown, Star, Stethoscope, AlertCircle, Trophy, Loader2, CalendarDays,
     Footprints, AlertTriangle,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useCoachSquad, useUpcomingEvents, useTeamFlags } from "@/hooks/useCoachData";
+import { InvitePlayersModal } from "@/components/ui/InvitePlayersModal";
 
-export function OverviewTab({ teamId }: { teamId?: string }) {
+export function OverviewTab({ teamId, team }: { teamId?: string; team?: { id: string; name: string; invite_code: string } }) {
     const { t } = useTranslation("dashboard");
     const [searchQuery, setSearchQuery] = useState("");
     const [filterPosition, setFilterPosition] = useState("All");
     const [showFilters, setShowFilters] = useState(false);
+    const [showInvite, setShowInvite] = useState(false);
 
     const { data: squad = [], isLoading: squadLoading } = useCoachSquad(teamId);
     const { data: upcoming = [] } = useUpcomingEvents(teamId);
@@ -52,6 +54,7 @@ export function OverviewTab({ teamId }: { teamId?: string }) {
     const avgScore = roster.length > 0 ? (roster.reduce((a, p) => a + p.coach_rating, 0) / roster.length * 10).toFixed(1) : "0.0";
 
     return (
+        <>
         <div className="space-y-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
@@ -61,20 +64,6 @@ export function OverviewTab({ teamId }: { teamId?: string }) {
                     <p className="text-muted-foreground font-medium">
                         {t("coach.welcome", { name: "Coach" })}
                     </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-3">
-                    <Select defaultValue="team-1">
-                        <SelectTrigger className="w-[200px] bg-card border-white/5">
-                            <SelectValue placeholder={t("coach.selectTeam")} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="team-1">U18 Team Alpha</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <Button className="bg-primary hover:bg-primary/90 text-black font-bold">
-                        <Plus className="h-4 w-4 mr-2" />
-                        {t("coach.createTeam")}
-                    </Button>
                 </div>
             </div>
 
@@ -217,7 +206,7 @@ export function OverviewTab({ teamId }: { teamId?: string }) {
                                     {t("coach.filters.title")}
                                     <ChevronDown className={`ml-2 h-4 w-4 transition-transform ${showFilters ? "rotate-180" : ""}`} />
                                 </Button>
-                                <Button>
+                                <Button onClick={() => setShowInvite(true)} disabled={!team}>
                                     <UserPlus className="h-4 w-4 mr-2" />
                                     {t("coach.invitePlayers")}
                                 </Button>
@@ -311,5 +300,14 @@ export function OverviewTab({ teamId }: { teamId?: string }) {
                 </CardContent>
             </Card>
         </div>
+        {team && (
+            <InvitePlayersModal
+                open={showInvite}
+                onClose={() => setShowInvite(false)}
+                team={team}
+                onSuccess={() => setShowInvite(false)}
+            />
+        )}
+        </>
     );
 }

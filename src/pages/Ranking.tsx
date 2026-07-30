@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useCallback } from "react";
+﻿import { useState, useMemo, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -90,7 +90,7 @@ export default function Ranking() {
                 growth: r.growth ?? 0,
                 totalVideos: r.total_analyses || 0,
                 lastActive: r.last_active || "recently",
-                trend: "stable",
+                trend: (r.growth ?? 0) > 1 ? "up" : (r.growth ?? 0) < -1 ? "down" : "stable",
             })) as MockPlayer[];
         },
         placeholderData: (prev) => prev ?? (demo ? DEMO_RANKING : undefined),
@@ -113,7 +113,18 @@ export default function Ranking() {
     const [compareIds, setCompareIds] = useState<string[]>([]);
     const [previewPlayer, setPreviewPlayer] = useState<MockPlayer | null>(null);
     const [previewOpen, setPreviewOpen] = useState(false);
+    const [savedIds, setSavedIds] = useState<string[]>(() => {
+        try { return JSON.parse(localStorage.getItem("ranking_saved_players") || "[]"); } catch { return []; }
+    });
     const PAGE_SIZE = 20;
+
+    useEffect(() => {
+        localStorage.setItem("ranking_saved_players", JSON.stringify(savedIds));
+    }, [savedIds]);
+
+    const toggleSaved = (id: string) => {
+        setSavedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    };
 
     const updateURL = useCallback((updates: Record<string, string>) => {
         const p = new URLSearchParams(searchParams);
@@ -177,7 +188,7 @@ export default function Ranking() {
         });
 
         return list;
-    }, [filters, sub, sortField, sortDir]);
+    }, [rankingPlayers, filters, sub, sortField, sortDir]);
 
     const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
     const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -548,23 +559,42 @@ export default function Ranking() {
                                                     {player.lastActive}
                                                 </td>
                                                 <td className="p-3 text-center" onClick={e => e.stopPropagation()}>
-                                                    <TooltipProvider>
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    className="h-8 w-8 hover:bg-primary/20 hover:text-primary"
-                                                                    onClick={() => navigate(`/player/${player.id}`)}
-                                                                >
-                                                                    <Eye className="h-4 w-4" />
-                                                                </Button>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent side="left" className="bg-card border-white/10">
-                                                                <p className="text-xs">{t("tooltip.viewProfile")}</p>
-                                                            </TooltipContent>
-                                                        </Tooltip>
-                                                    </TooltipProvider>
+                                                    <div className="flex items-center justify-center gap-1">
+                                                        <TooltipProvider>
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className={`h-8 w-8 hover:bg-primary/20 hover:text-primary ${savedIds.includes(player.id) ? "text-primary" : ""}`}
+                                                                        onClick={() => toggleSaved(player.id)}
+                                                                    >
+                                                                        <Bookmark className={`h-4 w-4 ${savedIds.includes(player.id) ? "fill-primary" : ""}`} />
+                                                                    </Button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent side="left" className="bg-card border-white/10">
+                                                                    <p className="text-xs">{savedIds.includes(player.id) ? t("saved.remove", "Убрать из сохранённых") : t("saved.add", "Сохранить")}</p>
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        </TooltipProvider>
+                                                        <TooltipProvider>
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="h-8 w-8 hover:bg-primary/20 hover:text-primary"
+                                                                        onClick={() => navigate(`/player/${player.id}`)}
+                                                                    >
+                                                                        <Eye className="h-4 w-4" />
+                                                                    </Button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent side="left" className="bg-card border-white/10">
+                                                                    <p className="text-xs">{t("tooltip.viewProfile")}</p>
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        </TooltipProvider>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );
@@ -635,24 +665,77 @@ export default function Ranking() {
 
                 {/* Saved Tab */}
                 <TabsContent value="saved" className="mt-6">
-                    <div className="flex flex-col items-center justify-center py-20 text-center">
-                        <Bookmark className="h-16 w-16 text-muted-foreground opacity-30 mb-4" />
-                        <h2 className="text-2xl font-bold text-foreground">{t("saved.empty")}</h2>
-                        <p className="text-muted-foreground mt-2 max-w-md">
-                            {t("saved.description")}
-                        </p>
-                    </div>
+                    {savedIds.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-20 text-center">
+                            <Bookmark className="h-16 w-16 text-muted-foreground opacity-30 mb-4" />
+                            <h2 className="text-2xl font-bold text-foreground">{t("saved.empty")}</h2>
+                            <p className="text-muted-foreground mt-2 max-w-md">
+                                {t("saved.description")}
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {rankingPlayers.filter(p => savedIds.includes(p.id)).map(player => (
+                                <div key={player.id} className="rounded-2xl border border-white/5 bg-card/50 p-4 flex items-center gap-3 cursor-pointer hover:border-primary/30 transition-colors" onClick={() => { setPreviewPlayer(player); setPreviewOpen(true); }}>
+                                    <Avatar className="h-10 w-10 border border-white/10 shrink-0">
+                                        <AvatarImage src={player.avatarUrl || ""} />
+                                        <AvatarFallback className="bg-primary/20 text-primary text-xs">{player.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="min-w-0 flex-1">
+                                        <div className="font-semibold text-foreground truncate">{player.name}</div>
+                                        <div className="text-xs text-muted-foreground">{player.position} · U{player.age} · #{player.rank}</div>
+                                    </div>
+                                    <span className={`text-lg font-black ${rankColor(player.aiScore)}`}>{player.aiScore.toFixed(0)}</span>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive/20 hover:text-destructive" onClick={e => { e.stopPropagation(); toggleSaved(player.id); }}>
+                                        <Bookmark className="h-4 w-4 fill-current" />
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </TabsContent>
 
                 {/* Alerts Tab */}
                 <TabsContent value="alerts" className="mt-6">
-                    <div className="flex flex-col items-center justify-center py-20 text-center">
-                        <Bell className="h-16 w-16 text-muted-foreground opacity-30 mb-4" />
-                        <h2 className="text-2xl font-bold text-foreground">{t("alerts.empty")}</h2>
-                        <p className="text-muted-foreground mt-2 max-w-md">
-                            {t("alerts.description")}
-                        </p>
-                    </div>
+                    {(() => {
+                        const risers = [...rankingPlayers].filter(p => p.growth > 0).sort((a, b) => b.growth - a.growth).slice(0, 5);
+                        const fallers = [...rankingPlayers].filter(p => p.growth < 0).sort((a, b) => a.growth - b.growth).slice(0, 3);
+                        if (risers.length === 0 && fallers.length === 0) {
+                            return (
+                                <div className="flex flex-col items-center justify-center py-20 text-center">
+                                    <Bell className="h-16 w-16 text-muted-foreground opacity-30 mb-4" />
+                                    <h2 className="text-2xl font-bold text-foreground">{t("alerts.empty")}</h2>
+                                    <p className="text-muted-foreground mt-2 max-w-md">
+                                        {t("alerts.description")}
+                                    </p>
+                                </div>
+                            );
+                        }
+                        return (
+                            <div className="space-y-3">
+                                {risers.map(p => (
+                                    <div key={`up-${p.id}`} className="flex items-center gap-3 rounded-xl border border-white/5 bg-card/50 p-4">
+                                        <TrendingUp className="h-5 w-5 text-emerald-400 shrink-0" />
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm text-foreground"><span className="font-semibold">{p.name}</span> поднялся в рейтинге</p>
+                                            <p className="text-xs text-muted-foreground">Прогресс за период: +{p.growth.toFixed(1)} · сейчас #{p.rank}</p>
+                                        </div>
+                                        <Button variant="ghost" size="sm" onClick={() => navigate(`/player/${p.id}`)}>{t("tooltip.viewProfile")}</Button>
+                                    </div>
+                                ))}
+                                {fallers.map(p => (
+                                    <div key={`down-${p.id}`} className="flex items-center gap-3 rounded-xl border border-white/5 bg-card/50 p-4">
+                                        <TrendingDown className="h-5 w-5 text-red-400 shrink-0" />
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm text-foreground"><span className="font-semibold">{p.name}</span> снизил показатели</p>
+                                            <p className="text-xs text-muted-foreground">Изменение: {p.growth.toFixed(1)} · сейчас #{p.rank}</p>
+                                        </div>
+                                        <Button variant="ghost" size="sm" onClick={() => navigate(`/player/${p.id}`)}>{t("tooltip.viewProfile")}</Button>
+                                    </div>
+                                ))}
+                            </div>
+                        );
+                    })()}
                 </TabsContent>
             </Tabs>
 
@@ -867,7 +950,7 @@ export default function Ranking() {
                         </div>
                         <div className="flex justify-end p-4 border-t border-white/5 gap-3">
                             <Button variant="outline" size="sm" onClick={() => setCompareDialogOpen(false)} className="border-white/5">
-                                {t("compare.clear", "Close")}
+                                {t("compare.close", "Закрыть")}
                             </Button>
                             <Button variant="ghost" size="sm" onClick={() => { setCompareIds([]); setCompareDialogOpen(false); }} className="text-muted-foreground">
                                 {t("compare.clear", "Clear selection")}

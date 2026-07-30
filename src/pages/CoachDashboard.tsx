@@ -120,7 +120,7 @@ export default function CoachDashboard() {
       </div>
 
       <CoachLayout activeTab={activeTab} onTabChange={handleTabChange}>
-        {activeTab === "overview" && <OverviewTab teamId={teamId} />}
+        {activeTab === "overview" && <OverviewTab teamId={teamId} team={selectedTeam} />}
         {activeTab === "squad" && <SquadTab teamId={teamId} />}
         {activeTab === "statistics" && <StatisticsTab teamId={teamId} />}
         {activeTab === "matches" && <MatchesTab teamId={teamId} />}

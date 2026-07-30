@@ -146,7 +146,7 @@ export function EvaluationsTab({ teamId }: { teamId?: string }) {
                                                 {group.fields.map(field => {
                                                     const coachVal = (selectedEval.categories[group.key] as any)[field] ?? 0;
                                                     const aiKey = getAILabel(field);
-                                                    const aiVal = aiKey ? selectedEval.ai_scores[aiKey] : null;
+                                                    const aiVal = aiKey ? selectedEval.ai_scores?.[aiKey] ?? null : null;
                                                     return (
                                                         <div key={field} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
                                                             <span className="text-xs font-medium text-muted-foreground">{FIELD_LABELS[field] || field}</span>
