@@ -37,8 +37,9 @@ export default function DemoJoinTeam() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-card flex items-center justify-center p-4">
-      <Card className="max-w-md w-full">
+    <div className="relative flex min-h-[80vh] items-center justify-center px-4 py-12">
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-grid opacity-20 mask-fade-edges" />
+      <Card className="relative w-full max-w-md">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-6 w-6" />
@@ -71,7 +72,7 @@ export default function DemoJoinTeam() {
             <>
               <div className="bg-muted rounded-lg p-4 space-y-2">
                 <div className="flex items-center justify-center mb-4">
-                  <CheckCircle className="h-12 w-12 text-green-600" />
+                  <CheckCircle className="h-12 w-12 text-primary" />
                 </div>
                 <div className="text-center">
                   <p className="text-sm text-muted-foreground">{t("join.joining")}</p>

@@ -68,19 +68,19 @@ function SortableBlock({
       ref={setNodeRef}
       style={style}
       className={`flex items-center gap-3 p-3 rounded-lg border ${
-        isDragging ? "border-primary bg-primary/10" : "border-white/5 bg-white/5"
+        isDragging ? "border-primary bg-primary/10" : "border-border bg-surface-2"
       }`}
     >
       <button
         {...attributes}
         {...listeners}
-        className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-white transition-colors"
+        className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors"
       >
         <GripVertical className="h-4 w-4" />
       </button>
       <div className="flex-1 min-w-0">
-        <span className="text-sm font-medium text-white">{exercise.name}</span>
-        <Badge variant="outline" className="ml-2 border-white/10 text-[9px]">
+        <span className="text-sm font-medium text-foreground">{exercise.name}</span>
+        <Badge variant="outline" className="ml-2 border-border text-[9px]">
           {exercise.category}
         </Badge>
       </div>
@@ -91,7 +91,7 @@ function SortableBlock({
           max={120}
           value={exercise.duration_minutes}
           onChange={(e) => onUpdateDuration(exercise.id, parseInt(e.target.value) || 10)}
-          className="w-14 h-7 text-center text-xs bg-background/50 border border-white/5 rounded text-muted-foreground"
+          className="w-14 h-7 text-center text-xs bg-background/50 border border-border rounded text-muted-foreground"
         />
         <span className="text-[10px] text-muted-foreground">{t("coach.training.min")}</span>
       </div>
@@ -175,7 +175,7 @@ export function TrainingBuilder({
           items={exercises.map((e) => e.id)}
           strategy={verticalListSortingStrategy}
         >
-          <div className="space-y-2 min-h-[100px] rounded-xl border-2 border-dashed border-white/10 p-4">
+          <div className="space-y-2 min-h-[100px] rounded-xl border-2 border-dashed border-border p-4">
             {exercises.length === 0 ? (
               <p className="text-center text-xs text-muted-foreground py-6">
                 {t("coach.training.dragExercises")}
@@ -197,14 +197,14 @@ export function TrainingBuilder({
       {/* Add Exercise Dialog */}
       {showAddDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="bg-card border border-white/10 rounded-xl p-6 max-w-md w-full mx-4 max-h-[70vh] overflow-y-auto space-y-4">
+          <div className="bg-card border border-border rounded-xl p-6 max-w-md w-full mx-4 max-h-[70vh] overflow-y-auto space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-white">
+              <h3 className="text-sm font-bold text-foreground">
                 {t("coach.training.addExercise")}
               </h3>
               <button
                 onClick={() => setShowAddDialog(false)}
-                className="text-muted-foreground hover:text-white"
+                className="text-muted-foreground hover:text-foreground"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -218,7 +218,7 @@ export function TrainingBuilder({
                   className={`px-3 py-1 rounded-full text-[10px] font-medium border transition-all ${
                     selectedCategory === cat
                       ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-white/5 text-muted-foreground border-white/10 hover:text-white"
+                      : "bg-surface-2 text-muted-foreground border-border hover:text-foreground"
                   }`}
                 >
                   {cat === "all" ? "All" : cat.charAt(0).toUpperCase() + cat.slice(1)}
@@ -231,11 +231,11 @@ export function TrainingBuilder({
                 <button
                   key={ex.id}
                   onClick={() => handleAddExercise(ex)}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/5 hover:border-primary/30 hover:bg-primary/5 transition-all text-left"
+                  className="w-full flex items-center gap-3 p-3 rounded-lg bg-surface-2 border border-border hover:border-primary/30 hover:bg-primary/5 transition-all text-left"
                 >
                   <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium text-white">{ex.name}</span>
-                    <Badge variant="outline" className="ml-2 border-white/10 text-[9px]">
+                    <span className="text-sm font-medium text-foreground">{ex.name}</span>
+                    <Badge variant="outline" className="ml-2 border-border text-[9px]">
                       {ex.difficulty}
                     </Badge>
                   </div>

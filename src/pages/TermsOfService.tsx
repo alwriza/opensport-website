@@ -14,8 +14,9 @@ export default function TermsOfService() {
     ];
 
     return (
-        <div className="min-h-screen bg-gradient-card p-8">
-            <div className="container mx-auto max-w-4xl">
+        <div className="relative min-h-screen">
+            <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-spotlight" />
+            <div className="section-container relative max-w-4xl py-12 lg:py-16">
                 <Button
                     variant="ghost"
                     onClick={() => {
@@ -25,7 +26,7 @@ export default function TermsOfService() {
                             navigate("/");
                         }
                     }}
-                    className="mb-4"
+                    className="mb-6"
                 >
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     {t("back")}
@@ -33,10 +34,10 @@ export default function TermsOfService() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-3xl">{t("title")}</CardTitle>
+                        <CardTitle className="text-3xl sm:text-4xl">{t("title")}</CardTitle>
                         <CardDescription>{t("lastUpdated")}</CardDescription>
                     </CardHeader>
-                    <CardContent className="prose dark:prose-invert max-w-none space-y-6">
+                    <CardContent className="prose prose-invert max-w-none space-y-8 prose-headings:font-display prose-headings:text-foreground prose-h2:text-xl prose-p:text-muted-foreground prose-p:leading-relaxed prose-li:text-muted-foreground prose-strong:text-foreground prose-a:text-primary">
                         {sections.map((sectionKey) => (
                             <section key={sectionKey}>
                                 <h2>{t(`sections.${sectionKey}.title`)}</h2>

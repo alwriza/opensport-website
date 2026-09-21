@@ -60,7 +60,7 @@ function CompletedDuelVideos({ challengerVideoId, opponentVideoId }: { challenge
   return (
     <div className="grid grid-cols-2 gap-3 mb-4">
       {[urls.challenger, urls.opponent].map((url, i) => (
-        <div key={i} className="rounded-xl overflow-hidden border border-white/10 bg-black/40 aspect-video">
+        <div key={i} className="rounded-xl overflow-hidden border border-border bg-black/40 aspect-video">
           {url ? (
             <video src={url} controls className="w-full h-full object-cover" />
           ) : (
@@ -275,18 +275,22 @@ export default function Duels() {
     mySide(d) === "challenger" ? !!d.challenger_video_id : !!d.opponent_video_id;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10 space-y-10">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Swords className="h-7 w-7 text-[#9FE870]" />
-            Duels
-          </h1>
-          <p className="text-muted-foreground mt-1">Challenge other players and compare your best shots.</p>
+    <div className="relative mx-auto max-w-4xl space-y-10 px-4 py-10">
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 -top-20 h-72 bg-spotlight" />
+
+      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <span className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-primary/25 bg-primary/10 text-primary sm:flex">
+            <Swords className="h-6 w-6" />
+          </span>
+          <div className="space-y-1">
+            <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">Duels</h1>
+            <p className="text-sm text-muted-foreground sm:text-base">Challenge other players and compare your best shots.</p>
+          </div>
         </div>
         <Dialog open={challengeOpen} onOpenChange={setChallengeOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#9FE870] hover:bg-[#8DD760] text-black font-semibold">
+            <Button>
               Challenge someone
             </Button>
           </DialogTrigger>
@@ -457,14 +461,14 @@ export default function Duels() {
               const theirScore = mySide(d) === "challenger" ? d.opponent_score : d.challenger_score;
               const opponentName = demo && d.id === "demo-duel-1" ? DEMO_OPPONENT_NAME : "Opponent";
               return (
-                <Card key={d.id} className="border-white/10">
+                <Card key={d.id} className="border-border">
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
                         {isDraw ? (
                           <Badge variant="secondary" className="text-sm">Draw</Badge>
                         ) : iWon ? (
-                          <Badge className="bg-[#9FE870] text-black text-sm px-3 py-1"><Trophy className="h-4 w-4 mr-1" /> You won</Badge>
+                          <Badge className="bg-primary text-black text-sm px-3 py-1"><Trophy className="h-4 w-4 mr-1" /> You won</Badge>
                         ) : (
                           <Badge variant="destructive" className="text-sm">You lost</Badge>
                         )}
@@ -474,30 +478,30 @@ export default function Duels() {
 
                     {/* Score comparison */}
                     <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div className={`p-4 rounded-xl border ${iWon && !isDraw ? "bg-[#9FE870]/10 border-[#9FE870]/30" : "bg-white/5 border-white/10"}`}>
+                      <div className={`p-4 rounded-xl border ${iWon && !isDraw ? "bg-primary/10 border-[#9FE870]/30" : "bg-surface-2 border-border"}`}>
                         <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><User className="h-3 w-3" /> You</p>
-                        <p className="text-3xl font-black">{myScore?.toFixed(1) ?? "—"}</p>
+                        <p className="text-3xl font-bold">{myScore?.toFixed(1) ?? "—"}</p>
                       </div>
-                      <div className={`p-4 rounded-xl border ${!iWon && !isDraw ? "bg-destructive/10 border-destructive/30" : "bg-white/5 border-white/10"}`}>
+                      <div className={`p-4 rounded-xl border ${!iWon && !isDraw ? "bg-destructive/10 border-destructive/30" : "bg-surface-2 border-border"}`}>
                         <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1"><User className="h-3 w-3" /> {opponentName}</p>
-                        <p className="text-3xl font-black">{theirScore?.toFixed(1) ?? "—"}</p>
+                        <p className="text-3xl font-bold">{theirScore?.toFixed(1) ?? "—"}</p>
                       </div>
                     </div>
 
                     {/* Video preview for demo */}
                     {demo && d.id === "demo-duel-1" && (
-                      <div className="mb-4 p-3 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
-                        <div className="w-16 h-12 rounded-lg bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center border border-white/10 shrink-0">
+                      <div className="mb-4 p-3 rounded-xl bg-surface-2 border border-border flex items-center gap-3">
+                        <div className="w-16 h-12 rounded-lg bg-gradient-to-br from-primary/20 to-chart-6/20 flex items-center justify-center border border-border shrink-0">
                           <Video className="h-5 w-5 text-primary" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs font-medium text-white/80">Shared kick video</p>
+                          <p className="text-xs font-medium text-foreground/80">Shared kick video</p>
                           <p className="text-[10px] text-muted-foreground">Side angle · Both players analyzed the same source</p>
                         </div>
                         <div className="ml-auto flex items-center gap-2 text-[10px]">
                           <span className="text-emerald-400 font-bold">87.3</span>
                           <span className="text-muted-foreground">vs</span>
-                          <span className="text-red-400 font-bold">82.1</span>
+                          <span className="text-destructive font-bold">82.1</span>
                         </div>
                       </div>
                     )}

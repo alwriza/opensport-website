@@ -62,7 +62,7 @@ export const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
                     step={step}
                     {...props}
                 />
-                <div className="absolute right-1 top-1 bottom-1 flex flex-col w-6 gap-0.5 border-l border-white/5 pl-1">
+                <div className="absolute right-1 top-1 bottom-1 flex flex-col w-6 gap-0.5 border-l border-border pl-1">
                     <button
                         type="button"
                         onClick={handleIncrement}

@@ -10,6 +10,8 @@
         "duels": "Duels"
     },
     "buttons": {
-        "getStarted": "Get Started"
+        "getStarted": "Get Started",
+        "signOut": "Sign out",
+        "exitDemo": "Exit demo"
     }
 }

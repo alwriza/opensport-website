@@ -34,9 +34,9 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
 
     const statusColor = (status: string) => {
         switch (status) {
-            case "completed": return "bg-emerald-400/20 text-emerald-400";
+            case "completed": return "bg-success/15 text-success";
             case "scheduled": return "bg-primary/20 text-primary";
-            default: return "bg-white/10 text-muted-foreground";
+            default: return "bg-surface-3 text-muted-foreground";
         }
     };
 
@@ -74,7 +74,7 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
 
     return (
         <Tabs defaultValue="calendar" className="w-full">
-            <TabsList className="bg-card/50 border border-white/5 p-1 gap-1 mb-6">
+            <TabsList className="bg-surface-1 border border-border p-1 gap-1 mb-6">
                 <TabsTrigger value="calendar" className="flex items-center gap-2"><CalendarIcon className="h-4 w-4" /> {t("coach.training.calendar")}</TabsTrigger>
                 <TabsTrigger value="sessions" className="flex items-center gap-2"><Clock className="h-4 w-4" /> {t("coach.training.sessions")}</TabsTrigger>
                 <TabsTrigger value="plans" className="flex items-center gap-2"><FileText className="h-4 w-4" /> {t("coach.training.plans")}</TabsTrigger>
@@ -83,9 +83,9 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
 
             {/* Calendar */}
             <TabsContent value="calendar">
-                <Card className="bg-card border-white/5 shadow-xl shadow-black/20">
+                <Card className="bg-card border-border shadow-xl shadow-black/20">
                     <CardHeader>
-                        <CardTitle className="text-white flex items-center gap-2">
+                        <CardTitle className="text-foreground flex items-center gap-2">
                             <CalendarIcon className="h-5 w-5 text-primary" />
                             {t("coach.training.calendar")}
                         </CardTitle>
@@ -93,7 +93,7 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
                     <CardContent>
                         <div className="grid grid-cols-7 gap-1 mb-2">
                             {["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d => (
-                                <div key={d} className="text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground py-2">{d}</div>
+                                <div key={d} className="text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground py-2">{d}</div>
                             ))}
                             {Array.from({ length: 35 }, (_, i) => {
                                 const day = i - 3;
@@ -102,7 +102,7 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
                                     return d.getDate() === day && d.getMonth() === 6;
                                 });
                                 return (
-                                    <div key={i} className={`min-h-[80px] p-1 rounded-lg border border-white/5 ${day >= 1 && day <= 31 ? "bg-white/[0.02]" : "opacity-30"}`}>
+                                    <div key={i} className={`min-h-[80px] p-1 rounded-lg border border-border ${day >= 1 && day <= 31 ? "bg-surface-2" : "opacity-30"}`}>
                                         {day >= 1 && day <= 31 && (
                                             <>
                                                 <span className="text-[10px] font-medium text-muted-foreground">{day}</span>
@@ -122,7 +122,7 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
             {/* Sessions */}
             <TabsContent value="sessions">
                 <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-bold text-white">{t("coach.training.sessions")}</h3>
+                    <h3 className="text-lg font-bold text-foreground">{t("coach.training.sessions")}</h3>
                     <Button className="bg-primary text-black hover:bg-primary/90 gap-2" onClick={() => setShowCreateSession(true)}>
                         <Plus className="h-4 w-4" /> {t("coach.training.newSession")}
                     </Button>
@@ -130,11 +130,11 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {trainingSessions.map(session => (
-                        <Card key={session.id} className="bg-card border-white/5 shadow-xl shadow-black/20 hover:border-primary/30 transition-all">
+                        <Card key={session.id} className="bg-card border-border shadow-xl shadow-black/20 hover:border-primary/30 transition-all">
                             <CardContent className="p-5 space-y-4">
                                 <div className="flex items-start justify-between">
                                     <div>
-                                        <h4 className="font-bold text-white">{session.name}</h4>
+                                        <h4 className="font-bold text-foreground">{session.name}</h4>
                                         <p className="text-xs text-muted-foreground">{session.date} · {session.duration_minutes}min</p>
                                     </div>
                                     <Badge className={`text-[10px] uppercase border-none ${statusColor(session.status)}`}>{session.status}</Badge>
@@ -147,9 +147,9 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
                                 <p className="text-xs text-muted-foreground line-clamp-2">{session.objective}</p>
                                 <div className="space-y-1">
                                     {session.exercises.map((ex: any) => (
-                                        <div key={ex.id} className="flex items-center gap-2 text-xs text-muted-foreground bg-white/5 rounded-lg p-2">
-                                            <GripVertical className="h-3 w-3 text-white/20" />
-                                            <span className="font-medium text-white/80">{ex.exercise_name || ex.name || "Exercise"}</span>
+                                        <div key={ex.id} className="flex items-center gap-2 text-xs text-muted-foreground bg-surface-2 rounded-lg p-2">
+                                            <GripVertical className="h-3 w-3 text-subtle-foreground" />
+                                            <span className="font-medium text-foreground/80">{ex.exercise_name || ex.name || "Exercise"}</span>
                                             <span className="ml-auto">{ex.duration_minutes}min</span>
                                         </div>
                                     ))}
@@ -161,7 +161,7 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
 
                 {/* Create Session Dialog */}
                 <Dialog open={showCreateSession} onOpenChange={setShowCreateSession}>
-                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-white/10">
+                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border">
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2">
                                 <Plus className="h-5 w-5 text-primary" />
@@ -172,32 +172,32 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <label className="text-xs font-medium text-muted-foreground">{t("coach.training.name")}</label>
-                                    <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Session name" className="bg-background/50 border-white/5" />
+                                    <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Session name" className="bg-background/50 border-border" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-medium text-muted-foreground">{t("coach.training.duration")}</label>
-                                    <Input type="number" value={form.duration_minutes} onChange={e => setForm(p => ({ ...p, duration_minutes: parseInt(e.target.value) || 0 }))} placeholder="Minutes" className="bg-background/50 border-white/5" />
+                                    <Input type="number" value={form.duration_minutes} onChange={e => setForm(p => ({ ...p, duration_minutes: parseInt(e.target.value) || 0 }))} placeholder="Minutes" className="bg-background/50 border-border" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-medium text-muted-foreground">{t("coach.training.date")}</label>
-                                    <Input type="date" value={form.date} onChange={e => setForm(p => ({ ...p, date: e.target.value }))} min={today} className="bg-background/50 border-white/5" />
+                                    <Input type="date" value={form.date} onChange={e => setForm(p => ({ ...p, date: e.target.value }))} min={today} className="bg-background/50 border-border" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-medium text-muted-foreground">{t("coach.training.time")}</label>
-                                    <Input type="time" value={form.time} onChange={e => setForm(p => ({ ...p, time: e.target.value }))} className="bg-background/50 border-white/5" />
+                                    <Input type="time" value={form.time} onChange={e => setForm(p => ({ ...p, time: e.target.value }))} className="bg-background/50 border-border" />
                                 </div>
                                 <div className="space-y-2 col-span-2">
                                     <label className="text-xs font-medium text-muted-foreground">{t("coach.training.location")}</label>
-                                    <Input value={form.location} onChange={e => setForm(p => ({ ...p, location: e.target.value }))} placeholder="Location" className="bg-background/50 border-white/5" />
+                                    <Input value={form.location} onChange={e => setForm(p => ({ ...p, location: e.target.value }))} placeholder="Location" className="bg-background/50 border-border" />
                                 </div>
                                 <div className="space-y-2 col-span-2">
                                     <label className="text-xs font-medium text-muted-foreground">{t("coach.training.objective")}</label>
-                                    <Textarea value={form.objective} onChange={e => setForm(p => ({ ...p, objective: e.target.value }))} placeholder="Session objective..." className="bg-background/50 border-white/5" />
+                                    <Textarea value={form.objective} onChange={e => setForm(p => ({ ...p, objective: e.target.value }))} placeholder="Session objective..." className="bg-background/50 border-border" />
                                 </div>
                                 <div className="space-y-2 col-span-2">
                                     <label className="text-xs font-medium text-muted-foreground">{t("coach.training.players")}</label>
                                     <Select value={form.player_ids.length === squad.length ? "all" : form.player_ids[0] || "all"} onValueChange={v => setForm(p => ({ ...p, player_ids: v === "all" ? squad.map(s => s.player_id || s.id) : [v] }))}>
-                                        <SelectTrigger className="bg-background/50 border-white/5"><SelectValue /></SelectTrigger>
+                                        <SelectTrigger className="bg-background/50 border-border"><SelectValue /></SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="all">All Players ({squad.length})</SelectItem>
                                             {squad.map(p => (
@@ -215,15 +215,15 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
                                         <Plus className="h-3 w-3" /> {t("coach.training.addExercise")}
                                     </Button>
                                 </div>
-                                <div className="space-y-2 min-h-[100px] rounded-xl border-2 border-dashed border-white/10 p-4">
+                                <div className="space-y-2 min-h-[100px] rounded-xl border-2 border-dashed border-border p-4">
                                     {sessionExercises.length === 0 ? (
                                         <p className="text-center text-xs text-muted-foreground py-6">{t("coach.training.dragExercises")}</p>
                                     ) : (
                                         sessionExercises.map((ex, i) => (
-                                            <div key={ex.exId} className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/5">
+                                            <div key={ex.exId} className="flex items-center gap-3 p-3 rounded-lg bg-surface-2 border border-border">
                                                 <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
-                                                <span className="text-sm font-medium text-white flex-1">{ex.name}</span>
-                                                <Input type="number" value={ex.minutes} onChange={e => setSessionExercises(prev => prev.map((x, j) => j === i ? { ...x, minutes: parseInt(e.target.value) || 0 } : x))} className="w-16 h-7 text-center bg-background/50 border-white/5 text-sm" />
+                                                <span className="text-sm font-medium text-foreground flex-1">{ex.name}</span>
+                                                <Input type="number" value={ex.minutes} onChange={e => setSessionExercises(prev => prev.map((x, j) => j === i ? { ...x, minutes: parseInt(e.target.value) || 0 } : x))} className="w-16 h-7 text-center bg-background/50 border-border text-sm" />
                                                 <span className="text-xs text-muted-foreground">{t("coach.training.min")}</span>
                                                 <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => removeFromSession(ex.exId)}>
                                                     <X className="h-3 w-3" />
@@ -235,7 +235,7 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
                             </div>
 
                             <div className="flex justify-end gap-3 pt-2">
-                                <Button variant="outline" onClick={() => setShowCreateSession(false)} className="border-white/5">{t("coach.matches.cancel")}</Button>
+                                <Button variant="outline" onClick={() => setShowCreateSession(false)} className="border-border">{t("coach.matches.cancel")}</Button>
                                 <Button className="bg-primary text-black hover:bg-primary/90 gap-2" onClick={handleSave} disabled={createSession.isPending || !form.name || !form.date}>
                                     {createSession.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                                     {t("coach.training.save")}
@@ -247,7 +247,7 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
 
                 {/* Add Exercise Dialog */}
                 <Dialog open={showAddExercise} onOpenChange={setShowAddExercise}>
-                    <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto bg-card border-white/10">
+                    <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto bg-card border-border">
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2">
                                 <Dumbbell className="h-5 w-5 text-primary" />
@@ -259,12 +259,12 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
                             {exercises.map(ex => {
                                 const alreadyAdded = sessionExercises.some(e => e.exId === ex.id);
                                 return (
-                                    <div key={ex.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+                                    <div key={ex.id} className="flex items-center justify-between p-3 rounded-lg bg-surface-2 border border-border hover:bg-surface-3 transition-colors">
                                         <div>
-                                            <p className="text-sm font-medium text-white">{ex.name}</p>
+                                            <p className="text-sm font-medium text-foreground">{ex.name}</p>
                                             <p className="text-xs text-muted-foreground">{ex.category} · {ex.duration_minutes}{t("coach.training.min")}</p>
                                         </div>
-                                        <Button size="sm" variant={alreadyAdded ? "ghost" : "outline"} className="border-white/10" disabled={alreadyAdded} onClick={() => addExerciseToSession(ex)}>
+                                        <Button size="sm" variant={alreadyAdded ? "ghost" : "outline"} className="border-border" disabled={alreadyAdded} onClick={() => addExerciseToSession(ex)}>
                                             {alreadyAdded ? t("coach.training.noExercises") : t("coach.training.addExercise")}
                                         </Button>
                                     </div>
@@ -278,7 +278,7 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
             {/* Plans */}
             <TabsContent value="plans">
                 <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-bold text-white">{t("coach.training.plans")}</h3>
+                    <h3 className="text-lg font-bold text-foreground">{t("coach.training.plans")}</h3>
                     <Button className="bg-primary text-black hover:bg-primary/90 gap-2" onClick={() => setShowCreatePlan(true)}>
                         <Plus className="h-4 w-4" /> {t("coach.training.newPlan")}
                     </Button>
@@ -286,11 +286,11 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {trainingPlans.map(plan => (
-                        <Card key={plan.id} className="bg-card border-white/5 shadow-xl shadow-black/20">
+                        <Card key={plan.id} className="bg-card border-border shadow-xl shadow-black/20">
                             <CardContent className="p-5 space-y-4">
                                 <div className="flex items-start justify-between">
                                     <div>
-                                        <h4 className="font-bold text-white">{plan.name}</h4>
+                                        <h4 className="font-bold text-foreground">{plan.name}</h4>
                                         <p className="text-xs text-muted-foreground">{(plan as any).team_name ?? "Team"}</p>
                                     </div>
                                     <Badge className={`text-[10px] uppercase border-none ${statusColor(plan.status)}`}>{plan.status}</Badge>
@@ -299,7 +299,7 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
                                     <span className="flex items-center gap-1"><CalendarIcon className="h-3 w-3" /> {plan.start_date} – {plan.end_date}</span>
                                     <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {plan.player_ids.length} players</span>
                                 </div>
-                                <Badge variant="outline" className="border-white/10 text-[10px]">
+                                <Badge variant="outline" className="border-border text-[10px]">
                                     {plan.assigned_to === "team" ? "Whole Team" : plan.assigned_to === "selected" ? "Selected Players" : "Individual"}
                                 </Badge>
                                 <div className="text-xs text-muted-foreground">{(plan as any).session_ids?.length ?? 0} sessions in plan</div>
@@ -310,7 +310,7 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
 
                 {/* Create Plan Dialog */}
                 <Dialog open={showCreatePlan} onOpenChange={setShowCreatePlan}>
-                    <DialogContent className="sm:max-w-lg bg-card border-white/10">
+                    <DialogContent className="sm:max-w-lg bg-card border-border">
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2">
                                 <FileText className="h-5 w-5 text-primary" />
@@ -320,20 +320,20 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <label className="text-xs font-medium text-muted-foreground">{t("coach.training.name")}</label>
-                                <Input placeholder="Plan name" value={planForm.name} onChange={e => setPlanForm(p => ({ ...p, name: e.target.value }))} className="bg-background/50 border-white/5" />
+                                <Input placeholder="Plan name" value={planForm.name} onChange={e => setPlanForm(p => ({ ...p, name: e.target.value }))} className="bg-background/50 border-border" />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <label className="text-xs font-medium text-muted-foreground">{t("coach.training.date")}</label>
-                                    <Input type="date" value={planForm.start_date} onChange={e => setPlanForm(p => ({ ...p, start_date: e.target.value }))} className="bg-background/50 border-white/5" />
+                                    <Input type="date" value={planForm.start_date} onChange={e => setPlanForm(p => ({ ...p, start_date: e.target.value }))} className="bg-background/50 border-border" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-medium text-muted-foreground">{t("coach.training.date")}</label>
-                                    <Input type="date" value={planForm.end_date} onChange={e => setPlanForm(p => ({ ...p, end_date: e.target.value }))} className="bg-background/50 border-white/5" />
+                                    <Input type="date" value={planForm.end_date} onChange={e => setPlanForm(p => ({ ...p, end_date: e.target.value }))} className="bg-background/50 border-border" />
                                 </div>
                             </div>
                             <div className="flex justify-end gap-3 pt-2">
-                                <Button variant="outline" onClick={() => setShowCreatePlan(false)} className="border-white/5">{t("coach.matches.cancel")}</Button>
+                                <Button variant="outline" onClick={() => setShowCreatePlan(false)} className="border-border">{t("coach.matches.cancel")}</Button>
                                 <Button className="bg-primary text-black hover:bg-primary/90" onClick={handleSavePlan}>{t("coach.training.save")}</Button>
                             </div>
                         </div>
@@ -346,7 +346,7 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
                 <div className="flex flex-wrap gap-2 mb-6">
                     {exerciseCategories.map(cat => (
                         <button key={cat} onClick={() => setSelectedCategory(cat)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${selectedCategory === cat ? "bg-primary text-primary-foreground border-primary" : "bg-card/50 text-muted-foreground border-white/5 hover:text-foreground"}`}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${selectedCategory === cat ? "bg-primary text-primary-foreground border-primary" : "bg-surface-1 text-muted-foreground border-border hover:text-foreground"}`}
                         >
                             {cat === "all" ? "All" : cat.charAt(0).toUpperCase() + cat.slice(1)}
                         </button>
@@ -355,14 +355,14 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredExercises.map(ex => (
-                        <Card key={ex.id} className="bg-card border-white/5 shadow-xl shadow-black/20 hover:border-primary/30 transition-all group">
+                        <Card key={ex.id} className="bg-card border-border shadow-xl shadow-black/20 hover:border-primary/30 transition-all group">
                             <CardContent className="p-5 space-y-4">
                                 <div className="flex items-start justify-between">
                                     <div>
-                                        <h4 className="font-bold text-white group-hover:text-primary transition-colors">{ex.name}</h4>
+                                        <h4 className="font-bold text-foreground group-hover:text-primary transition-colors">{ex.name}</h4>
                                         <div className="flex items-center gap-2 mt-1">
-                                            <Badge variant="outline" className="border-white/10 text-[10px]">{ex.category}</Badge>
-                                            <Badge className={`text-[10px] border-none ${ex.difficulty === "beginner" ? "bg-emerald-400/20 text-emerald-400" : ex.difficulty === "intermediate" ? "bg-amber-400/20 text-amber-400" : "bg-red-400/20 text-red-400"}`}>{ex.difficulty}</Badge>
+                                            <Badge variant="outline" className="border-border text-[10px]">{ex.category}</Badge>
+                                            <Badge className={`text-[10px] border-none ${ex.difficulty === "beginner" ? "bg-success/15 text-success" : ex.difficulty === "intermediate" ? "bg-warning/20 text-warning" : "bg-destructive/15 text-destructive"}`}>{ex.difficulty}</Badge>
                                         </div>
                                     </div>
                                 </div>
@@ -374,11 +374,11 @@ export function TrainingTab({ teamId }: { teamId?: string }) {
                                 {ex.equipment.length > 0 && (
                                     <div className="flex flex-wrap gap-1">
                                         {ex.equipment.map(eq => (
-                                            <span key={eq} className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground">{eq}</span>
+                                            <span key={eq} className="text-[9px] px-1.5 py-0.5 rounded bg-surface-2 text-muted-foreground">{eq}</span>
                                         ))}
                                     </div>
                                 )}
-                                <Button variant="outline" size="sm" className="w-full border-white/5 text-xs gap-1" onClick={() => { setShowCreateSession(true); addExerciseToSession(ex); }}>
+                                <Button variant="outline" size="sm" className="w-full border-border text-xs gap-1" onClick={() => { setShowCreateSession(true); addExerciseToSession(ex); }}>
                                     <Plus className="h-3 w-3" /> {t("coach.training.addToTraining")}
                                 </Button>
                             </CardContent>

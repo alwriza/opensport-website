@@ -10,7 +10,23 @@
             "start": "Start Your Journey",
             "coaches": "For Coaches",
             "dashboard": "Go to Dashboard"
-        }
+        },
+        "badge": "AI football analysis",
+        "stats": {
+            "videos": {
+                "value": "600+",
+                "label": "Labelled match videos"
+            },
+            "speed": {
+                "value": "<60s",
+                "label": "From upload to report"
+            },
+            "languages": {
+                "value": "3",
+                "label": "Languages supported"
+            }
+        },
+        "scrollHint": "Scroll to explore"
     },
     "about": {
         "titleStart": "What is",
@@ -128,6 +144,20 @@
         "headline1": "Sport is for everyone.",
         "headline2": "The data should be too.",
         "subtext": "OPENsport is currently in active development. If you're a coach, club, or early adopter — we'd love to hear from you.",
-        "emailLabel": "Get in Touch"
-    }
+        "emailLabel": "Get in Touch",
+        "cta": {
+            "primary": "Create free account",
+            "secondary": "Try the demo"
+        }
+    },
+    "marquee": [
+        "AI Scouting",
+        "Pose Estimation",
+        "Shot Scoring",
+        "Performance Analytics",
+        "Smart Training",
+        "Player Profiles",
+        "Duels",
+        "Rankings"
+    ]
 }

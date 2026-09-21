@@ -180,8 +180,9 @@ export default function JoinTeam() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-card flex items-center justify-center p-4">
-            <Card className="max-w-md w-full">
+        <div className="relative flex min-h-[80vh] items-center justify-center px-4 py-12">
+            <div aria-hidden className="pointer-events-none absolute inset-0 bg-grid opacity-20 mask-fade-edges" />
+            <Card className="relative w-full max-w-md">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Users className="h-6 w-6" />
@@ -203,7 +204,7 @@ export default function JoinTeam() {
                                     value={inviteCode}
                                     onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
                                     placeholder={t("join.placeholder")}
-                                    className="text-2xl font-bold text-center tracking-wider"
+                                    className="h-14 text-center font-display text-2xl font-bold tracking-[0.3em]"
                                     maxLength={6}
                                 />
                             </div>
@@ -220,13 +221,13 @@ export default function JoinTeam() {
                     ) : (
                         <>
                             {/* Team Info */}
-                            <div className="bg-muted rounded-lg p-4 space-y-2">
+                            <div className="space-y-2 rounded-2xl border border-primary/20 bg-primary/[0.06] p-5">
                                 <div className="flex items-center justify-center mb-4">
-                                    <CheckCircle className="h-12 w-12 text-green-600" />
+                                    <CheckCircle className="h-12 w-12 text-primary" />
                                 </div>
                                 <div className="text-center">
                                     <p className="text-sm text-muted-foreground">{t("join.joining")}</p>
-                                    <h3 className="text-xl font-bold">{teamInfo.name}</h3>
+                                    <h3 className="font-display text-xl font-bold">{teamInfo.name}</h3>
                                     <p className="text-sm text-muted-foreground">
                                         {teamInfo.clubs?.name} • {teamInfo.age_group}
                                     </p>

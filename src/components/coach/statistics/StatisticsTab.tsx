@@ -59,14 +59,14 @@ export function StatisticsTab({ teamId }: { teamId?: string }) {
     };
 
     const getValColor = (val: number, field: keyof ExtendedPlayerStats) => {
-        if (field === "improvement_pct") return val >= 0 ? "text-emerald-400" : "text-red-400";
+        if (field === "improvement_pct") return val >= 0 ? "text-emerald-400" : "text-destructive";
         if (["yellow_cards", "red_cards", "losses"].includes(field)) {
-            if (val > 3) return "text-red-400";
-            if (val > 1) return "text-amber-400";
+            if (val > 3) return "text-destructive";
+            if (val > 1) return "text-warning";
             return "text-muted-foreground";
         }
         if (val >= 80) return "text-primary";
-        if (val >= 60) return "text-amber-400";
+        if (val >= 60) return "text-warning";
         return "text-muted-foreground";
     };
 
@@ -83,30 +83,30 @@ export function StatisticsTab({ teamId }: { teamId?: string }) {
                     placeholder={t("coach.searchPlayers")}
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="pl-9 bg-card/50 border-white/5"
+                    className="pl-9 bg-surface-1 border-border"
                 />
             </div>
 
-            <Card className="bg-card border-white/5 shadow-xl shadow-black/20 overflow-hidden">
+            <Card className="bg-card border-border shadow-xl shadow-black/20 overflow-hidden">
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
-                                <tr className="border-b border-white/5 bg-white/[0.02]">
-                                    <th rowSpan={2} className="p-3 text-left text-[10px] font-black uppercase tracking-widest text-gray-300 min-w-[160px] border-r border-white/5">{t("coach.squad.player")}</th>
-                                    <th rowSpan={2} className="p-3 text-left text-[10px] font-black uppercase tracking-widest text-gray-300 border-r border-white/5">{t("coach.squad.pos")}</th>
+                                <tr className="border-b border-border bg-surface-2">
+                                    <th rowSpan={2} className="p-3 text-left text-[10px] font-semibold uppercase tracking-widest text-muted-foreground min-w-[160px] border-r border-border">{t("coach.squad.player")}</th>
+                                    <th rowSpan={2} className="p-3 text-left text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-r border-border">{t("coach.squad.pos")}</th>
                                     {GROUPS.map(group => (
-                                        <th key={group.label} colSpan={group.columns.length} className="p-2 text-center text-[9px] font-black uppercase tracking-widest text-primary bg-primary/5 border-r border-white/5">
+                                        <th key={group.label} colSpan={group.columns.length} className="p-2 text-center text-[9px] font-semibold uppercase tracking-widest text-primary bg-primary/5 border-r border-border">
                                             {group.label}
                                         </th>
                                     ))}
                                 </tr>
-                                <tr className="border-b border-white/5 bg-white/[0.02]">
+                                <tr className="border-b border-border bg-surface-2">
                                     {ALL_COLUMNS.map(col => (
                                         <th key={col.key} className="p-2 text-center">
                                             <button
                                                 onClick={() => toggleSort(col.key)}
-                                                className="flex items-center justify-center gap-0.5 mx-auto text-[9px] font-black uppercase tracking-widest text-gray-300 hover:text-primary transition-colors"
+                                                className="flex items-center justify-center gap-0.5 mx-auto text-[9px] font-semibold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors"
                                             >
                                                 {col.label}
                                                 {sortField === col.key ? (
@@ -119,17 +119,17 @@ export function StatisticsTab({ teamId }: { teamId?: string }) {
                             </thead>
                             <tbody className="divide-y divide-white/5">
                                 {stats.map(player => (
-                                    <tr key={player.player_id} className="hover:bg-white/[0.02] transition-colors">
-                                        <td className="p-3 border-r border-white/5">
+                                    <tr key={player.player_id} className="hover:bg-surface-2 transition-colors">
+                                        <td className="p-3 border-r border-border">
                                             <div className="flex items-center gap-3">
-                                                <Avatar className="h-7 w-7 border border-white/10">
+                                                <Avatar className="h-7 w-7 border border-border">
                                                     <AvatarFallback className="bg-primary/20 text-primary text-[10px]">{player.name.charAt(0)}</AvatarFallback>
                                                 </Avatar>
-                                                <span className="font-bold text-white text-sm">{player.name}</span>
+                                                <span className="font-bold text-foreground text-sm">{player.name}</span>
                                             </div>
                                         </td>
-                                        <td className="p-3 text-center border-r border-white/5">
-                                            <Badge variant="outline" className="border-white/10 text-muted-foreground bg-white/5 text-[10px]">{player.position}</Badge>
+                                        <td className="p-3 text-center border-r border-border">
+                                            <Badge variant="outline" className="border-border text-muted-foreground bg-surface-2 text-[10px]">{player.position}</Badge>
                                         </td>
                                         {ALL_COLUMNS.map(col => {
                                             const val = (player as any)[col.key] ?? 0;

@@ -14,8 +14,8 @@ type SortDir = "asc" | "desc";
 
 const SOURCE_LABELS: Record<MetricSource, string> = { manual: "M", coach: "C", opensport_ai: "AI", import: "I" };
 const SOURCE_COLORS: Record<MetricSource, string> = {
-    manual: "text-blue-400 bg-blue-400/10", coach: "text-primary bg-primary/10",
-    opensport_ai: "text-purple-400 bg-purple-400/10", import: "text-amber-400 bg-amber-400/10",
+    manual: "text-chart-2 bg-chart-2/15", coach: "text-primary bg-primary/10",
+    opensport_ai: "text-chart-6 bg-chart-6/15", import: "text-warning bg-warning/10",
 };
 
 const COLUMNS = [
@@ -116,52 +116,52 @@ export function SquadTab({ teamId }: { teamId?: string }) {
         <div className="space-y-6">
             <div className="relative max-w-sm">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder={t("coach.searchPlayers")} value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-card/50 border-white/5" />
+                <Input placeholder={t("coach.searchPlayers")} value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-surface-1 border-border" />
             </div>
 
-            <Card className="bg-card border-white/5 shadow-xl shadow-black/20 overflow-hidden">
+            <Card className="bg-card border-border shadow-xl shadow-black/20 overflow-hidden">
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
-                                <tr className="border-b border-white/5 bg-white/[0.02]">
-                                    <th className="p-3 text-left text-[10px] font-black uppercase tracking-widest text-gray-300 min-w-[180px]">{t("coach.squad.player")}</th>
+                                <tr className="border-b border-border bg-surface-2">
+                                    <th className="p-3 text-left text-[10px] font-semibold uppercase tracking-widest text-muted-foreground min-w-[180px]">{t("coach.squad.player")}</th>
                                     <th className="p-3 text-center">
-                                        <button onClick={() => toggleSort("position")} className="flex items-center gap-1 mx-auto text-[10px] font-black uppercase tracking-widest text-gray-300 hover:text-primary">
+                                        <button onClick={() => toggleSort("position")} className="flex items-center gap-1 mx-auto text-[10px] font-semibold uppercase tracking-widest text-muted-foreground hover:text-primary">
                                             Pos {sortField === "position" ? (sortDir === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />) : null}
                                         </button>
                                     </th>
                                     <th className="p-3 text-center">
-                                        <button onClick={() => toggleSort("age")} className="flex items-center gap-1 mx-auto text-[10px] font-black uppercase tracking-widest text-gray-300 hover:text-primary">
+                                        <button onClick={() => toggleSort("age")} className="flex items-center gap-1 mx-auto text-[10px] font-semibold uppercase tracking-widest text-muted-foreground hover:text-primary">
                                             Age {sortField === "age" ? (sortDir === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />) : null}
                                         </button>
                                     </th>
                                     {COLUMNS.map(col => (
                                         <th key={col.key} className="p-3 text-center">
-                                            <button onClick={() => toggleSort(col.key as SortField)} className="flex items-center gap-1 mx-auto text-[10px] font-black uppercase tracking-widest text-gray-300 hover:text-primary">
+                                            <button onClick={() => toggleSort(col.key as SortField)} className="flex items-center gap-1 mx-auto text-[10px] font-semibold uppercase tracking-widest text-muted-foreground hover:text-primary">
                                                 {col.label} {sortField === col.key ? (sortDir === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />) : null}
                                             </button>
                                         </th>
                                     ))}
-                                    <th className="p-3 text-center text-[10px] font-black uppercase tracking-widest text-gray-300">{t("coach.squad.video")}</th>
+                                    <th className="p-3 text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{t("coach.squad.video")}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
                                 {filtered.map(player => (
-                                    <tr key={player.id} className="hover:bg-white/[0.02] transition-colors group">
+                                    <tr key={player.id} className="hover:bg-surface-2 transition-colors group">
                                         <td className="p-3">
                                             <div className="flex items-center gap-3">
-                                                <Avatar className="h-8 w-8 border border-white/10">
+                                                <Avatar className="h-8 w-8 border border-border">
                                                     <AvatarFallback className="bg-primary/20 text-primary text-xs">{player.name.charAt(0)}</AvatarFallback>
                                                 </Avatar>
                                                 <div>
-                                                    <div className="font-bold text-white text-sm group-hover:text-primary transition-colors">{player.name}</div>
+                                                    <div className="font-bold text-foreground text-sm group-hover:text-primary transition-colors">{player.name}</div>
                                                     <span className="text-[10px] text-muted-foreground">#{player.jersey_number}</span>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="p-3 text-center">
-                                            <Badge variant="outline" className="border-white/10 text-muted-foreground bg-white/5 text-xs">{player.position}</Badge>
+                                            <Badge variant="outline" className="border-border text-muted-foreground bg-surface-2 text-xs">{player.position}</Badge>
                                         </td>
                                         <td className="p-3 text-center text-sm text-muted-foreground">{player.age}</td>
                                         {COLUMNS.map(col => (

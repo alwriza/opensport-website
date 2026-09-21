@@ -23,17 +23,18 @@ export function CoachLayout({ children, activeTab, onTabChange }: CoachLayoutPro
 
     return (
         <div className="min-h-screen">
-            <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-xl border-b border-white/5">
-                <div className="container mx-auto px-4 md:px-6">
-                    <div className="flex gap-1 overflow-x-auto py-3">
+            {/* Offset matches the site header height, or the bar hides under it */}
+            <div className="sticky top-16 z-30 border-b border-border bg-background/90 backdrop-blur-xl lg:top-[72px]">
+                <div className="mx-auto max-w-[1600px] px-4 md:px-6">
+                    <div className="no-scrollbar flex gap-1.5 overflow-x-auto py-3">
                         {TABS.map(({ key, icon: Icon, labelKey }) => (
                             <button
                                 key={key}
                                 onClick={() => onTabChange(key)}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all border ${
+                                className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-xl border px-4 py-2 text-sm font-semibold transition-all ${
                                     activeTab === key
-                                        ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
-                                        : "text-muted-foreground border-transparent hover:text-foreground hover:bg-white/5"
+                                        ? "border-primary bg-primary text-primary-foreground shadow-glow"
+                                        : "border-transparent text-muted-foreground hover:bg-surface-2 hover:text-foreground"
                                 }`}
                             >
                                 <Icon className="h-4 w-4" />
@@ -44,9 +45,7 @@ export function CoachLayout({ children, activeTab, onTabChange }: CoachLayoutPro
                 </div>
             </div>
 
-            <div className="container mx-auto px-4 md:px-6 py-6">
-                {children}
-            </div>
+            <div className="mx-auto max-w-[1600px] px-4 py-8 md:px-6">{children}</div>
         </div>
     );
 }

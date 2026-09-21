@@ -1,14 +1,15 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowRight, ExternalLink, Loader2 } from "lucide-react";
+
+import AuthLayout from "@/components/auth/AuthLayout";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function Register() {
@@ -59,99 +60,118 @@ export default function Register() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>{t("createYourAccount")}</CardTitle>
-          <CardDescription>{t("joinDescription")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">{t("emailLabel")}</Label>
-              <Input
-                id="email"
-                type="email"
-                required
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                placeholder={t("emailPlaceholder")}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">{t("passwordLabel")}</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                minLength={8}
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                placeholder={t("passwordPlaceholder")}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">{t("phoneLabel")}</Label>
-              <Input
-                id="phone"
-                type="tel"
-                required
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                placeholder={t("phonePlaceholder")}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="nickname">{t("nicknameLabel")}</Label>
-              <Input
-                id="nickname"
-                required
-                value={form.nickname}
-                onChange={(e) => setForm({ ...form, nickname: e.target.value })}
-                placeholder={t("nicknamePlaceholder")}
-              />
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-start space-x-3">
-                <Checkbox
-                  id="terms"
-                  checked={termsAccepted}
-                  onCheckedChange={(checked) => setTermsAccepted(checked === true)}
-                  className="mt-1"
-                />
-                <label htmlFor="terms" className="text-sm leading-relaxed cursor-pointer">
-                  {t("termsLabel")}{" "}
-                  <Link to="/terms" target="_blank" className="text-primary underline inline-flex items-center gap-0.5">
-                    <ExternalLink className="h-3 w-3" />
-                  </Link>
-                </label>
-              </div>
-              <div className="flex items-start space-x-3">
-                <Checkbox
-                  id="privacy"
-                  checked={privacyAccepted}
-                  onCheckedChange={(checked) => setPrivacyAccepted(checked === true)}
-                  className="mt-1"
-                />
-                <label htmlFor="privacy" className="text-sm leading-relaxed cursor-pointer">
-                  {t("privacyLabel")}{" "}
-                  <Link to="/privacy" target="_blank" className="text-primary underline inline-flex items-center gap-0.5">
-                    <ExternalLink className="h-3 w-3" />
-                  </Link>
-                </label>
-              </div>
-            </div>
-            <Button type="submit" className="w-full" disabled={loading || !canSubmit}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {t("createAccount")}
-            </Button>
-          </form>
-          <p className="text-sm text-muted-foreground text-center mt-4">
-            {t("alreadyHaveAccount")}{" "}
-            <a href="/login" className="text-primary underline">{t("signIn")}</a>
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+    <AuthLayout
+      title={t("createYourAccount")}
+      description={t("joinDescription")}
+      footer={
+        <>
+          {t("alreadyHaveAccount")}{" "}
+          <Link to="/login" className="font-semibold text-primary hover:underline">
+            {t("signIn")}
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="space-y-2">
+          <Label htmlFor="email">{t("emailLabel")}</Label>
+          <Input
+            id="email"
+            type="email"
+            required
+            autoComplete="email"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            placeholder={t("emailPlaceholder")}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="password">{t("passwordLabel")}</Label>
+          <PasswordInput
+            id="password"
+            required
+            minLength={8}
+            autoComplete="new-password"
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            placeholder={t("passwordPlaceholder")}
+          />
+        </div>
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="phone">{t("phoneLabel")}</Label>
+            <Input
+              id="phone"
+              type="tel"
+              required
+              autoComplete="tel"
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              placeholder={t("phonePlaceholder")}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="nickname">{t("nicknameLabel")}</Label>
+            <Input
+              id="nickname"
+              required
+              autoComplete="nickname"
+              value={form.nickname}
+              onChange={(e) => setForm({ ...form, nickname: e.target.value })}
+              placeholder={t("nicknamePlaceholder")}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-3 rounded-xl border border-border bg-surface-1 p-4">
+          <div className="flex items-start gap-3">
+            <Checkbox
+              id="terms"
+              checked={termsAccepted}
+              onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+              className="mt-0.5"
+            />
+            <label htmlFor="terms" className="cursor-pointer text-sm leading-relaxed text-muted-foreground">
+              {t("termsLabel")}{" "}
+              <Link
+                to="/terms"
+                target="_blank"
+                className="inline-flex items-center gap-0.5 font-medium text-primary hover:underline"
+              >
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </label>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <Checkbox
+              id="privacy"
+              checked={privacyAccepted}
+              onCheckedChange={(checked) => setPrivacyAccepted(checked === true)}
+              className="mt-0.5"
+            />
+            <label htmlFor="privacy" className="cursor-pointer text-sm leading-relaxed text-muted-foreground">
+              {t("privacyLabel")}{" "}
+              <Link
+                to="/privacy"
+                target="_blank"
+                className="inline-flex items-center gap-0.5 font-medium text-primary hover:underline"
+              >
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </label>
+          </div>
+        </div>
+
+        <Button type="submit" size="lg" className="w-full" disabled={loading || !canSubmit}>
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          {t("createAccount")}
+          {!loading && <ArrowRight className="h-4 w-4" />}
+        </Button>
+      </form>
+    </AuthLayout>
   );
 }

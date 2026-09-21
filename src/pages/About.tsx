@@ -62,7 +62,7 @@ export default function About() {
         </div>
 
         {/* Mission Statement */}
-        <Card className="mb-16 shadow-card bg-gradient-hero">
+        <Card variant="gradient" className="mb-16">
           <CardContent className="p-12 text-center">
             <h2 className="text-3xl font-bold text-primary-foreground mb-6">{t("mission.title")}</h2>
             <p className="text-xl text-primary-foreground/90 max-w-4xl mx-auto leading-relaxed">

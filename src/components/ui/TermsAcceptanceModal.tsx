@@ -127,7 +127,7 @@ export function TermsAcceptanceModal({ open, userId, onAccept }: TermsAcceptance
                         </div>
                     </div>
 
-                    <div className="bg-muted/50 p-4 rounded-lg">
+                    <div className="bg-surface-2 p-4 rounded-lg">
                         <p className="text-xs text-muted-foreground">
                             <strong>{t("legal.collect")}</strong> {t("legal.collectDescription")}
                         </p>

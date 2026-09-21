@@ -10,6 +10,8 @@
         "duels": "Дуэльдер"
     },
     "buttons": {
-        "getStarted": "Бастау"
+        "getStarted": "Бастау",
+        "signOut": "Шығу",
+        "exitDemo": "Демодан шығу"
     }
 }

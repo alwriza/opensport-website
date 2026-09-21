@@ -59,7 +59,7 @@ export function PlayerPreviewModal({ player, isOpen, onClose }: PlayerPreviewMod
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-md bg-card border-white/10 text-card-foreground">
+            <DialogContent className="max-w-md bg-card border-border text-card-foreground">
                 <DialogHeader>
                     <DialogTitle className="text-center">{t("modal.title")}</DialogTitle>
                 </DialogHeader>
@@ -86,11 +86,11 @@ export function PlayerPreviewModal({ player, isOpen, onClose }: PlayerPreviewMod
                     <div className="grid grid-cols-2 gap-4 w-full">
                         <div className="bg-primary/10 p-4 rounded-xl text-center border border-primary/20">
                             <p className="text-sm text-muted-foreground uppercase tracking-wider">{t("modal.bestScore")}</p>
-                            <p className="text-4xl font-black text-primary">{player.best_score?.toFixed(1) || "0.0"}</p>
+                            <p className="text-4xl font-bold text-primary">{player.best_score?.toFixed(1) || "0.0"}</p>
                         </div>
-                        <div className="bg-white/5 p-4 rounded-xl text-center border border-white/10">
+                        <div className="bg-surface-2 p-4 rounded-xl text-center border border-border">
                             <p className="text-sm text-muted-foreground uppercase tracking-wider">{t("modal.totalAnalyses")}</p>
-                            <p className="text-4xl font-bold text-white">{player.total_analyses || 0}</p>
+                            <p className="text-4xl font-bold text-foreground">{player.total_analyses || 0}</p>
                         </div>
                     </div>
 
@@ -111,17 +111,17 @@ export function PlayerPreviewModal({ player, isOpen, onClose }: PlayerPreviewMod
                                 <ScoreRow
                                     label={t("scores.power")}
                                     value={bestAnalysis.power}
-                                    icon={<Zap className="h-4 w-4 text-amber-400" />}
+                                    icon={<Zap className="h-4 w-4 text-warning" />}
                                 />
                                 <ScoreRow
                                     label={t("scores.technique")}
                                     value={bestAnalysis.technique}
-                                    icon={<Activity className="h-4 w-4 text-blue-400" />}
+                                    icon={<Activity className="h-4 w-4 text-chart-2" />}
                                 />
                                 <ScoreRow
                                     label={t("scores.balance")}
                                     value={bestAnalysis.balance}
-                                    icon={<Move className="h-4 w-4 text-purple-400" />}
+                                    icon={<Move className="h-4 w-4 text-chart-6" />}
                                 />
                             </div>
                         </div>
@@ -147,14 +147,14 @@ export function PlayerPreviewModal({ player, isOpen, onClose }: PlayerPreviewMod
 
 function ScoreRow({ label, value, icon }: { label: string, value: number, icon: any }) {
     return (
-        <div className="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors">
+        <div className="flex items-center justify-between p-2 rounded-lg hover:bg-surface-2 transition-colors">
             <div className="flex items-center gap-3">
-                <div className="p-2 bg-white/5 rounded-full">
+                <div className="p-2 bg-surface-2 rounded-full">
                     {icon}
                 </div>
                 <span className="font-medium">{label}</span>
             </div>
-            <Badge variant="outline" className="text-lg px-3 py-1 bg-background/50 border-white/10">
+            <Badge variant="outline" className="text-lg px-3 py-1 bg-background/50 border-border">
                 {value?.toFixed(0)}
             </Badge>
         </div>

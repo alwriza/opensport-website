@@ -56,13 +56,13 @@ export const TeamProfileOverlay: React.FC<TeamProfileOverlayProps> = ({
     // Helper functions for styling (aligned with new dark theme)
     const getScoreColor = (score: number) => {
         if (score >= 80) return "text-primary";
-        if (score >= 60) return "text-amber-400";
+        if (score >= 60) return "text-warning";
         return "text-destructive";
     };
 
     const getScoreBgColor = (score: number) => {
         if (score >= 80) return "bg-primary";
-        if (score >= 60) return "bg-amber-400";
+        if (score >= 60) return "bg-warning";
         return "bg-destructive";
     };
 
@@ -197,12 +197,12 @@ export const TeamProfileOverlay: React.FC<TeamProfileOverlayProps> = ({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[1100px] max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0 border-none shadow-2xl bg-background text-white">
-                <DialogHeader className="p-8 pb-10 bg-card border-b border-white/5 relative">
+            <DialogContent className="sm:max-w-[1100px] max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0 border-none shadow-2xl bg-background text-foreground">
+                <DialogHeader className="p-8 pb-10 bg-card border-b border-border relative">
                     <div className="flex justify-between items-start relative z-10">
                         <div className="flex flex-col gap-3">
                             <div>
-                                <DialogTitle className="text-3xl font-black tracking-tight mb-2 text-white">
+                                <DialogTitle className="text-3xl font-display font-bold tracking-tight mb-2 text-foreground">
                                     {(team as any)?.name}
                                 </DialogTitle>
                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-muted-foreground text-sm font-medium">
@@ -211,19 +211,19 @@ export const TeamProfileOverlay: React.FC<TeamProfileOverlayProps> = ({
                                         {(team as any)?.clubs?.name || t("profileOverlay.independent")}
                                     </span>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-white/20 font-bold">•</span>
+                                        <span className="text-subtle-foreground font-bold">•</span>
                                         <span>{coachName}</span>
                                         <Badge variant="outline" className="text-primary border-primary/20 font-bold px-2 py-0 uppercase tracking-wider text-[9px]">
                                             {t("profileOverlay.coach")}
                                         </Badge>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-white/20 font-bold">•</span>
+                                        <span className="text-subtle-foreground font-bold">•</span>
                                         <span>{(team as any)?.age_group}</span>
                                     </div>
                                     {(team as any)?.season && (
                                         <div className="flex items-center gap-2">
-                                            <span className="text-white/20 font-bold">•</span>
+                                            <span className="text-subtle-foreground font-bold">•</span>
                                             <span>{(team as any).season}</span>
                                         </div>
                                     )}
@@ -244,12 +244,12 @@ export const TeamProfileOverlay: React.FC<TeamProfileOverlayProps> = ({
                             <>
                                 {/* Stats Cards */}
                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                    <Card className="shadow-black/20 border-white/5 bg-card">
+                                    <Card className="shadow-black/20 border-border bg-card">
                                         <CardContent className="pt-6">
                                             <div className="flex items-center justify-between">
                                                 <div>
                                                     <p className="text-sm text-muted-foreground">{t("profileOverlay.stats.totalPlayers")}</p>
-                                                    <p className="text-2xl font-black text-white">{roster.length}</p>
+                                                    <p className="text-2xl font-bold text-foreground">{roster.length}</p>
                                                 </div>
                                                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
                                                     <Users className="h-6 w-6 text-primary" />
@@ -258,12 +258,12 @@ export const TeamProfileOverlay: React.FC<TeamProfileOverlayProps> = ({
                                         </CardContent>
                                     </Card>
 
-                                    <Card className="shadow-black/20 border-white/5 bg-card">
+                                    <Card className="shadow-black/20 border-border bg-card">
                                         <CardContent className="pt-6">
                                             <div className="flex items-center justify-between">
                                                 <div>
                                                     <p className="text-sm text-muted-foreground">{t("profileOverlay.stats.avgScore")}</p>
-                                                    <p className="text-2xl font-black text-white">{avgScore}</p>
+                                                    <p className="text-2xl font-bold text-foreground">{avgScore}</p>
                                                 </div>
                                                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
                                                     <TrendingUp className="h-6 w-6 text-primary" />
@@ -272,34 +272,34 @@ export const TeamProfileOverlay: React.FC<TeamProfileOverlayProps> = ({
                                         </CardContent>
                                     </Card>
 
-                                    <Card className="shadow-black/20 border-white/5 bg-card">
+                                    <Card className="shadow-black/20 border-border bg-card">
                                         <CardContent className="pt-6">
                                             <div className="flex items-center justify-between">
                                                 <div>
                                                     <p className="text-sm text-muted-foreground">{t("profileOverlay.stats.elitePerformers")}</p>
-                                                    <p className="text-2xl font-black text-white">{roster.filter(p => p.latest_score >= 80).length}</p>
+                                                    <p className="text-2xl font-bold text-foreground">{roster.filter(p => p.latest_score >= 80).length}</p>
                                                 </div>
-                                                <div className="w-12 h-12 rounded-xl bg-amber-400/10 flex items-center justify-center">
-                                                    <Award className="h-6 w-6 text-amber-400" />
+                                                <div className="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center">
+                                                    <Award className="h-6 w-6 text-warning" />
                                                 </div>
                                             </div>
                                         </CardContent>
                                     </Card>
 
-                                    <Card className="shadow-black/20 border-white/5 bg-card">
+                                    <Card className="shadow-black/20 border-border bg-card">
                                         <CardContent className="pt-6">
                                             <div className="flex items-center justify-between">
                                                 <div>
                                                     <p className="text-sm text-muted-foreground">{t("profileOverlay.stats.activeToday")}</p>
-                                                    <p className="text-2xl font-black text-white">
+                                                    <p className="text-2xl font-bold text-foreground">
                                                         {roster.filter(p => {
                                                             if (!p.last_upload) return false;
                                                             return new Date(p.last_upload).toDateString() === new Date().toDateString();
                                                         }).length}
                                                     </p>
                                                 </div>
-                                                <div className="w-12 h-12 rounded-xl bg-blue-400/10 flex items-center justify-center">
-                                                    <Clock className="h-6 w-6 text-blue-400" />
+                                                <div className="w-12 h-12 rounded-xl bg-chart-2/15 flex items-center justify-center">
+                                                    <Clock className="h-6 w-6 text-chart-2" />
                                                 </div>
                                             </div>
                                         </CardContent>
@@ -307,9 +307,9 @@ export const TeamProfileOverlay: React.FC<TeamProfileOverlayProps> = ({
                                 </div>
 
                                 {/* Team Roster */}
-                                <Card className="shadow-black/20 border-white/5 bg-card overflow-hidden">
-                                    <div className="p-6 border-b border-white/5">
-                                        <h3 className="font-bold text-white flex items-center gap-2">
+                                <Card className="shadow-black/20 border-border bg-card overflow-hidden">
+                                    <div className="p-6 border-b border-border">
+                                        <h3 className="font-bold text-foreground flex items-center gap-2">
                                             <Activity className="h-4 w-4 text-primary" />
                                             {t("profileOverlay.roster.title")}
                                         </h3>
@@ -317,32 +317,32 @@ export const TeamProfileOverlay: React.FC<TeamProfileOverlayProps> = ({
                                     <div className="overflow-x-auto">
                                         <table className="w-full">
                                             <thead>
-                                                <tr className="border-b border-white/5 bg-white/2">
-                                                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t("profileOverlay.roster.num")}</th>
-                                                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t("profileOverlay.roster.name")}</th>
-                                                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t("profileOverlay.roster.age")}</th>
-                                                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t("profileOverlay.roster.pos")}</th>
-                                                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t("profileOverlay.roster.performance")}</th>
-                                                    <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t("profileOverlay.roster.history")}</th>
+                                                <tr className="border-b border-border bg-surface-1">
+                                                    <th className="text-left p-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{t("profileOverlay.roster.num")}</th>
+                                                    <th className="text-left p-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{t("profileOverlay.roster.name")}</th>
+                                                    <th className="text-left p-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{t("profileOverlay.roster.age")}</th>
+                                                    <th className="text-left p-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{t("profileOverlay.roster.pos")}</th>
+                                                    <th className="text-left p-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{t("profileOverlay.roster.performance")}</th>
+                                                    <th className="text-left p-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{t("profileOverlay.roster.history")}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {roster.map((p, idx) => (
-                                                    <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors group">
+                                                    <tr key={idx} className="border-b border-border hover:bg-surface-2 transition-colors group">
                                                         <td className="p-4 text-muted-foreground font-mono text-xs">{p.jersey_number || '-'}</td>
                                                         <td className="p-4">
-                                                            <div className="font-bold text-white group-hover:text-primary transition-colors">{p.name}</div>
-                                                            <div className="text-[10px] text-muted-foreground uppercase font-black tracking-tight opacity-70">
+                                                            <div className="font-bold text-foreground group-hover:text-primary transition-colors">{p.name}</div>
+                                                            <div className="text-[10px] text-muted-foreground uppercase font-display font-bold tracking-tight opacity-70">
                                                                 {t("profileOverlay.roster.lastUpload")}: {p.last_upload ? new Date(p.last_upload).toLocaleDateString() : t("profileOverlay.roster.na")}
                                                             </div>
                                                         </td>
                                                         <td className="p-4 text-sm text-muted-foreground font-medium">{p.age || '-'}</td>
                                                         <td className="p-4">
-                                                            <Badge variant="outline" className="font-mono text-[10px] border-white/10 text-muted-foreground">{p.position || '-'}</Badge>
+                                                            <Badge variant="outline" className="font-mono text-[10px] border-border text-muted-foreground">{p.position || '-'}</Badge>
                                                         </td>
                                                         <td className="p-4">
                                                             <div className="flex items-center gap-2">
-                                                                <span className={`text-xl font-black ${getScoreColor(p.latest_score)}`}>
+                                                                <span className={`text-xl font-bold ${getScoreColor(p.latest_score)}`}>
                                                                     {p.latest_score.toFixed(1)}
                                                                 </span>
                                                                 {p.trend !== 0 && (
@@ -357,7 +357,7 @@ export const TeamProfileOverlay: React.FC<TeamProfileOverlayProps> = ({
                                                                 {p.recent_scores.map((score, sIdx) => (
                                                                     <div
                                                                         key={sIdx}
-                                                                        className={`h-7 w-9 rounded-lg text-[10px] flex items-center justify-center font-black text-white shadow-sm ${getScoreBgColor(score)}`}
+                                                                        className={`h-7 w-9 rounded-lg text-[10px] flex items-center justify-center font-bold text-foreground shadow-sm ${getScoreBgColor(score)}`}
                                                                     >
                                                                         {score.toFixed(0)}
                                                                     </div>

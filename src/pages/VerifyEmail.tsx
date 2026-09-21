@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, MailOpen } from "lucide-react";
+
+import AuthLayout from "@/components/auth/AuthLayout";
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function VerifyEmail() {
@@ -58,57 +59,61 @@ export default function VerifyEmail() {
 
   if (!email) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background px-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>{t("noEmailFound")}</CardTitle>
-            <CardDescription>
-              {t("startFromRegistration")} <a href="/register" className="text-primary underline">{t("registrationPage")}</a>.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
+      <AuthLayout
+        title={t("noEmailFound")}
+        description={t("startFromRegistration")}
+      >
+        <Button asChild size="lg" className="w-full">
+          <Link to="/register">{t("registrationPage")}</Link>
+        </Button>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>{t("confirmYourEmail")}</CardTitle>
-          <CardDescription>
-            {t("enterCodeSentTo")} <span className="text-foreground">{email}</span>
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex justify-center">
-            <InputOTP maxLength={6} value={code} onChange={setCode}>
-              <InputOTPGroup>
-                <InputOTPSlot index={0} />
-                <InputOTPSlot index={1} />
-                <InputOTPSlot index={2} />
-                <InputOTPSlot index={3} />
-                <InputOTPSlot index={4} />
-                <InputOTPSlot index={5} />
-              </InputOTPGroup>
-            </InputOTP>
-          </div>
-          <Button onClick={handleVerify} className="w-full" disabled={loading || code.length !== 6}>
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {t("verify")}
-          </Button>
-          <p className="text-sm text-muted-foreground text-center">
-            {t("didntGetCode")}{" "}
-            <button
-              onClick={handleResend}
-              disabled={resending}
-              className="text-primary underline disabled:opacity-50"
-            >
-              {resending ? t("sending") : t("resendCode")}
-            </button>
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+    <AuthLayout
+      title={t("confirmYourEmail")}
+      description={
+        <>
+          {t("enterCodeSentTo")} <span className="font-medium text-foreground">{email}</span>
+        </>
+      }
+      footer={
+        <>
+          {t("didntGetCode")}{" "}
+          <button
+            type="button"
+            onClick={handleResend}
+            disabled={resending}
+            className="font-semibold text-primary hover:underline disabled:opacity-50"
+          >
+            {resending ? t("sending") : t("resendCode")}
+          </button>
+        </>
+      }
+    >
+      <div className="space-y-7">
+        <div className="flex justify-center">
+          <span className="flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/25 bg-primary/10 text-primary">
+            <MailOpen className="h-7 w-7" />
+          </span>
+        </div>
+
+        <div className="flex justify-center">
+          <InputOTP maxLength={6} value={code} onChange={setCode}>
+            <InputOTPGroup>
+              {[0, 1, 2, 3, 4, 5].map((i) => (
+                <InputOTPSlot key={i} index={i} />
+              ))}
+            </InputOTPGroup>
+          </InputOTP>
+        </div>
+
+        <Button onClick={handleVerify} size="lg" className="w-full" disabled={loading || code.length !== 6}>
+          {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+          {t("verify")}
+        </Button>
+      </div>
+    </AuthLayout>
   );
 }

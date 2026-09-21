@@ -88,7 +88,7 @@ export default function CoachDashboard() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-sm font-black uppercase tracking-widest opacity-40">{t("coach.loading")}</p>
+          <p className="text-sm text-muted-foreground">{t("coach.loading")}</p>
         </div>
       </div>
     );
@@ -96,10 +96,10 @@ export default function CoachDashboard() {
 
   return (
     <div>
-      <div className="container mx-auto px-4 md:px-6 py-6 flex items-center justify-between border-b border-white/5">
-        <div className="flex items-center gap-4">
+      <div className="mx-auto flex max-w-[1600px] flex-col gap-3 border-b border-border px-4 py-5 sm:flex-row sm:items-center sm:justify-between md:px-6">
+        <div className="flex flex-wrap items-center gap-3">
           <Select value={teamId ?? ""} onValueChange={handleTeamChange}>
-            <SelectTrigger className="w-[220px] bg-card border-white/5">
+            <SelectTrigger className="w-[220px]">
               <SelectValue placeholder={t("coach.selectTeam")} />
             </SelectTrigger>
             <SelectContent>
@@ -114,7 +114,7 @@ export default function CoachDashboard() {
             </Button>
           )}
         </div>
-        <Button className="bg-primary hover:bg-primary/90 text-black font-bold" onClick={() => setShowCreateModal(true)}>
+        <Button onClick={() => setShowCreateModal(true)}>
           <Plus className="h-4 w-4 mr-2" /> {t("coach.createTeam")}
         </Button>
       </div>

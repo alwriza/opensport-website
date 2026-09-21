@@ -10,6 +10,8 @@
         "duels": "Дуэли"
     },
     "buttons": {
-        "getStarted": "Начать"
+        "getStarted": "Начать",
+        "signOut": "Выйти",
+        "exitDemo": "Выйти из демо"
     }
 }

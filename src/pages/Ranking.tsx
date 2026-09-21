@@ -1,5 +1,6 @@
 ﻿import { useState, useMemo, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { PageHeader } from "@/components/ui/section-heading";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -215,9 +216,9 @@ export default function Ranking() {
     const rankColor = (score: number) => {
         if (score >= 90) return "text-emerald-400";
         if (score >= 80) return "text-primary";
-        if (score >= 70) return "text-amber-400";
-        if (score >= 60) return "text-orange-400";
-        return "text-red-400";
+        if (score >= 70) return "text-warning";
+        if (score >= 60) return "text-chart-4";
+        return "text-destructive";
     };
 
     const renderStars = (score: number) => {
@@ -225,28 +226,22 @@ export default function Ranking() {
         return (
             <div className="flex gap-0.5">
                 {Array.from({ length: 5 }, (_, i) => (
-                    <Star key={i} className={`h-3 w-3 ${i < full ? "text-primary fill-primary" : "text-white/10"}`} />
+                    <Star key={i} className={`h-3 w-3 ${i < full ? "text-primary fill-primary" : "text-surface-3"}`} />
                 ))}
             </div>
         );
     };
 
     return (
-        <div className="container px-4 md:px-6 py-6 md:py-8 space-y-6 max-w-[1600px] mx-auto min-h-screen">
+        <div className="relative mx-auto min-h-screen max-w-[1600px] space-y-6 px-4 py-8 md:px-6 md:py-10">
+            <div aria-hidden className="pointer-events-none absolute inset-x-0 -top-20 h-72 bg-spotlight" />
+
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1">
-                    <h1 className="text-3xl md:text-5xl font-black tracking-tighter text-gradient flex items-center gap-3">
-                        <Trophy className="h-8 w-8 md:h-12 md:w-12 text-primary" />
-                        {t("title")}
-                    </h1>
-                    <p className="text-muted-foreground font-medium text-lg">{t("subtitle")}</p>
-                </div>
-            </div>
+            <PageHeader className="relative" icon={Trophy} title={t("title")} description={t("subtitle")} />
 
             {/* Tabs */}
             <Tabs value={tab} onValueChange={v => updateURL({ tab: v, page: "1" })}>
-                <TabsList className="bg-card/50 border border-white/5 p-1 gap-1">
+                <TabsList>
                     <TabsTrigger value="rankings" className="flex items-center gap-2">
                         <Trophy className="h-4 w-4" /> {t("tabs.rankings")}
                     </TabsTrigger>
@@ -271,10 +266,10 @@ export default function Ranking() {
                             <button
                                 key={key}
                                 onClick={() => updateURL({ sub: key, page: "1" })}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all border ${
+                                className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-all ${
                                     sub === key
-                                        ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
-                                        : "bg-card/50 text-muted-foreground border-white/5 hover:text-foreground hover:border-white/20"
+                                        ? "border-primary bg-primary text-primary-foreground shadow-glow"
+                                        : "border-border bg-surface-2 text-muted-foreground hover:border-border-strong hover:text-foreground"
                                 }`}
                             >
                                 <Icon className="h-4 w-4" />
@@ -294,7 +289,7 @@ export default function Ranking() {
                                     setFilters(prev => ({ ...prev, search: e.target.value }));
                                     updateURL({ search: e.target.value, page: "1" });
                                 }}
-                                className="pl-10 bg-card/50 border-white/5"
+                                className="pl-10"
                             />
                             {filters.search && (
                                 <button
@@ -311,7 +306,7 @@ export default function Ranking() {
 
                         <Sheet>
                             <SheetTrigger asChild>
-                                <Button variant="outline" className="border-white/5 bg-card/50 gap-2">
+                                <Button variant="outline" className="gap-2">
                                     <SlidersHorizontal className="h-4 w-4" />
                                     {t("filters.title")}
                                     {(filters.position !== "all" || filters.ageGroup !== "all" || filters.country) && (
@@ -321,7 +316,7 @@ export default function Ranking() {
                                     )}
                                 </Button>
                             </SheetTrigger>
-                            <SheetContent side="left" className="w-full max-w-sm border-r border-white/5 bg-background">
+                            <SheetContent side="left" className="w-full max-w-sm">
                                 <SheetHeader>
                                     <SheetTitle className="flex items-center gap-2">
                                         <SlidersHorizontal className="h-5 w-5 text-primary" />
@@ -348,7 +343,7 @@ export default function Ranking() {
                                                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm border transition-all ${
                                                         filters.position === value
                                                             ? "bg-primary/20 text-primary border-primary/40"
-                                                            : "bg-card/50 text-muted-foreground border-white/5 hover:text-foreground"
+                                                            : "bg-surface-1 text-muted-foreground border-border hover:text-foreground"
                                                     }`}
                                                 >
                                                     <Icon className="h-3.5 w-3.5" />
@@ -358,7 +353,7 @@ export default function Ranking() {
                                         </div>
                                     </div>
 
-                                    <Separator className="bg-white/5" />
+                                    <Separator className="bg-surface-2" />
 
                                     {/* Age Group */}
                                     <div className="space-y-3">
@@ -374,7 +369,7 @@ export default function Ranking() {
                                                     className={`px-3 py-1.5 rounded-lg text-sm border transition-all ${
                                                         filters.ageGroup === age
                                                             ? "bg-primary/20 text-primary border-primary/40"
-                                                            : "bg-card/50 text-muted-foreground border-white/5 hover:text-foreground"
+                                                            : "bg-surface-1 text-muted-foreground border-border hover:text-foreground"
                                                     }`}
                                                 >
                                                     {age === "all" ? t("filters.allAges") : age}
@@ -383,7 +378,7 @@ export default function Ranking() {
                                         </div>
                                     </div>
 
-                                    <Separator className="bg-white/5" />
+                                    <Separator className="bg-surface-2" />
 
                                     {/* Country */}
                                     <div className="space-y-2">
@@ -395,7 +390,7 @@ export default function Ranking() {
                                                 setFilters(prev => ({ ...prev, country: e.target.value }));
                                                 updateURL({ country: e.target.value, page: "1" });
                                             }}
-                                            className="bg-card/50 border-white/5"
+                                            className="bg-surface-1 border-border"
                                         />
                                     </div>
 
@@ -415,25 +410,25 @@ export default function Ranking() {
                     </div>
 
                     {/* Table */}
-                    <div className="rounded-xl border border-white/5 overflow-hidden bg-card/30 backdrop-blur-sm">
+                    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
                         <div className="overflow-x-auto">
                             <table className="w-full">
                                 <thead>
-                                    <tr className="border-b border-white/5 bg-white/5 text-xs uppercase tracking-wider text-muted-foreground">
+                                    <tr className="border-b border-border bg-surface-2 text-[11px] font-semibold uppercase tracking-wider text-subtle-foreground">
                                         <th className="w-10 p-3 text-center">
                                             <button
                                                 onClick={() => {
                                                     if (compareIds.length === paged.length) setCompareIds([]);
                                                     else setCompareIds(paged.map(p => p.id));
                                                 }}
-                                                className={`w-4 h-4 rounded border transition-all mx-auto ${
+                                                className={`mx-auto flex h-[18px] w-[18px] items-center justify-center rounded-md border transition-all ${
                                                     compareIds.length === paged.length && paged.length > 0
                                                         ? "bg-primary border-primary"
-                                                        : "border-white/20 hover:border-primary/50"
+                                                        : "border-border-strong bg-surface-2 hover:border-primary/60"
                                                 }`}
                                             >
                                                 {compareIds.length === paged.length && paged.length > 0 && (
-                                                    <span className="text-[8px] font-bold text-black flex items-center justify-center">✓</span>
+                                                    <span className="text-[10px] font-bold text-primary-foreground">✓</span>
                                                 )}
                                             </button>
                                         </th>
@@ -468,33 +463,39 @@ export default function Ranking() {
                                         return (
                                             <tr
                                                 key={player.id}
-                                                className={`border-b border-white/5 transition-colors hover:bg-white/5 cursor-pointer ${
-                                                    isCompareActive ? "bg-primary/5" : ""
+                                                className={`cursor-pointer border-b border-border transition-colors hover:bg-surface-2 ${
+                                                    isCompareActive ? "bg-primary/10" : ""
                                                 }`}
                                                 onClick={() => { setPreviewPlayer(player); setPreviewOpen(true); }}
                                             >
                                                 <td className="p-3 text-center" onClick={e => e.stopPropagation()}>
                                                     <button
                                                         onClick={() => toggleCompare(player.id)}
-                                                        className={`w-4 h-4 rounded border transition-all ${
+                                                        className={`flex h-[18px] w-[18px] items-center justify-center rounded-md border transition-all ${
                                                             isCompareActive
                                                                 ? "bg-primary border-primary"
-                                                                : "border-white/20 hover:border-primary/50"
+                                                                : "border-border-strong bg-surface-2 hover:border-primary/60"
                                                         }`}
                                                     >
                                                         {isCompareActive && (
-                                                            <span className="text-[8px] font-bold text-black flex items-center justify-center">✓</span>
+                                                            <span className="text-[10px] font-bold text-primary-foreground">✓</span>
                                                         )}
                                                     </button>
                                                 </td>
                                                 <td className="p-3 text-center">
-                                                    <span className={`text-sm font-bold ${player.rank <= 3 ? "text-primary" : "text-muted-foreground"}`}>
-                                                        #{player.rank}
+                                                    <span
+                                                        className={`inline-flex h-7 min-w-7 items-center justify-center rounded-lg px-1.5 text-sm font-bold tabular ${
+                                                            player.rank <= 3
+                                                                ? "border border-primary/30 bg-primary/15 text-primary"
+                                                                : "text-muted-foreground"
+                                                        }`}
+                                                    >
+                                                        {player.rank}
                                                     </span>
                                                 </td>
                                                 <td className="p-3">
                                                     <div className="flex items-center gap-3">
-                                                        <Avatar className="h-9 w-9 border border-white/10 shrink-0">
+                                                        <Avatar className="h-9 w-9 border border-border shrink-0">
                                                             <AvatarImage src={player.avatarUrl || ""} />
                                                             <AvatarFallback className="bg-primary/20 text-primary text-xs">
                                                                 {player.name.charAt(0)}
@@ -510,12 +511,12 @@ export default function Ranking() {
                                                 </td>
                                                 <td className="p-3 text-center text-sm text-muted-foreground">U{player.age}</td>
                                                 <td className="p-3 text-center">
-                                                    <Badge variant="outline" className="text-xs border-white/10 bg-white/5 font-medium">
+                                                    <Badge variant="outline" className="text-xs border-border bg-surface-2 font-medium">
                                                         {player.position}
                                                     </Badge>
                                                 </td>
                                                 <td className="p-3 text-sm hidden md:table-cell text-muted-foreground">
-                                                    {player.team || <span className="text-white/20">тАФ</span>}
+                                                    {player.team || <span className="text-subtle-foreground">тАФ</span>}
                                                 </td>
                                                 <td className="p-3 text-sm hidden lg:table-cell text-muted-foreground">
                                                     {player.city}, {player.country}
@@ -524,11 +525,11 @@ export default function Ranking() {
                                                     <TooltipProvider>
                                                         <Tooltip>
                                                             <TooltipTrigger>
-                                                                <span className={`text-lg font-black ${rankColor(player.aiScore)}`}>
+                                                                <span className={`font-display text-lg font-bold tabular ${rankColor(player.aiScore)}`}>
                                                                     {player.aiScore.toFixed(0)}
                                                                 </span>
                                                             </TooltipTrigger>
-                                                            <TooltipContent side="bottom" className="bg-card border-white/10">
+                                                            <TooltipContent side="bottom" className="bg-card border-border">
                                                                 <div className="text-xs space-y-1">
                                                                     <p className="font-medium">{t("tooltip.score")}</p>
                                                                     {renderStars(player.aiScore)}
@@ -542,13 +543,13 @@ export default function Ranking() {
                                                         {player.growth > 0 ? (
                                                             <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
                                                         ) : player.growth < 0 ? (
-                                                            <TrendingDown className="h-3.5 w-3.5 text-red-400" />
+                                                            <TrendingDown className="h-3.5 w-3.5 text-destructive" />
                                                         ) : (
                                                             <Minus className="h-3.5 w-3.5 text-muted-foreground" />
                                                         )}
                                                         <span className={`text-sm font-medium ${
                                                             player.growth > 0 ? "text-emerald-400" :
-                                                            player.growth < 0 ? "text-red-400" : "text-muted-foreground"
+                                                            player.growth < 0 ? "text-destructive" : "text-muted-foreground"
                                                         }`}>
                                                             {player.growth > 0 ? "+" : ""}{player.growth.toFixed(1)}
                                                         </span>
@@ -572,7 +573,7 @@ export default function Ranking() {
                                                                         <Bookmark className={`h-4 w-4 ${savedIds.includes(player.id) ? "fill-primary" : ""}`} />
                                                                     </Button>
                                                                 </TooltipTrigger>
-                                                                <TooltipContent side="left" className="bg-card border-white/10">
+                                                                <TooltipContent side="left" className="bg-card border-border">
                                                                     <p className="text-xs">{savedIds.includes(player.id) ? t("saved.remove", "Убрать из сохранённых") : t("saved.add", "Сохранить")}</p>
                                                                 </TooltipContent>
                                                             </Tooltip>
@@ -589,7 +590,7 @@ export default function Ranking() {
                                                                         <Eye className="h-4 w-4" />
                                                                     </Button>
                                                                 </TooltipTrigger>
-                                                                <TooltipContent side="left" className="bg-card border-white/10">
+                                                                <TooltipContent side="left" className="bg-card border-border">
                                                                     <p className="text-xs">{t("tooltip.viewProfile")}</p>
                                                                 </TooltipContent>
                                                             </Tooltip>
@@ -615,7 +616,7 @@ export default function Ranking() {
                                 size="sm"
                                 disabled={page <= 1}
                                 onClick={() => updateURL({ page: String(page - 1) })}
-                                className="border-white/5 bg-card/50 gap-1"
+                                className="border-border bg-surface-1 gap-1"
                             >
                                 <ChevronLeft className="h-4 w-4" />
                                 {t("pagination.prev")}
@@ -641,7 +642,7 @@ export default function Ranking() {
                                             className={`w-9 ${
                                                 pageNum === page
                                                     ? "bg-primary text-primary-foreground"
-                                                    : "border-white/5 bg-card/50"
+                                                    : "border-border bg-surface-1"
                                             }`}
                                         >
                                             {pageNum}
@@ -654,7 +655,7 @@ export default function Ranking() {
                                 size="sm"
                                 disabled={page >= totalPages}
                                 onClick={() => updateURL({ page: String(page + 1) })}
-                                className="border-white/5 bg-card/50 gap-1"
+                                className="border-border bg-surface-1 gap-1"
                             >
                                 {t("pagination.next")}
                                 <ChevronRight className="h-4 w-4" />
@@ -676,8 +677,8 @@ export default function Ranking() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {rankingPlayers.filter(p => savedIds.includes(p.id)).map(player => (
-                                <div key={player.id} className="rounded-2xl border border-white/5 bg-card/50 p-4 flex items-center gap-3 cursor-pointer hover:border-primary/30 transition-colors" onClick={() => { setPreviewPlayer(player); setPreviewOpen(true); }}>
-                                    <Avatar className="h-10 w-10 border border-white/10 shrink-0">
+                                <div key={player.id} className="rounded-2xl border border-border bg-surface-1 p-4 flex items-center gap-3 cursor-pointer hover:border-primary/30 transition-colors" onClick={() => { setPreviewPlayer(player); setPreviewOpen(true); }}>
+                                    <Avatar className="h-10 w-10 border border-border shrink-0">
                                         <AvatarImage src={player.avatarUrl || ""} />
                                         <AvatarFallback className="bg-primary/20 text-primary text-xs">{player.name.charAt(0)}</AvatarFallback>
                                     </Avatar>
@@ -685,7 +686,7 @@ export default function Ranking() {
                                         <div className="font-semibold text-foreground truncate">{player.name}</div>
                                         <div className="text-xs text-muted-foreground">{player.position} · U{player.age} · #{player.rank}</div>
                                     </div>
-                                    <span className={`text-lg font-black ${rankColor(player.aiScore)}`}>{player.aiScore.toFixed(0)}</span>
+                                    <span className={`font-display text-lg font-bold tabular ${rankColor(player.aiScore)}`}>{player.aiScore.toFixed(0)}</span>
                                     <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive/20 hover:text-destructive" onClick={e => { e.stopPropagation(); toggleSaved(player.id); }}>
                                         <Bookmark className="h-4 w-4 fill-current" />
                                     </Button>
@@ -714,7 +715,7 @@ export default function Ranking() {
                         return (
                             <div className="space-y-3">
                                 {risers.map(p => (
-                                    <div key={`up-${p.id}`} className="flex items-center gap-3 rounded-xl border border-white/5 bg-card/50 p-4">
+                                    <div key={`up-${p.id}`} className="flex items-center gap-3 rounded-xl border border-border bg-surface-1 p-4">
                                         <TrendingUp className="h-5 w-5 text-emerald-400 shrink-0" />
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm text-foreground"><span className="font-semibold">{p.name}</span> поднялся в рейтинге</p>
@@ -724,8 +725,8 @@ export default function Ranking() {
                                     </div>
                                 ))}
                                 {fallers.map(p => (
-                                    <div key={`down-${p.id}`} className="flex items-center gap-3 rounded-xl border border-white/5 bg-card/50 p-4">
-                                        <TrendingDown className="h-5 w-5 text-red-400 shrink-0" />
+                                    <div key={`down-${p.id}`} className="flex items-center gap-3 rounded-xl border border-border bg-surface-1 p-4">
+                                        <TrendingDown className="h-5 w-5 text-destructive shrink-0" />
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm text-foreground"><span className="font-semibold">{p.name}</span> снизил показатели</p>
                                             <p className="text-xs text-muted-foreground">Изменение: {p.growth.toFixed(1)} · сейчас #{p.rank}</p>
@@ -741,7 +742,7 @@ export default function Ranking() {
 
             {/* Compare Tray */}
             {compareIds.length >= 2 && (
-                <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-background/95 backdrop-blur-xl shadow-2xl">
+                <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur-xl shadow-2xl">
                     <div className="container max-w-[1600px] mx-auto px-4 py-3 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <Badge className="bg-primary text-primary-foreground">
@@ -779,7 +780,7 @@ export default function Ranking() {
 
             {/* Quick Preview Sheet */}
             <Sheet open={previewOpen} onOpenChange={setPreviewOpen}>
-                <SheetContent side="right" className="w-full max-w-md border-l border-white/5 bg-background p-0">
+                <SheetContent side="right" className="w-full max-w-md border-l border-border bg-background p-0">
                     {previewPlayer && (
                         <ScrollArea className="h-full">
                             <div className="p-6 space-y-6">
@@ -793,7 +794,7 @@ export default function Ranking() {
                                     </Avatar>
                                     <h3 className="text-xl font-bold">{previewPlayer.name}</h3>
                                     <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
-                                        <Badge variant="outline" className="border-white/10">{previewPlayer.position}</Badge>
+                                        <Badge variant="outline" className="border-border">{previewPlayer.position}</Badge>
                                         <span>U{previewPlayer.age}</span>
                                         <span>{previewPlayer.city}</span>
                                     </div>
@@ -806,11 +807,11 @@ export default function Ranking() {
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="bg-primary/10 p-4 rounded-xl text-center border border-primary/20">
                                         <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{t("preview.score")}</p>
-                                        <p className={`text-3xl font-black ${rankColor(previewPlayer.aiScore)}`}>
+                                        <p className={`text-3xl font-bold ${rankColor(previewPlayer.aiScore)}`}>
                                             {previewPlayer.aiScore.toFixed(0)}
                                         </p>
                                     </div>
-                                    <div className="bg-card/50 p-4 rounded-xl text-center border border-white/5">
+                                    <div className="bg-surface-1 p-4 rounded-xl text-center border border-border">
                                         <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{t("preview.rank")}</p>
                                         <p className="text-3xl font-bold text-foreground">#{previewPlayer.rank}</p>
                                     </div>
@@ -820,18 +821,18 @@ export default function Ranking() {
                                 <div className="space-y-4">
                                     <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{t("preview.stats")}</h4>
                                     <div className="grid grid-cols-2 gap-3">
-                                        <div className="bg-card/30 p-3 rounded-lg border border-white/5">
+                                        <div className="bg-card p-3 rounded-lg border border-border">
                                             <p className="text-xs text-muted-foreground">{t("preview.growth")}</p>
                                             <div className="flex items-center gap-1 mt-1">
                                                 {previewPlayer.growth > 0 ? (
                                                     <TrendingUp className="h-4 w-4 text-emerald-400" />
                                                 ) : (
-                                                    <TrendingDown className="h-4 w-4 text-red-400" />
+                                                    <TrendingDown className="h-4 w-4 text-destructive" />
                                                 )}
                                                 <span className="text-lg font-bold">{previewPlayer.growth > 0 ? "+" : ""}{previewPlayer.growth.toFixed(1)}</span>
                                             </div>
                                         </div>
-                                        <div className="bg-card/30 p-3 rounded-lg border border-white/5">
+                                        <div className="bg-card p-3 rounded-lg border border-border">
                                             <p className="text-xs text-muted-foreground">{t("preview.videos")}</p>
                                             <p className="text-lg font-bold mt-1">{previewPlayer.totalVideos}</p>
                                         </div>
@@ -843,18 +844,18 @@ export default function Ranking() {
                                     <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{t("preview.skills")}</h4>
                                     {[
                                         { label: t("scores.stability"), value: Math.min(100, previewPlayer.aiScore + Math.round(Math.random() * 10 - 5)), icon: Shield, color: "text-emerald-400" },
-                                        { label: t("scores.power"), value: Math.min(100, previewPlayer.aiScore + Math.round(Math.random() * 10 - 5)), icon: Zap, color: "text-amber-400" },
-                                        { label: t("scores.technique"), value: Math.min(100, previewPlayer.aiScore + Math.round(Math.random() * 10 - 5)), icon: Activity, color: "text-blue-400" },
-                                        { label: t("scores.balance"), value: Math.min(100, previewPlayer.aiScore + Math.round(Math.random() * 10 - 5)), icon: Move, color: "text-purple-400" },
+                                        { label: t("scores.power"), value: Math.min(100, previewPlayer.aiScore + Math.round(Math.random() * 10 - 5)), icon: Zap, color: "text-warning" },
+                                        { label: t("scores.technique"), value: Math.min(100, previewPlayer.aiScore + Math.round(Math.random() * 10 - 5)), icon: Activity, color: "text-chart-2" },
+                                        { label: t("scores.balance"), value: Math.min(100, previewPlayer.aiScore + Math.round(Math.random() * 10 - 5)), icon: Move, color: "text-chart-6" },
                                     ].map(({ label, value, icon: Icon, color }) => (
-                                        <div key={label} className="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors">
+                                        <div key={label} className="flex items-center justify-between p-2 rounded-lg hover:bg-surface-2 transition-colors">
                                             <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-white/5 rounded-full">
+                                                <div className="p-2 bg-surface-2 rounded-full">
                                                     <Icon className={`h-4 w-4 ${color}`} />
                                                 </div>
                                                 <span className="font-medium">{label}</span>
                                             </div>
-                                            <Badge variant="outline" className="text-base px-3 py-1 bg-background/50 border-white/10">
+                                            <Badge variant="outline" className="text-base px-3 py-1 bg-background/50 border-border">
                                                 {value}
                                             </Badge>
                                         </div>
@@ -865,7 +866,7 @@ export default function Ranking() {
                                 <div className="flex gap-3 pt-2">
                                     <Button
                                         variant="outline"
-                                        className="flex-1 border-white/5"
+                                        className="flex-1 border-border"
                                         onClick={() => setPreviewOpen(false)}
                                     >
                                         {t("preview.close")}
@@ -887,13 +888,13 @@ export default function Ranking() {
             {/* Compare Overlay */}
             {compareDialogOpen && compareIds.length >= 2 && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setCompareDialogOpen(false)}>
-                    <div className="bg-card border border-white/10 rounded-2xl shadow-2xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                        <div className="flex items-center justify-between p-5 border-b border-white/5">
+                    <div className="bg-card border border-border rounded-2xl shadow-2xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between p-5 border-b border-border">
                             <h2 className="text-lg font-bold flex items-center gap-2">
                                 <BarChart3 className="h-5 w-5 text-primary" />
                                 {t("compare.title", "Сравнение игроков")}
                             </h2>
-                            <button onClick={() => setCompareDialogOpen(false)} className="text-muted-foreground hover:text-white p-1">
+                            <button onClick={() => setCompareDialogOpen(false)} className="text-muted-foreground hover:text-foreground p-1">
                                 <X className="h-5 w-5" />
                             </button>
                         </div>
@@ -904,7 +905,7 @@ export default function Ranking() {
                                 const other = compareIds.slice(0, 2).find(x => x !== id);
                                 const otherP = other ? rankingPlayers.find(x => x.id === other) : null;
                                 return (
-                                    <div key={id} className={`p-6 space-y-5 ${idx === 0 ? "border-r border-white/5" : ""}`}>
+                                    <div key={id} className={`p-6 space-y-5 ${idx === 0 ? "border-r border-border" : ""}`}>
                                         <div className="flex flex-col items-center text-center">
                                             <Avatar className="h-16 w-16 border-2 border-primary/20 mb-3">
                                                 <AvatarFallback className="bg-primary/10 text-primary text-lg">
@@ -913,7 +914,7 @@ export default function Ranking() {
                                             </Avatar>
                                             <h3 className="text-lg font-bold">{p.name}</h3>
                                             <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                                                <Badge variant="outline" className="text-xs border-white/10">{p.position}</Badge>
+                                                <Badge variant="outline" className="text-xs border-border">{p.position}</Badge>
                                                 <span>U{p.age}</span>
                                                 <span>{p.city}</span>
                                             </div>
@@ -931,12 +932,12 @@ export default function Ranking() {
                                                 const isBetter = better === "higher" ? val > otherVal : val < otherVal;
                                                 const isWorse = better === "higher" ? val < otherVal : val > otherVal;
                                                 return (
-                                                    <div key={key} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+                                                    <div key={key} className="flex items-center justify-between p-3 rounded-xl bg-surface-2 border border-border">
                                                         <span className="text-xs text-muted-foreground">{label}</span>
                                                         <div className="flex items-center gap-2">
                                                             {isBetter && <span className="text-emerald-400 text-xs font-bold">▲</span>}
-                                                            {isWorse && <span className="text-red-400 text-xs font-bold">▼</span>}
-                                                            <span className={`text-base font-black ${key === "aiScore" ? "text-primary" : "text-white"}`}>
+                                                            {isWorse && <span className="text-destructive text-xs font-bold">▼</span>}
+                                                            <span className={`text-base font-bold ${key === "aiScore" ? "text-primary" : "text-foreground"}`}>
                                                                 {typeof val === "number" ? (key === "rank" ? `#${val}` : val.toFixed(1)) : val}
                                                             </span>
                                                         </div>
@@ -948,8 +949,8 @@ export default function Ranking() {
                                 );
                             })}
                         </div>
-                        <div className="flex justify-end p-4 border-t border-white/5 gap-3">
-                            <Button variant="outline" size="sm" onClick={() => setCompareDialogOpen(false)} className="border-white/5">
+                        <div className="flex justify-end p-4 border-t border-border gap-3">
+                            <Button variant="outline" size="sm" onClick={() => setCompareDialogOpen(false)} className="border-border">
                                 {t("compare.close", "Закрыть")}
                             </Button>
                             <Button variant="ghost" size="sm" onClick={() => { setCompareIds([]); setCompareDialogOpen(false); }} className="text-muted-foreground">
