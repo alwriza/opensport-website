@@ -9,6 +9,14 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 let client: ReturnType<typeof createClient<Database>> | null = null;
 
+// Registration is public. Supplying an accessToken callback skips Auth client
+// initialization and never reads or refreshes the previous user's session.
+export const registrationFunctions = createClient(
+  SUPABASE_URL || 'https://placeholder.supabase.co',
+  SUPABASE_ANON_KEY || 'placeholder-key',
+  { accessToken: async () => SUPABASE_ANON_KEY || 'placeholder-key' }
+).functions;
+
 function getClient() {
   if (!client) {
     client = createClient<Database>(
@@ -29,6 +37,6 @@ function getClient() {
 
 export const supabase = new Proxy({} as ReturnType<typeof createClient<Database>>, {
   get(_, prop) {
-    return (getClient() as any)[prop];
+    return Reflect.get(getClient(), prop);
   }
 });

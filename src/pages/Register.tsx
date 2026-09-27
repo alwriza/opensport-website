@@ -9,7 +9,8 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ExternalLink } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { FunctionsHttpError } from "@supabase/supabase-js";
+import { registrationFunctions } from "@/integrations/supabase/client";
 
 export default function Register() {
   const { t } = useTranslation("auth");
@@ -24,14 +25,19 @@ export default function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading || !canSubmit) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke<{ error?: string }>("register", {
+      const { data, error } = await registrationFunctions.invoke<{ error?: string }>("register", {
         body: { ...form, terms_accepted: termsAccepted, privacy_accepted: privacyAccepted },
       });
 
       if (error) {
-        const message = (error as { context?: { error?: string } })?.context?.error || error.message || "Registration failed";
+        let message = error.message || "Registration failed";
+        if (error instanceof FunctionsHttpError) {
+          const response = await error.context.json().catch(() => null);
+          if (typeof response?.error === "string") message = response.error;
+        }
         throw new Error(message);
       }
 
@@ -46,10 +52,11 @@ export default function Register() {
 
       navigate("/verify-email", { state: { email: form.email } });
     } catch (err) {
-      const msg = (err as Error).message || "";
+      const msg = err instanceof Error ? err.message : "";
+      const normalizedMessage = msg.toLowerCase();
       let description = t("somethingWentWrong");
-      if (msg.includes("nickname")) description = t("nicknameTaken");
-      else if (msg.includes("phone")) description = t("phoneTaken");
+      if (normalizedMessage.includes("nickname")) description = t("nicknameTaken");
+      else if (normalizedMessage.includes("phone")) description = t("phoneTaken");
       else if (msg) description = msg;
 
       toast({ title: t("registrationFailed"), description, variant: "destructive" });

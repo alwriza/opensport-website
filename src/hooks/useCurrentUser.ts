@@ -9,17 +9,20 @@ export function useCurrentUser() {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setIsLoaded(true);
-    });
+    let active = true;
 
+    // INITIAL_SESSION reports the restored session or null after recovery.
+    // Use the same stream for startup and later changes to avoid stale reads.
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!active) return;
       setUser(session?.user ?? null);
       setIsLoaded(true);
     });
 
-    return () => listener.subscription.unsubscribe();
+    return () => {
+      active = false;
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   if (demo) {
