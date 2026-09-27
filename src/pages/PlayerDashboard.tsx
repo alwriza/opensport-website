@@ -47,7 +47,13 @@ async function loadRecommendedTraining(scores: AnalysisScores) {
     if (error) return [];
     return data || [];
   }));
-  return recommendations.flat().slice(0, 3);
+  const levels = recommendations.flat();
+  if (levels.length) return levels.slice(0, 3);
+
+  const { data: fallbackSkill, error: skillError } = await supabase.from("skills").select("id").order("order_index").limit(1).maybeSingle();
+  if (skillError || !fallbackSkill) return [];
+  const { data, error } = await supabase.from("skill_levels").select("*, skills (name, icon)").eq("skill_id", fallbackSkill.id).eq("level_name", "beginner").order("level_order").limit(3);
+  return error ? [] : data || [];
 }
 
 export default function PlayerDashboard() {
@@ -110,7 +116,7 @@ export default function PlayerDashboard() {
 
   // 2. Fetch Videos
   const { data: videos = [] } = useQuery({
-    queryKey: ['videos', dbUser?.id],
+    queryKey: ['videos', dbUser?.id, isDemo],
     queryFn: async () => {
       if (demo) return demo.videos;
       if (!dbUser?.id) return [];
@@ -137,7 +143,7 @@ export default function PlayerDashboard() {
   const latestVideo = videos.find(v => v.id === latestCompletedVideoId);
 
   const { data: latestAnalysis } = useQuery({
-    queryKey: ['analysis', latestCompletedVideoId],
+    queryKey: ['analysis', latestCompletedVideoId, isDemo],
     queryFn: async () => {
       if (demo) return demo.latestAnalysis;
       if (!latestCompletedVideoId) return null;
@@ -154,7 +160,7 @@ export default function PlayerDashboard() {
 
   // 4. Fetch Training Progress
   const { data: trainingStats } = useQuery({
-    queryKey: ['training-stats', dbUser?.id],
+    queryKey: ['training-stats', dbUser?.id, isDemo],
     queryFn: async () => {
       if (demo) return { ...demo.trainingStats, skillCount: demo.skills.length, skillNames: Object.fromEntries(demo.skills.map(skill => [skill.id, skill.name])) };
       if (!dbUser?.id) return null;
@@ -178,7 +184,7 @@ export default function PlayerDashboard() {
 
   const completedVideoIds = useMemo(() => videos.filter(v => v.status === 'completed').map(v => v.id), [videos]);
   const { data: scoreAnalyses = [] } = useQuery({
-    queryKey: ['score-analyses', completedVideoIds],
+    queryKey: ['score-analyses', completedVideoIds, isDemo],
     queryFn: async () => {
       if (demo) return demo.analyses.filter(a => completedVideoIds.includes(a.video_id));
       const { data, error } = await supabase.from('analyses').select('video_id, overall').in('video_id', completedVideoIds);
@@ -190,7 +196,7 @@ export default function PlayerDashboard() {
 
   // 5. Fetch AI Recommendations based on latest analysis
   const { data: latestRecommendations = [] } = useQuery({
-    queryKey: ['latest-recommendations', latestAnalysis?.id],
+    queryKey: ['latest-recommendations', latestAnalysis?.id, isDemo],
     queryFn: async () => {
       if (demo) return demo.latestRecommendations;
       if (!latestAnalysis || !dbUser?.id) return [];
@@ -209,7 +215,7 @@ export default function PlayerDashboard() {
 
   // 4. Fetch My Teams
   const { data: myTeams = [], isLoading: loadingTeams } = useQuery({
-    queryKey: ['my-teams', dbUser?.id],
+    queryKey: ['my-teams', dbUser?.id, isDemo],
     queryFn: async () => {
       if (demo) return demo.myTeams;
       if (!dbUser?.id) return [];

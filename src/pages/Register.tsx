@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ExternalLink } from "lucide-react";
@@ -26,17 +26,17 @@ export default function Register() {
     e.preventDefault();
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("register", {
+      const { data, error } = await supabase.functions.invoke<{ error?: string }>("register", {
         body: { ...form, terms_accepted: termsAccepted, privacy_accepted: privacyAccepted },
       });
 
       if (error) {
-        const message = (error as any)?.context?.error || error.message || "Registration failed";
+        const message = (error as { context?: { error?: string } })?.context?.error || error.message || "Registration failed";
         throw new Error(message);
       }
 
-      if ((data as any)?.error) {
-        throw new Error((data as any).error);
+      if (data?.error) {
+        throw new Error(data.error);
       }
 
       toast({
@@ -45,8 +45,8 @@ export default function Register() {
       });
 
       navigate("/verify-email", { state: { email: form.email } });
-    } catch (err: any) {
-      const msg = err.message || "";
+    } catch (err) {
+      const msg = (err as Error).message || "";
       let description = t("somethingWentWrong");
       if (msg.includes("nickname")) description = t("nicknameTaken");
       else if (msg.includes("phone")) description = t("phoneTaken");
@@ -73,6 +73,7 @@ export default function Register() {
                 id="email"
                 type="email"
                 required
+                autoComplete="email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 placeholder={t("emailPlaceholder")}
@@ -80,11 +81,11 @@ export default function Register() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">{t("passwordLabel")}</Label>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 required
                 minLength={8}
+                autoComplete="new-password"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 placeholder={t("passwordPlaceholder")}
@@ -96,6 +97,7 @@ export default function Register() {
                 id="phone"
                 type="tel"
                 required
+                autoComplete="tel"
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 placeholder={t("phonePlaceholder")}
@@ -106,6 +108,7 @@ export default function Register() {
               <Input
                 id="nickname"
                 required
+                autoComplete="nickname"
                 value={form.nickname}
                 onChange={(e) => setForm({ ...form, nickname: e.target.value })}
                 placeholder={t("nicknamePlaceholder")}
@@ -148,7 +151,7 @@ export default function Register() {
           </form>
           <p className="text-sm text-muted-foreground text-center mt-4">
             {t("alreadyHaveAccount")}{" "}
-            <a href="/login" className="text-primary underline">{t("signIn")}</a>
+            <Link to="/login" className="text-primary underline">{t("signIn")}</Link>
           </p>
         </CardContent>
       </Card>

@@ -30,10 +30,21 @@ export default function Ranking() {
 
   useEffect(() => {
     try {
-      const value = JSON.parse(localStorage.getItem(savedKey) || "[]");
+      let stored = localStorage.getItem(savedKey);
+      const migratedFor = localStorage.getItem("opensport:saved-players:legacy-owner");
+      const legacy = localStorage.getItem("ranking_saved_players");
+      if (stored === null && !demo && user?.id && legacy && (!migratedFor || migratedFor === user.id)) {
+        const legacyIds: unknown = JSON.parse(legacy);
+        if (Array.isArray(legacyIds)) {
+          stored = JSON.stringify(legacyIds.filter(id => typeof id === "string"));
+          localStorage.setItem(savedKey, stored);
+          localStorage.setItem("opensport:saved-players:legacy-owner", user.id);
+        }
+      }
+      const value = JSON.parse(stored || "[]");
       setSaved({ key: savedKey, ids: Array.isArray(value) ? value.filter(id => typeof id === "string") : [] });
     } catch { setSaved({ key: savedKey, ids: [] }); }
-  }, [savedKey]);
+  }, [demo, savedKey, user?.id]);
   const savedIds = useMemo(() => saved.key === savedKey ? saved.ids : [], [saved, savedKey]);
   const toggleSaved = (id: string) => {
     const ids = savedIds.includes(id) ? savedIds.filter(value => value !== id) : [...savedIds, id];
@@ -47,8 +58,12 @@ export default function Ranking() {
       if (demo) return DEMO_RANKING;
       const { data, error } = await supabase.from("global_rankings").select("*").order("best_score", { ascending: false }).limit(200);
       if (error) throw error;
-      const ids = (data || []).map(row => row.user_id);
       const growthByPlayer = new Map<string, number>();
+      for (const row of data || []) {
+        const growth = (row as typeof row & { growth?: number | null }).growth;
+        if (typeof growth === "number" && Number.isFinite(growth)) growthByPlayer.set(row.user_id, growth);
+      }
+      const ids = (data || []).filter(row => !growthByPlayer.has(row.user_id)).map(row => row.user_id);
       if (ids.length) {
         const { data: history, error: historyError } = await supabase.from("analyses").select("user_id, overall").in("user_id", ids).order("created_at", { ascending: false }).limit(1000);
         if (historyError) throw historyError;
@@ -63,7 +78,7 @@ export default function Ranking() {
         id: row.user_id, rank: index + 1, name: row.name || "Unnamed player", age: row.age ?? null,
         position: positionCode(row.position), team: row.club || null, city: row.city || "", country: row.country || "",
         avatarUrl: row.avatar_url || null, aiScore: row.best_score ?? 0, growth: growthByPlayer.get(row.user_id) ?? null,
-        totalVideos: row.total_analyses ?? 0, lastActive: row.last_analysis_at || "", trend: (growthByPlayer.get(row.user_id) ?? 0) > 0 ? "up" : "stable",
+        totalVideos: row.total_analyses ?? 0, lastActive: row.last_analysis_at || "", trend: (growthByPlayer.get(row.user_id) ?? 0) > 0 ? "up" : (growthByPlayer.get(row.user_id) ?? 0) < 0 ? "down" : "stable",
       }));
     },
     refetchInterval: demo ? false : 60 * 60 * 1000,

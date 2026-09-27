@@ -7,8 +7,8 @@ import { useDesignCopy } from "@/hooks/useDesignCopy";
 
 export type AnalysisVideoRecord = { id: string; filename: string; storage_path?: string; };
 
-export function AnalysisVideo({ video, onUpload, onOpenResults, emptyMessage }: {
-  video?: AnalysisVideoRecord; onUpload?: () => void; onOpenResults?: () => void; emptyMessage?: string;
+export function AnalysisVideo({ video, onUpload, onOpenResults, emptyMessage, title, showCaption = true }: {
+  video?: AnalysisVideoRecord; onUpload?: () => void; onOpenResults?: () => void; emptyMessage?: string; title?: string; showCaption?: boolean;
 }) {
   const copy = useDesignCopy();
   const demo = useDemoContext();
@@ -36,13 +36,13 @@ export function AnalysisVideo({ video, onUpload, onOpenResults, emptyMessage }: 
   });
 
   return <section className="design-analysis-video">
-    <div className="design-section-heading"><h2>{copy("Analysis video")}</h2></div>
+    <div className="design-section-heading"><h2>{title || copy("Analysis video")}</h2></div>
     <div className="design-video-frame">
       {!video ? <div className="design-video-message"><Video /><p>{emptyMessage || copy("Upload a video to get your first technique breakdown.")}</p>{onUpload && <button className="design-button" onClick={onUpload}>{copy("Upload video")}</button>}</div>
         : isLoading ? <Loader2 className="animate-spin" aria-label={copy("Loading video")} />
         : isError || !url || failedUrl === url ? <div className="design-video-message"><p>{copy("Could not load the video.")}</p><button className="design-link" onClick={() => { setFailedUrl(null); void refetch(); }}>{copy("Try again")}</button></div>
         : <video key={url} src={url} controls playsInline preload="metadata" onError={() => setFailedUrl(url)} aria-label={video.filename} />}
     </div>
-    {video && <div className="design-video-caption"><span className="design-mono">{video.filename}</span>{onOpenResults && <button className="design-link" onClick={onOpenResults}>{copy("Full report →")}</button>}</div>}
+    {video && showCaption && <div className="design-video-caption"><span className="design-mono">{video.filename}</span>{onOpenResults && <button className="design-link" onClick={onOpenResults}>{copy("Full report →")}</button>}</div>}
   </section>;
 }

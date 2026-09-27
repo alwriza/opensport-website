@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { AnalysisVideo } from "@/components/redesign/AnalysisVideo";
+import { useDesignCopy } from "@/hooks/useDesignCopy";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +40,7 @@ async function getAccessToken() {
 }
 
 export default function Duels() {
+  const copy = useDesignCopy();
   const { user } = useCurrentUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -419,6 +422,8 @@ export default function Duels() {
               const isDraw = d.winner_id === null;
               const myScore = mySide(d) === "challenger" ? d.challenger_score : d.opponent_score;
               const theirScore = mySide(d) === "challenger" ? d.opponent_score : d.challenger_score;
+              const myVideoId = mySide(d) === "challenger" ? d.challenger_video_id : d.opponent_video_id;
+              const theirVideoId = mySide(d) === "challenger" ? d.opponent_video_id : d.challenger_video_id;
               const opponentName = demo && d.id === "demo-duel-1" ? DEMO_OPPONENT_NAME : "Opponent";
               return (
                 <Card key={d.id} className="border-border">
@@ -447,6 +452,11 @@ export default function Duels() {
                         <p className="text-3xl font-black">{theirScore?.toFixed(1) ?? "—"}</p>
                       </div>
                     </div>
+
+                    {!demo && (myVideoId || theirVideoId) && <div className="design-duel-videos">
+                      <AnalysisVideo title={copy("Your video")} video={myVideoId ? { id: myVideoId, filename: copy("Your video") } : undefined} emptyMessage={copy("No video available.")} showCaption={false} />
+                      <AnalysisVideo title={copy("Opponent's video")} video={theirVideoId ? { id: theirVideoId, filename: copy("Opponent's video") } : undefined} emptyMessage={copy("No video available.")} showCaption={false} />
+                    </div>}
 
                     {/* Video preview for demo */}
                     {demo && d.id === "demo-duel-1" && (

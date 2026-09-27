@@ -2,6 +2,7 @@ import { useDesignCopy } from "@/hooks/useDesignCopy";
 import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 import { useCoachSquad, useTeamFlags, useUpcomingEvents } from "@/hooks/useCoachData";
 import { useDemoContext } from "@/demo";
@@ -10,10 +11,15 @@ import { positionCode } from "@/lib/player";
 
 export function OverviewTab({ teamId, onInvite }: { teamId?: string; onInvite: () => void; }) {
   const copy = useDesignCopy();
+  const { t } = useTranslation("dashboard");
   const demo = useDemoContext();
   const [params, setParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [position, setPosition] = useState("All");
+  const [ageRange, setAgeRange] = useState<[number, number]>([0, 100]);
+  const [scoreRange, setScoreRange] = useState<[number, number]>([0, 100]);
+  const [sortBy, setSortBy] = useState<"name" | "age" | "score">("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [showFilters, setShowFilters] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const { data: squad = [], isLoading, isError } = useCoachSquad(teamId);
@@ -40,13 +46,43 @@ export function OverviewTab({ teamId, onInvite }: { teamId?: string; onInvite: (
     const id = player.player_id || player.id;
     return { id, name: player.name || "Unnamed player", age: player.age, position: positionCode(player.position), score: activity.find(video => video.user_id === id && video.score != null)?.score ?? null, uploaded: activity.find(video => video.user_id === id)?.uploaded_at };
   }), [demo, squad, activity]);
-  const filtered = roster.filter(player => player.name.toLowerCase().includes(search.toLowerCase()) && (position === "All" || player.position === position));
+  const filtered = useMemo(() => {
+    const ageFiltered = ageRange[0] !== 0 || ageRange[1] !== 100;
+    const scoreFiltered = scoreRange[0] !== 0 || scoreRange[1] !== 100;
+    return roster.filter(player => (
+      player.name.toLowerCase().includes(search.trim().toLowerCase())
+      && (position === "All" || player.position === position)
+      && (!ageFiltered || (player.age != null && player.age >= ageRange[0] && player.age <= ageRange[1]))
+      && (!scoreFiltered || (player.score != null && player.score >= scoreRange[0] && player.score <= scoreRange[1]))
+    )).sort((a, b) => {
+      const direction = sortOrder === "asc" ? 1 : -1;
+      if (sortBy === "name") return a.name.localeCompare(b.name) * direction;
+      const first = a[sortBy];
+      const second = b[sortBy];
+      if (first == null) return second == null ? 0 : 1;
+      if (second == null) return -1;
+      return (first - second) * direction;
+    });
+  }, [roster, search, position, ageRange, scoreRange, sortBy, sortOrder]);
+  const resetFilters = () => {
+    setSearch("");
+    setPosition("All");
+    setAgeRange([0, 100]);
+    setScoreRange([0, 100]);
+    setSortBy("name");
+    setSortOrder("asc");
+  };
+  const updateRange = (range: [number, number], index: 0 | 1, value: string) => {
+    const next: [number, number] = [...range];
+    next[index] = value === "" ? (index === 0 ? 0 : 100) : Math.min(100, Math.max(0, Number(value)));
+    return next;
+  };
   const shown = showAll ? filtered : filtered.slice(0, 11);
   const scored = roster.filter(player => player.score != null);
   const average = scored.length ? (scored.reduce((total, player) => total + player.score!, 0) / scored.length).toFixed(1) : "—";
   const top = scored.reduce<(typeof roster)[number] | null>((best, player) => !best || player.score! > best.score! ? player : best, null);
   const uploadedThisWeek = roster.filter(player => player.uploaded && Date.now() - new Date(player.uploaded).getTime() < 7 * 86400000).length;
-  const attention = demo ? demo.roster.filter(player => player.trend > 3 || !player.last_upload).map(player => ({ id: player.id, name: player.name, type: player.last_upload ? "high_potential" : "no_upload", note: player.last_upload ? `+${player.trend.toFixed(1)} since last upload. Keep the momentum.` : "No video uploaded yet. Invite this player to record a kick." })) : flags.map(flag => ({ id: flag.player_id, name: roster.find(player => player.id === flag.player_id)?.name || "Player", type: flag.type, note: flag.note }));
+  const attention = demo ? demo.roster.filter(player => player.trend > 3 || !player.last_upload).map(player => ({ id: player.id, key: player.id, name: player.name, type: player.last_upload ? "high_potential" : "no_upload", note: player.last_upload ? `+${player.trend.toFixed(1)} since last upload. Keep the momentum.` : "No video uploaded yet. Invite this player to record a kick." })) : flags.map(flag => ({ id: flag.player_id, key: flag.id, name: roster.find(player => player.id === flag.player_id)?.name || flag.player_name || "Player", type: flag.type, note: flag.note }));
   const profilePath = (id: string) => `${demo ? "/demo" : ""}/player/${id}`;
 
   if (isLoading) return <div className="flex justify-center py-16">
@@ -80,7 +116,7 @@ export function OverviewTab({ teamId, onInvite }: { teamId?: string; onInvite: (
     {activityError && <p role="alert" className="text-sm text-destructive py-4">Could not load video activity. Scores will appear when the connection is restored.</p>}
     <section className="design-attention">
       <h2>{copy("Needs attention")}</h2>
-      {attention.map(flag => <div key={flag.id} className="design-flag">
+      {attention.map(flag => <div key={flag.key} className="design-flag">
         <span className={`design-tag ${flag.type === "high_potential" ? "" : "design-tag-signal"}`}>{flag.type.replace(/_/g, " ")}</span>
         <strong>{flag.name}</strong>
         <p>{flag.note}</p>
@@ -99,13 +135,46 @@ export function OverviewTab({ teamId, onInvite }: { teamId?: string; onInvite: (
         <div className="design-table-tools">
           <label htmlFor="roster-search">{copy("Search")}</label>
           <input id="roster-search" className="design-search" placeholder={copy("Player name")} value={search} onChange={event => setSearch(event.target.value)} />
-          <button className="design-button design-button-outline design-button-mono" aria-expanded={showFilters} onClick={() => setShowFilters(!showFilters)}>{copy("FILTERS ↓")}</button>
+          <button className="design-button design-button-outline design-button-mono" aria-expanded={showFilters} aria-controls="roster-filters" onClick={() => setShowFilters(!showFilters)}>{copy("FILTERS ↓")}</button>
         </div>
       </div>
-      {showFilters && <div className="design-filter-panel">
-        <label className="design-eyebrow" htmlFor="roster-position">{copy("Position")}</label>
-        <select id="roster-position" className="design-search" value={position} onChange={event => setPosition(event.target.value)}>{["All", "GK", "DEF", "MID", "FWD"].map(value => <option key={value} value={value}>{value}</option>)}</select>
-        <button className="design-link" onClick={() => { setPosition("All"); setSearch(""); }}>{copy("Reset filters")}</button>
+      {showFilters && <div className="design-filter-panel" id="roster-filters">
+        <div className="grid w-full gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="min-w-0 space-y-2">
+            <label className="design-eyebrow" htmlFor="roster-position">{copy("Position")}</label>
+            <select id="roster-position" className="design-search" style={{ width: "100%" }} value={position} onChange={event => setPosition(event.target.value)}>{["All", "GK", "DEF", "MID", "FWD"].map(value => <option key={value} value={value}>{value === "All" ? t("coach.filters.allPositions") : value}</option>)}</select>
+          </div>
+          <div className="min-w-0 space-y-2">
+            <label className="design-eyebrow" htmlFor="roster-age-min">{t("coach.filters.ageRange")}</label>
+            <div className="flex gap-2">
+              <input id="roster-age-min" className="design-search" style={{ width: "50%", minWidth: 0 }} type="number" min={0} max={100} aria-label={`${t("coach.filters.ageRange")}: ${t("coach.filters.min")}`} value={ageRange[0]} onChange={event => setAgeRange(updateRange(ageRange, 0, event.target.value))} />
+              <input id="roster-age-max" className="design-search" style={{ width: "50%", minWidth: 0 }} type="number" min={0} max={100} aria-label={`${t("coach.filters.ageRange")}: ${t("coach.filters.max")}`} value={ageRange[1]} onChange={event => setAgeRange(updateRange(ageRange, 1, event.target.value))} />
+            </div>
+          </div>
+          <div className="min-w-0 space-y-2">
+            <label className="design-eyebrow" htmlFor="roster-score-min">{copy("AI score")}</label>
+            <div className="flex gap-2">
+              <input id="roster-score-min" className="design-search" style={{ width: "50%", minWidth: 0 }} type="number" min={0} max={100} aria-label={t("coach.filters.minScore")} value={scoreRange[0]} onChange={event => setScoreRange(updateRange(scoreRange, 0, event.target.value))} />
+              <input id="roster-score-max" className="design-search" style={{ width: "50%", minWidth: 0 }} type="number" min={0} max={100} aria-label={t("coach.filters.maxScore")} value={scoreRange[1]} onChange={event => setScoreRange(updateRange(scoreRange, 1, event.target.value))} />
+            </div>
+          </div>
+          <div className="min-w-0 space-y-2">
+            <label className="design-eyebrow" htmlFor="roster-sort">{t("coach.filters.sortBy")}</label>
+            <select id="roster-sort" className="design-search" style={{ width: "100%" }} value={sortBy} onChange={event => setSortBy(event.target.value as "name" | "age" | "score")}>
+              <option value="name">{t("coach.filters.sorting.name")}</option>
+              <option value="age">{t("coach.filters.sorting.age")}</option>
+              <option value="score">{copy("AI score")}</option>
+            </select>
+          </div>
+          <div className="min-w-0 space-y-2">
+            <label className="design-eyebrow" htmlFor="roster-sort-order">{t("coach.filters.order")}</label>
+            <select id="roster-sort-order" className="design-search" style={{ width: "100%" }} value={sortOrder} onChange={event => setSortOrder(event.target.value as "asc" | "desc")}>
+              <option value="asc">{t("coach.filters.ascending")}</option>
+              <option value="desc">{t("coach.filters.descending")}</option>
+            </select>
+          </div>
+          <button className="design-link self-end justify-self-start" onClick={resetFilters}>{copy("Reset filters")}</button>
+        </div>
       </div>}
       <div className="design-table-scroll">
         <table className="design-table design-roster-table">

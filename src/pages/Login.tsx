@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
@@ -29,7 +30,7 @@ export default function Login() {
     try {
       const kind = classifyIdentifier(identifier.trim());
       let email = identifier.trim();
-      let phone = identifier.trim();
+      const phone = identifier.trim();
 
       if (kind === "nickname") {
         const { data: profile, error: lookupError } = await supabase
@@ -53,10 +54,10 @@ export default function Login() {
       if (error) throw error;
 
       navigate("/player-dashboard");
-    } catch (err: any) {
+    } catch (err) {
       toast({
         title: t("loginFailed"),
-        description: err.message || t("checkCredentials"),
+        description: (err as Error).message || t("checkCredentials"),
         variant: "destructive",
       });
     } finally {
@@ -78,6 +79,7 @@ export default function Login() {
               <Input
                 id="identifier"
                 required
+                autoComplete="username"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 placeholder={t("identifierPlaceholder")}
@@ -86,14 +88,14 @@ export default function Login() {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <Label htmlFor="password">{t("passwordLabel")}</Label>
-                <a href="/forgot-password" className="text-xs text-primary underline">
+                <Link to="/forgot-password" className="text-xs text-primary underline">
                   {t("forgotPassword")}
-                </a>
+                </Link>
               </div>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 required
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -105,7 +107,7 @@ export default function Login() {
           </form>
           <p className="text-sm text-muted-foreground text-center mt-4">
             {t("dontHaveAccount")}{" "}
-            <a href="/register" className="text-primary underline">{t("signUp")}</a>
+            <Link to="/register" className="text-primary underline">{t("signUp")}</Link>
           </p>
         </CardContent>
       </Card>

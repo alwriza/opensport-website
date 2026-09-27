@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
@@ -16,6 +16,7 @@ export default function ResetPassword() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
+  const mismatch = confirm.length > 0 && password !== confirm;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,10 +31,10 @@ export default function ResetPassword() {
 
       toast({ title: t("passwordUpdated"), description: t("canSignIn") });
       navigate("/login");
-    } catch (err: any) {
+    } catch (err) {
       toast({
         title: t("couldNotUpdatePassword"),
-        description: err.message || t("resetLinkExpired"),
+        description: (err as Error).message || t("resetLinkExpired"),
         variant: "destructive",
       });
     } finally {
@@ -52,27 +53,31 @@ export default function ResetPassword() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="password">{t("newPasswordLabel")}</Label>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 required
                 minLength={8}
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirm">{t("confirmPasswordLabel")}</Label>
-              <Input
+              <PasswordInput
                 id="confirm"
-                type="password"
                 required
                 minLength={8}
+                autoComplete="new-password"
+                aria-invalid={mismatch}
+                aria-describedby={mismatch ? "password-mismatch" : undefined}
+                className={mismatch ? "border-destructive" : undefined}
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
               />
+              {mismatch && <p id="password-mismatch" className="text-sm text-destructive" role="status">{t("passwordsDontMatch")}</p>}
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full" disabled={loading || mismatch}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t("updatePassword")}
             </Button>

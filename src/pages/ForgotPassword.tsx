@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,10 +25,10 @@ export default function ForgotPassword() {
       });
       if (error) throw error;
       setSent(true);
-    } catch (err: any) {
+    } catch (err) {
       toast({
         title: t("somethingWentWrong"),
-        description: err.message || "",
+        description: (err as Error).message || "",
         variant: "destructive",
       });
     } finally {
@@ -46,8 +47,13 @@ export default function ForgotPassword() {
               : t("enterEmailForReset")}
           </CardDescription>
         </CardHeader>
-        {!sent && (
-          <CardContent>
+        <CardContent>
+          {sent ? (
+            <div className="space-y-4">
+              <p className="break-all text-sm font-medium" role="status">{email}</p>
+              <Button asChild variant="outline" className="w-full"><Link to="/login">{t("signIn")}</Link></Button>
+            </div>
+          ) : <>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">{t("emailLabel")}</Label>
@@ -55,6 +61,7 @@ export default function ForgotPassword() {
                   id="email"
                   type="email"
                   required
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={t("emailPlaceholder")}
@@ -67,10 +74,10 @@ export default function ForgotPassword() {
             </form>
             <p className="text-sm text-muted-foreground text-center mt-4">
               {t("rememberedPassword")}{" "}
-              <a href="/login" className="text-primary underline">{t("signIn")}</a>
+              <Link to="/login" className="text-primary underline">{t("signIn")}</Link>
             </p>
-          </CardContent>
-        )}
+          </>}
+        </CardContent>
       </Card>
     </div>
   );

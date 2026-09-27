@@ -52,6 +52,7 @@
     },
     "compare": {
         "selected": "selected",
+        "close": "Close",
         "clear": "Clear",
         "button": "Compare",
         "title": "Player Comparison"

@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import Navbar from "@/components/ui/navbar";
 import ScrollToTop from "@/components/ScrollToTop";
+import BackToTop from "@/components/BackToTop";
 import Home from "./pages/Home";
 import PlayerDashboard from "./pages/PlayerDashboard";
 import Training from "./pages/Training";
@@ -90,6 +91,7 @@ const App = () => (
           <Footer />
         </div>
         <OnboardingTour />
+        <BackToTop />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

@@ -57,6 +57,10 @@ html { scroll-padding-top:calc(var(--navigation-height) + 20px); }
 .design-demo-exit { flex-shrink:0; display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; text-decoration:underline; text-underline-offset:3px; }
 .design-demo-exit svg { width:15px; height:15px; }
 .design-mobile-nav { display:none; }
+.design-back-to-top { position:fixed; right:var(--page-gutter); bottom:24px; z-index:30; width:44px; height:44px; display:flex; align-items:center; justify-content:center; background:var(--pitch); color:#fff; border:1px solid #6FD39C; }
+.design-back-to-top:hover { background:#0A4429; }
+.design-back-to-top:focus-visible { outline:2px solid var(--pitch); outline-offset:4px; }
+.design-back-to-top svg { width:20px; height:20px; }
 
 @media (max-width:1350px) { .design-navigation[data-workspace] .design-header-nav { display:none; } }
 @media (max-width:1199px) {
@@ -70,6 +74,7 @@ html { scroll-padding-top:calc(var(--navigation-height) + 20px); }
 }
 @media (max-width:767px) {
   .design-header { min-height:64px; gap:12px; }
+  body:has(.design-mobile-nav) .design-back-to-top { bottom:calc(92px + env(safe-area-inset-bottom)); }
   .design-header-controls { gap:10px; }
   .design-header-primary { display:none; }
   .design-account { width:44px; padding:0; }
@@ -517,6 +522,9 @@ html { scroll-padding-top:calc(var(--navigation-height) + 20px); }
 .design-player-hero .design-link { flex-shrink:0; }
 .design-analysis-video { min-width:0; }
 .design-video-frame { display:flex; align-items:center; justify-content:center; aspect-ratio:16/9; background:#14150F; color:var(--paper); overflow:hidden; }
+.design-duel-videos { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-bottom:20px; }
+.design-duel-videos .design-section-heading h2 { font-size:16px; }
+@media (max-width:480px) { .design-duel-videos { grid-template-columns:1fr; } }
 .design-video-frame video { width:100%; height:100%; object-fit:contain; }
 .design-video-message { padding:32px; display:flex; align-items:center; flex-direction:column; gap:16px; text-align:center; max-width:420px; font-size:14px; }
 .design-video-message .design-link { color:#6FD39C; }

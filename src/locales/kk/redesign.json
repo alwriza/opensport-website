@@ -237,5 +237,9 @@
   "tactical": "Тактика",
   "physical": "Дене дайындығы",
   "mental": "Психология",
-  "Select page for comparison": "Салыстыру үшін бетті таңдау"
+  "Select page for comparison": "Салыстыру үшін бетті таңдау",
+  "Your video": "Сіздің бейнеңіз",
+  "Opponent's video": "Қарсыластың бейнесі",
+  "No video available.": "Бейне қолжетімсіз.",
+  "Back to top": "Жоғарыға"
 }

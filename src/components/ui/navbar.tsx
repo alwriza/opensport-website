@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ChartNoAxesColumn, ChevronDown, Dumbbell, Globe, Home, LogOut, Menu, Play, Upload, UserRound, Users } from "lucide-react";
@@ -52,6 +52,8 @@ export default function Navbar() {
     { to: `${homePath}#roadmap`, label: copy("Roadmap") },
     { to: `${homePath}#clubs`, label: copy("For clubs") },
   ];
+
+  useEffect(() => { setAccountOpen(false); }, [location.pathname]);
 
   // Share the actual sticky height with anchor scrolling and the guided tour.
   useLayoutEffect(() => {
