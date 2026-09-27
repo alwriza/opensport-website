@@ -7,6 +7,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { markOnboardingPending, shouldStartOnboarding } from "@/lib/onboarding";
 
 export default function VerifyEmail() {
   const { t } = useTranslation("auth");
@@ -22,15 +23,22 @@ export default function VerifyEmail() {
     if (code.length !== 6 || !email) return;
     setLoading(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({
+      const { data, error } = await supabase.auth.verifyOtp({
         email,
         token: code,
         type: "signup",
       });
       if (error) throw error;
 
+      if (data.user && data.session) {
+        // Local pending state is written immediately; remote sync must not delay sign in.
+        void markOnboardingPending(data.user);
+      }
+
       toast({ title: t("emailConfirmed"), description: t("welcomeMessage") });
-      navigate("/player-dashboard");
+      navigate("/player-dashboard", {
+        state: data.user && shouldStartOnboarding(data.user) ? { onboarding: true } : undefined,
+      });
     } catch (err: any) {
       toast({
         title: t("invalidCode"),

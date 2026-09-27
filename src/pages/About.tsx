@@ -62,7 +62,7 @@ export default function About() {
         </div>
 
         {/* Mission Statement */}
-        <Card className="mb-16 shadow-card bg-gradient-hero">
+        <Card className="mb-16 bg-primary">
           <CardContent className="p-12 text-center">
             <h2 className="text-3xl font-bold text-primary-foreground mb-6">{t("mission.title")}</h2>
             <p className="text-xl text-primary-foreground/90 max-w-4xl mx-auto leading-relaxed">
@@ -76,9 +76,9 @@ export default function About() {
           <h2 className="text-3xl font-bold text-center text-foreground mb-12">{t("impact.title")}</h2>
           <div className="grid md:grid-cols-3 gap-8">
             {impacts.map((impact, index) => (
-              <Card key={index} className="shadow-card hover:shadow-lg transition-shadow">
+              <Card key={index} className=" transition-shadow">
                 <CardHeader className="text-center pb-4">
-                  <div className="flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mx-auto mb-4">
+                  <div className="flex items-center justify-center w-16 h-16 rounded-none bg-primary/10 mx-auto mb-4">
                     <div className="text-primary">{impact.icon}</div>
                   </div>
                   <CardTitle className="text-xl mb-2">{impact.title}</CardTitle>
@@ -99,10 +99,10 @@ export default function About() {
           <h2 className="text-3xl font-bold text-center text-foreground mb-12">{t("features.title")}</h2>
           <div className="space-y-8">
             {features.map((feature, index) => (
-              <Card key={index} className="shadow-card">
+              <Card key={index}>
                 <CardContent className="p-8">
                   <div className="flex flex-col md:flex-row items-start gap-6">
-                    <div className="flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 flex-shrink-0">
+                    <div className="flex items-center justify-center w-16 h-16 rounded-none bg-primary/10 flex-shrink-0">
                       <div className="text-primary">{feature.icon}</div>
                     </div>
                     <div className="flex-1">
@@ -120,7 +120,7 @@ export default function About() {
         </div>
 
         {/* The Problem We're Solving */}
-        <Card className="mb-16 shadow-card border-l-4 border-l-primary">
+        <Card className="mb-16 border-l-4 border-l-primary">
           <CardHeader>
             <CardTitle className="text-2xl text-primary">{t("problem.title")}</CardTitle>
           </CardHeader>
@@ -147,7 +147,7 @@ export default function About() {
         </Card>
 
         {/* Long-term Vision */}
-        <Card className="shadow-card bg-gradient-card">
+        <Card className="bg-gradient-card">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">{t("vision.title")}</CardTitle>
           </CardHeader>
@@ -156,15 +156,15 @@ export default function About() {
               {t("vision.content")}
             </p>
             <div className="grid md:grid-cols-3 gap-6 mt-8">
-              <div className="p-6 rounded-lg bg-primary/5">
+              <div className="p-6 rounded-sm bg-primary/5">
                 <h4 className="font-semibold text-primary mb-2">{t("vision.goals.2025.title")}</h4>
                 <p className="text-sm text-muted-foreground">{t("vision.goals.2025.content")}</p>
               </div>
-              <div className="p-6 rounded-lg bg-primary/5">
+              <div className="p-6 rounded-sm bg-primary/5">
                 <h4 className="font-semibold text-primary mb-2">{t("vision.goals.2026.title")}</h4>
                 <p className="text-sm text-muted-foreground">{t("vision.goals.2026.content")}</p>
               </div>
-              <div className="p-6 rounded-lg bg-primary/5">
+              <div className="p-6 rounded-sm bg-primary/5">
                 <h4 className="font-semibold text-primary mb-2">{t("vision.goals.2027.title")}</h4>
                 <p className="text-sm text-muted-foreground">{t("vision.goals.2027.content")}</p>
               </div>

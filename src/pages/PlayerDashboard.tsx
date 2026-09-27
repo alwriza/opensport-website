@@ -1,96 +1,99 @@
+import type { Database } from "@/integrations/supabase/types";
+import { getErrorMessage } from "@/lib/errors";
+import { PLAYER_POSITIONS, positionCode } from "@/lib/player";
+import { SkillIcon } from "@/components/training/SkillIcon";
+import { useDesignCopy } from "@/hooks/useDesignCopy";
 import { useState, useEffect, useMemo } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardFooter, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Upload, Trophy, Loader2, Video, AlertCircle, Plus, X, Users, Check, XCircle, LogOut, ChevronRight, ChevronUp, ChevronDown, Play, Activity, TrendingUp, Award, Flame, Target, Crosshair, Footprints, Shield, Dumbbell, Brain, Star, Zap, Swords, Goal, CircleDot, Gauge, HeartPulse, Clock, type LucideIcon } from "lucide-react";
+import { Upload, Trophy, Loader2, Video, AlertCircle, LogOut, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { MetricList } from "@/components/redesign/primitives";
+import { AnalysisVideo } from "@/components/redesign/AnalysisVideo";
+import { AnalysisHistoryTable } from "@/components/redesign/AnalysisHistoryTable";
 import { TeamProfileOverlay } from "@/components/ui/TeamProfileOverlay";
 import { Info } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDemoContext, useDemoMutationGuard } from "@/demo";
 
-const emojiToIcon: Record<string, LucideIcon> = {
-  '⚽': Goal, '🎯': Crosshair, '🏃': Footprints, '🦶': CircleDot,
-  '🔥': Flame, '💪': Dumbbell, '🧠': Brain, '🛡️': Shield, '🛡': Shield,
-  '⭐': Star, '🏆': Trophy, '⚡': Zap, '🎮': Swords,
-  '🤾': HeartPulse, '🧘': Gauge,
-};
+type UserRecord = Database["public"]["Tables"]["users"]["Row"];
+type VideoRecord = Pick<Database["public"]["Tables"]["videos"]["Row"], "id" | "filename" | "status" | "uploaded_at" | "duration">;
+type Analysis = Database["public"]["Tables"]["analyses"]["Row"];
+type RecommendedLevel = Database["public"]["Tables"]["skill_levels"]["Row"] & { skills?: Pick<Database["public"]["Tables"]["skills"]["Row"], "name" | "icon"> | null; };
+type EditableField = "name" | "age" | "position" | "city" | "club" | "height" | "weight";
 
-const SkillIconDash = ({ icon, size = 'md' }: { icon: string; size?: 'sm' | 'md' | 'lg' }) => {
-  const IconComponent = emojiToIcon[icon] || Target;
-  const sizeMap = { sm: 'w-8 h-8 rounded-lg', md: 'w-12 h-12 rounded-xl', lg: 'w-14 h-14 rounded-xl' };
-  const iconMap = { sm: 'h-4 w-4', md: 'h-6 w-6', lg: 'h-7 w-7' };
-  return (
-    <div className={`${sizeMap[size]} bg-[#9FE870]/10 flex items-center justify-center shrink-0`}>
-      <IconComponent className={`${iconMap[size]} text-[#9FE870]`} />
-    </div>
-  );
-};
+type AnalysisScores = Pick<Analysis, "stability" | "power" | "technique" | "balance">;
 
-interface VideoRecord {
-  id: string;
-  filename: string;
-  status: string;
-  uploaded_at: string;
-}
+async function loadRecommendedTraining(scores: AnalysisScores) {
+  const targets = [
+    { needed: scores.stability < 60 || scores.balance < 60, skill: "Balance & Core", levels: ["beginner", "intermediate"] },
+    { needed: scores.power < 60, skill: "Speed & Acceleration", levels: ["beginner", "intermediate"] },
+    { needed: scores.technique < 60, skill: "Shooting Precision", levels: ["beginner"] },
+  ].filter(target => target.needed);
 
-interface Analysis {
-  id: string;
-  video_id: string;
-  stability: number;
-  power: number;
-  technique: number;
-  balance: number;
-  overall: number;
-  feedback: string;
-  tags: string[];
+  const recommendations = await Promise.all(targets.map(async ({ skill, levels }) => {
+    const { data: skillData, error: skillError } = await supabase.from("skills").select("id").eq("name", skill).maybeSingle();
+    if (skillError || !skillData) return [];
+    const { data, error } = await supabase.from("skill_levels").select("*, skills (name, icon)").eq("skill_id", skillData.id).in("level_name", levels).order("level_order");
+    if (error) return [];
+    return data || [];
+  }));
+  return recommendations.flat().slice(0, 3);
 }
 
 export default function PlayerDashboard() {
+  const copy = useDesignCopy();
   const { t } = useTranslation("dashboard");
   const { user, isLoaded } = useCurrentUser();
   const demo = useDemoContext();
   const { isDemo, guard: guardMutation } = useDemoMutationGuard();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const demoNav = (path: string) => isDemo ? `/demo${path}` : path;
 
   // State
   const [uploading, setUploading] = useState(false);
-  const [latestVideoUrl, setLatestVideoUrl] = useState<string>("");
-  const [localUser, setLocalUser] = useState<any>(null);
+  const [localUser, setLocalUser] = useState<Partial<UserRecord> | null>(null);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [resultsModalOpen, setResultsModalOpen] = useState(false);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [loadingResults, setLoadingResults] = useState(false);
-  const [selectedAnalysis, setSelectedAnalysis] = useState<any>(null);
+  const [selectedAnalysis, setSelectedAnalysis] = useState<Analysis | null>(null);
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string>("");
   const [selectedTeamProfileId, setSelectedTeamProfileId] = useState<string | null>(null);
   const [teamProfileOpen, setTeamProfileOpen] = useState(false);
-  const [recommendedTraining, setRecommendedTraining] = useState<any[]>([]);
+  const [recommendedTraining, setRecommendedTraining] = useState<RecommendedLevel[]>([]);
   const [showAllVideos, setShowAllVideos] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [methodModalOpen, setMethodModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (location.state?.upload) setUploadModalOpen(true);
+    if (location.state?.profile) setProfileModalOpen(true);
+    if (location.state?.upload || location.state?.profile) navigate(location.pathname, { replace: true, state: null });
+  }, [location.state, location.pathname, navigate]);
 
   // Metadata state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [cameraAngle, setCameraAngle] = useState<string>("unknown");
   const [kickingFoot, setKickingFoot] = useState<string>("unknown");
 
-
-
   // 1. Fetch DB User
   const { data: dbUser, isLoading: loadingUser } = useQuery({
-    queryKey: ['db-user', user?.id],
+    queryKey: ['db-user', user?.id, isDemo],
     queryFn: async () => {
-      if (demo) return demo.coachProfile;
+      if (demo) return { ...demo.coachProfile, name: `${demo.user.firstName} ${demo.user.lastName}` };
       if (!user) return null;
 
       const { data: existingUser, error: fetchError } = await supabase
@@ -113,24 +116,25 @@ export default function PlayerDashboard() {
       if (!dbUser?.id) return [];
       const { data, error } = await supabase
         .from('videos')
-        .select('id, filename, status, uploaded_at')
+        .select('id, filename, status, uploaded_at, duration')
         .eq('user_id', dbUser.id)
         .order('uploaded_at', { ascending: false });
 
       if (error) throw error;
-      return (data || []) as any[];
+      return (data || []) as VideoRecord[];
     },
     enabled: !!dbUser?.id,
     refetchInterval: (query) => {
-      const hasProcessing = (query.state.data as any[])?.some((v: any) => v.status === 'processing');
+      const hasProcessing = (query.state.data as VideoRecord[])?.some((v) => v.status === 'processing');
       return hasProcessing ? 5000 : false;
     }
   });
 
   // 3. Fetch Latest Analysis
   const latestCompletedVideoId = useMemo(() =>
-    videos.find(v => (v as any).status === 'completed')?.id,
+    videos.find(v => v.status === 'completed')?.id,
     [videos]);
+  const latestVideo = videos.find(v => v.id === latestCompletedVideoId);
 
   const { data: latestAnalysis } = useQuery({
     queryKey: ['analysis', latestCompletedVideoId],
@@ -143,7 +147,7 @@ export default function PlayerDashboard() {
         .eq('video_id', latestCompletedVideoId)
         .single();
       if (error) throw error;
-      return data as any;
+      return data;
     },
     enabled: !!latestCompletedVideoId || !!demo,
   });
@@ -152,7 +156,7 @@ export default function PlayerDashboard() {
   const { data: trainingStats } = useQuery({
     queryKey: ['training-stats', dbUser?.id],
     queryFn: async () => {
-      if (demo) return demo.trainingStats;
+      if (demo) return { ...demo.trainingStats, skillCount: demo.skills.length, skillNames: Object.fromEntries(demo.skills.map(skill => [skill.id, skill.name])) };
       if (!dbUser?.id) return null;
       const { data: progress } = await supabase
         .from('player_progress')
@@ -165,101 +169,40 @@ export default function PlayerDashboard() {
         .select('*')
         .eq('player_id', dbUser.id);
 
-      return { progress, skills: skills || [] };
+      const { data: catalog } = await supabase.from('skills').select('id, name');
+
+      return { progress, skills: skills || [], skillCount: catalog?.length ?? 0, skillNames: Object.fromEntries((catalog || []).map(skill => [skill.id, skill.name])) };
     },
     enabled: !!dbUser?.id || !!demo
   });
 
-  const analyses = useMemo(() => videos.filter((v: any) => v.status === 'completed'), [videos]);
+  const completedVideoIds = useMemo(() => videos.filter(v => v.status === 'completed').map(v => v.id), [videos]);
+  const { data: scoreAnalyses = [] } = useQuery({
+    queryKey: ['score-analyses', completedVideoIds],
+    queryFn: async () => {
+      if (demo) return demo.analyses.filter(a => completedVideoIds.includes(a.video_id));
+      const { data, error } = await supabase.from('analyses').select('video_id, overall').in('video_id', completedVideoIds);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: completedVideoIds.length > 0,
+  });
 
   // 5. Fetch AI Recommendations based on latest analysis
   const { data: latestRecommendations = [] } = useQuery({
     queryKey: ['latest-recommendations', latestAnalysis?.id],
     queryFn: async () => {
-      if (demo) return demo.latestRecommendations as any[];
+      if (demo) return demo.latestRecommendations;
       if (!latestAnalysis || !dbUser?.id) return [];
 
       const scores = {
-        stability: (latestAnalysis as any)?.stability || 0,
-        power: (latestAnalysis as any)?.power || 0,
-        technique: (latestAnalysis as any)?.technique || 0,
-        balance: (latestAnalysis as any)?.balance || 0
+        stability: latestAnalysis?.stability || 0,
+        power: latestAnalysis?.power || 0,
+        technique: latestAnalysis?.technique || 0,
+        balance: latestAnalysis?.balance || 0
       };
 
-      try {
-        const recommendations: any[] = [];
-
-        // 1. Check stability/balance
-        if (scores.stability < 60 || scores.balance < 60) {
-          const { data: skillData } = await supabase
-            .from('skills')
-            .select('id')
-            .eq('name', 'Balance & Core')
-            .single();
-
-          if (skillData) {
-            const { data } = await supabase
-              .from('skill_levels' as any)
-              .select(`
-                *,
-                skills (name, icon)
-              `)
-              .eq('skill_id', (skillData as any).id)
-              .in('level_name', ['beginner', 'intermediate'])
-              .order('level_order');
-            if (data) recommendations.push(...(data as any[]));
-          }
-        }
-
-        // 2. Check power
-        if (scores.power < 60) {
-          const { data: skillData } = await supabase
-            .from('skills')
-            .select('id')
-            .eq('name', 'Speed & Acceleration')
-            .single();
-
-          if (skillData) {
-            const { data } = await supabase
-              .from('skill_levels' as any)
-              .select(`
-                *,
-                skills (name, icon)
-              `)
-              .eq('skill_id', (skillData as any).id)
-              .in('level_name', ['beginner', 'intermediate'])
-              .order('level_order');
-            if (data) recommendations.push(...(data as any[]));
-          }
-        }
-
-        // 3. Check technique
-        if (scores.technique < 60) {
-          const { data: skillData } = await supabase
-            .from('skills')
-            .select('id')
-            .eq('name', 'Shooting Precision')
-            .single();
-
-          if (skillData) {
-            const { data } = await supabase
-              .from('skill_levels' as any)
-              .select(`
-                *,
-                skills (name, icon)
-              `)
-              .eq('skill_id', (skillData as any).id)
-              .in('level_name', ['beginner'])
-              .order('level_order');
-            if (data) recommendations.push(...(data as any[]));
-          }
-        }
-
-        return recommendations.slice(0, 3);
-      } catch (error) {
-        console.error('Error getting recommendations:', error);
-        return [];
-      }
+      return loadRecommendedTraining(scores);
     },
     enabled: (!!latestAnalysis && !!dbUser?.id) || !!demo,
   });
@@ -273,27 +216,27 @@ export default function PlayerDashboard() {
       const { data, error } = await supabase
         .from('team_rosters')
         .select(`
-          id,
-          status,
-          team_id,
-          teams (
-            id,
-            name,
-            age_group,
-            clubs (name)
-          )
-        `)
+ id,
+ status,
+ team_id,
+ teams (
+ id,
+ name,
+ age_group,
+ clubs (name)
+ )
+ `)
         .eq('player_id', dbUser.id)
         .in('status', ['active', 'pending']);
 
       if (error) throw error;
 
-      return (data as any[])?.map(item => ({
+      return (data || []).filter(item => item.teams != null).map(item => ({
         roster_id: item.id,
-        team_id: (item.teams as any).id,
-        team_name: (item.teams as any).name,
-        age_group: (item.teams as any).age_group,
-        club_name: (item.teams as any).clubs?.name,
+        team_id: item.teams!.id,
+        team_name: item.teams!.name,
+        age_group: item.teams!.age_group,
+        club_name: item.teams!.clubs?.name,
         status: item.status
       })) || [];
     },
@@ -303,50 +246,19 @@ export default function PlayerDashboard() {
 
   // Sync local editing state
   useEffect(() => {
-    const userProfile = dbUser as any;
+    const userProfile = dbUser;
     if (userProfile) {
       setLocalUser(userProfile);
     }
   }, [dbUser]);
 
-  // Fetch signed URL for latest video
-  useEffect(() => {
-    if (demo && latestCompletedVideoId) {
-      const video = demo.videos.find((v: any) => v.id === latestCompletedVideoId);
-      setLatestVideoUrl(video ? `/${video.storage_path}` : "");
-      return;
-    }
-    if (!latestCompletedVideoId) {
-      console.log('latestCompletedVideoId is null — no completed video found among:', videos.map((v: any) => ({ id: v.id, status: v.status })));
-      return;
-    }
-
-    const fetchUrl = async () => {
-      const { data: videoData } = await supabase
-        .from('videos')
-        .select('storage_path')
-        .eq('id', latestCompletedVideoId)
-        .single();
-
-      if (videoData) {
-        console.log('Found storage_path:', (videoData as any).storage_path, 'for video id:', latestCompletedVideoId);
-        const { data: urlData, error: urlError } = await supabase.storage
-          .from('videos')
-          .createSignedUrl((videoData as any).storage_path, 3600);
-        if (urlError) console.error('createSignedUrl failed:', urlError, 'bucket: videos', 'path:', (videoData as any).storage_path);
-        if (urlData) setLatestVideoUrl(urlData.signedUrl);
-      }
-    };
-    fetchUrl();
-  }, [latestCompletedVideoId, demo]);
-
-  const updateProfile = async (field: string, value: any) => {
+  const updateProfile = async (field: EditableField, value: string | number | null) => {
     if (guardMutation()) return;
     if (!dbUser?.id) return;
 
     try {
-      const { error } = await (supabase
-        .from('users') as any)
+      const { error } = await supabase
+        .from('users')
         .update({ [field]: value })
         .eq('id', dbUser.id);
 
@@ -357,11 +269,11 @@ export default function PlayerDashboard() {
         description: `${field.charAt(0).toUpperCase() + field.slice(1)} saved.`,
       });
 
-      queryClient.invalidateQueries({ queryKey: ['db-user', user?.id] });
-    } catch (error: any) {
+      queryClient.invalidateQueries({ queryKey: ['db-user', user?.id, isDemo] });
+    } catch (error: unknown) {
       toast({
         title: "Update Failed",
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive"
       });
     }
@@ -404,7 +316,7 @@ export default function PlayerDashboard() {
   };
 
   const handleUploadAndAnalyze = async () => {
-    if (!selectedFile || !dbUser?.id) return;
+    if (guardMutation() || !selectedFile || !dbUser?.id) return;
     const file = selectedFile;
     setUploading(true);
     console.log("Starting upload:", file.name);
@@ -426,8 +338,8 @@ export default function PlayerDashboard() {
 
       console.log("✓ Upload successful");
 
-      const { data: newVideo, error: dbError } = await (supabase
-        .from('videos') as any)
+      const { data: newVideo, error: dbError } = await supabase
+        .from('videos')
         .insert({
           user_id: dbUser.id,
           storage_path: filePath,
@@ -443,7 +355,7 @@ export default function PlayerDashboard() {
         throw dbError;
       }
 
-      console.log("✓ Video record created:", (newVideo as any).id);
+      console.log("✓ Video record created:", newVideo.id);
 
       // 3. Call Edge Function to process video securely
       try {
@@ -451,7 +363,7 @@ export default function PlayerDashboard() {
 
         const { data: functionData, error: functionError } = await supabase.functions.invoke('process-video', {
           body: {
-            video_id: (newVideo as any).id,
+            video_id: newVideo.id,
             camera_angle: cameraAngle,
             kicking_foot: kickingFoot
           }
@@ -474,18 +386,18 @@ export default function PlayerDashboard() {
           description: "Your kick has been analyzed successfully.",
         });
 
-      } catch (mlError: any) {
+      } catch (mlError: unknown) {
         console.error('❌ ML processing failed via Edge Function:', mlError);
 
         // Mark video as failed
-        await (supabase
-          .from('videos') as any)
+        await supabase
+          .from('videos')
           .update({ status: 'failed' })
-          .eq('id', (newVideo as any).id);
+          .eq('id', newVideo.id);
 
         toast({
           title: "Analysis Failed",
-          description: mlError.message || "Could not analyze video due to a timeout or error. Video is saved but analysis failed.",
+          description: getErrorMessage(mlError) || "Could not analyze video due to a timeout or error. Video is saved but analysis failed.",
           variant: "destructive"
         });
       }
@@ -494,95 +406,16 @@ export default function PlayerDashboard() {
       setUploadModalOpen(false);
       setSelectedFile(null); // Reset file state
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ Upload failed:", error);
       toast({
         title: "Upload Failed",
-        description: error.message || "Could not upload video. Please try again.",
+        description: getErrorMessage(error) || "Could not upload video. Please try again.",
         variant: "destructive"
       });
     } finally {
       setUploading(false);
       // event.target.value = ''; // This was from the old handleFileUpload, not needed here
-    }
-  };
-
-  const getRecommendedTraining = async (scores: any) => {
-    if (!dbUser?.id) return [];
-
-    try {
-      const recommendations: any[] = [];
-
-      // 1. Check stability/balance
-      if (scores.stability < 60 || scores.balance < 60) {
-        const { data: skillData } = await supabase
-          .from('skills')
-          .select('id')
-          .eq('name', 'Balance & Core')
-          .single();
-
-        if (skillData) {
-          const { data } = await supabase
-            .from('skill_levels' as any)
-            .select(`
-              *,
-              skills (name, icon)
-            `)
-            .eq('skill_id', (skillData as any).id)
-            .in('level_name', ['beginner', 'intermediate'])
-            .order('level_order');
-          if (data) recommendations.push(...(data as any[]));
-        }
-      }
-
-      // 2. Check power
-      if (scores.power < 60) {
-        const { data: skillData } = await supabase
-          .from('skills')
-          .select('id')
-          .eq('name', 'Speed & Acceleration')
-          .single();
-
-        if (skillData) {
-          const { data } = await supabase
-            .from('skill_levels' as any)
-            .select(`
-              *,
-              skills (name, icon)
-            `)
-            .eq('skill_id', (skillData as any).id)
-            .in('level_name', ['beginner', 'intermediate'])
-            .order('level_order');
-          if (data) recommendations.push(...(data as any[]));
-        }
-      }
-
-      // 3. Check technique
-      if (scores.technique < 60) {
-        const { data: skillData } = await supabase
-          .from('skills')
-          .select('id')
-          .eq('name', 'Shooting Precision')
-          .single();
-
-        if (skillData) {
-          const { data } = await supabase
-            .from('skill_levels' as any)
-            .select(`
-              *,
-              skills (name, icon)
-            `)
-            .eq('skill_id', (skillData as any).id)
-            .in('level_name', ['beginner'])
-            .order('level_order');
-          if (data) recommendations.push(...(data as any[]));
-        }
-      }
-
-      return recommendations.slice(0, 3);
-    } catch (error) {
-      console.error('Error getting recommendations:', error);
-      return [];
     }
   };
 
@@ -592,6 +425,7 @@ export default function PlayerDashboard() {
     setSelectedAnalysis(null);
     setSelectedVideoUrl("");
     setRecommendedTraining([]);
+    setLoadingResults(true);
     setSelectedVideoId(videoId);
     setResultsModalOpen(true);
   };
@@ -600,6 +434,7 @@ export default function PlayerDashboard() {
   useEffect(() => {
     if (!resultsModalOpen || !selectedVideoId) return;
 
+    let cancelled = false;
     const fetchResultsData = async () => {
       setLoadingResults(true);
 
@@ -607,7 +442,7 @@ export default function PlayerDashboard() {
         const demoAnalysis = demo.analyses.find(a => a.video_id === selectedVideoId);
         if (demoAnalysis) {
           setSelectedAnalysis(demoAnalysis);
-          const video = demo.videos.find((v: any) => v.id === selectedVideoId);
+          const video = demo.videos.find((v) => v.id === selectedVideoId);
           setSelectedVideoUrl(video ? `/${video.storage_path}` : "");
           setRecommendedTraining([]);
         }
@@ -624,6 +459,7 @@ export default function PlayerDashboard() {
           .single();
 
         if (analysisError) throw analysisError;
+        if (cancelled) return;
         setSelectedAnalysis(analysisData);
 
         // Fetch video URL
@@ -637,22 +473,24 @@ export default function PlayerDashboard() {
 
         const { data: urlData, error: urlError } = await supabase.storage
           .from('videos')
-          .createSignedUrl((videoData as any).storage_path, 3600);
+          .createSignedUrl(videoData.storage_path, 3600);
 
         if (urlError) throw urlError;
+        if (cancelled) return;
         setSelectedVideoUrl(urlData.signedUrl);
 
         // Get recommendations
         const scores = {
-          stability: (analysisData as any)?.stability || 0,
-          power: (analysisData as any)?.power || 0,
-          technique: (analysisData as any)?.technique || 0,
-          balance: (analysisData as any)?.balance || 0
+          stability: analysisData?.stability || 0,
+          power: analysisData?.power || 0,
+          technique: analysisData?.technique || 0,
+          balance: analysisData?.balance || 0
         };
-        const recommendations = await getRecommendedTraining(scores);
-        setRecommendedTraining(recommendations);
+        const recommendations = await loadRecommendedTraining(scores);
+        if (!cancelled) setRecommendedTraining(recommendations);
 
-      } catch (error: any) {
+      } catch (error: unknown) {
+        if (cancelled) return;
         console.error('Error loading results:', error);
         toast({
           title: "Error",
@@ -660,16 +498,17 @@ export default function PlayerDashboard() {
           variant: "destructive"
         });
       } finally {
-        setLoadingResults(false);
+        if (!cancelled) setLoadingResults(false);
       }
     };
 
     fetchResultsData();
-  }, [resultsModalOpen, selectedVideoId]);
+    return () => { cancelled = true; };
+  }, [resultsModalOpen, selectedVideoId, demo, toast]);
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-primary";
-    if (score >= 60) return "text-amber-400";
+    if (score >= 60) return "text-[#8A6A1F]";
     return "text-destructive";
   };
 
@@ -696,7 +535,7 @@ export default function PlayerDashboard() {
         queryClient.invalidateQueries({ queryKey: ['my-teams', dbUser.id] });
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error leaving team:', error);
       toast({
         title: "Error",
@@ -706,7 +545,15 @@ export default function PlayerDashboard() {
     }
   };
 
-
+  const shareProfile = async () => {
+    const url = new URL(isDemo ? "/demo" : `/player/${dbUser?.id}`, window.location.origin).href;
+    try {
+      if (navigator.share) await navigator.share({ title: "OPENsport player profile", url });
+      else { await navigator.clipboard.writeText(url); toast({ title: "Profile link copied" }); }
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === "AbortError")) toast({ title: "Could not share profile", description: url, variant: "destructive" });
+    }
+  };
 
   if (!isLoaded || loadingUser) {
     return (
@@ -721,7 +568,7 @@ export default function PlayerDashboard() {
 
   if (!dbUser) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black p-4">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center space-y-4">
             <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
@@ -738,585 +585,145 @@ export default function PlayerDashboard() {
     );
   }
 
+  const playerName = localUser?.name || user?.email?.split("@")[0] || t("player.defaultName");
+  const previousScore = scoreAnalyses.find(analysis => analysis.video_id === completedVideoIds[1])?.overall;
+  const growth = latestAnalysis && previousScore != null ? latestAnalysis.overall - previousScore : null;
+  const averageScore = scoreAnalyses.length ? scoreAnalyses.reduce((sum, analysis) => sum + analysis.overall, 0) / scoreAnalyses.length : null;
+  const totalXp = trainingStats?.progress?.total_xp ?? 0;
+  const completedSkills = trainingStats?.skills.filter(skill => skill.is_completed).length ?? 0;
+  const metricLabels = {
+    stability: t("player.latestAnalysis.metrics.stability"), power: t("player.latestAnalysis.metrics.power"),
+    technique: t("player.latestAnalysis.metrics.technique"), balance: t("player.latestAnalysis.metrics.balance"),
+  };
+  const selectedTags = Array.isArray(selectedAnalysis?.tags) ? selectedAnalysis.tags.filter((tag): tag is string => typeof tag === "string") : [];
+  const metricScores = latestAnalysis || { stability: NaN, power: NaN, technique: NaN, balance: NaN };
+  const profileFields: { key: EditableField; label: string; type: "text" | "number"; }[] = [
+    { key: "name", label: copy("Full name"), type: "text" },
+    { key: "age", label: t("player.profile.age"), type: "number" },
+    { key: "position", label: t("player.profile.position"), type: "text" },
+    { key: "city", label: copy("City"), type: "text" },
+    { key: "club", label: t("player.profile.club"), type: "text" },
+    { key: "height", label: t("player.profile.height"), type: "number" },
+    { key: "weight", label: t("player.profile.weight"), type: "number" },
+  ];
+
   return (
-    <div className="container px-4 md:px-6 py-6 md:py-8 space-y-8 max-w-[1600px] mx-auto">
-
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-3xl md:text-5xl font-black tracking-tighter text-gradient">
-            {t("overview.title")}
-          </h1>
-          <p className="text-muted-foreground font-medium">
-            {t("overview.welcome", { name: user?.firstName || user?.username || t("player.defaultName") })}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={() => setUploadModalOpen(true)}
-            className="bg-primary hover:bg-primary/90 text-black font-bold h-11 px-6 rounded-xl hover:scale-105 transition-transform"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            {t("player.uploadVideo")}
-          </Button>
-        </div>
-      </div>
-
-      {/* Stats Hub */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <Card className="bg-card border-white/5 shadow-xl shadow-black/20">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{t("stats.level")}</p>
-                <p className="text-2xl font-bold">{trainingStats?.progress?.level || 1}</p>
-              </div>
-              <Trophy className="h-8 w-8 text-primary" />
+    <main className="design-page design-player" data-onboarding-dashboard="player">
+      <section className="design-player-hero">
+        <div className="design-player-info">
+          <div className="design-player-identity">
+            <span className="design-eyebrow design-player-latest">{copy("Your player profile")}</span>
+            <h1 className="design-player-name">{playerName}</h1>
+            <div className="design-player-tags">
+              {[localUser?.age ? `U${localUser.age}` : null, localUser?.position, localUser?.city, localUser?.club,
+                localUser?.height ? `${localUser.height} ${copy("cm")}` : null, localUser?.weight ? `${localUser.weight} ${copy("kg")}` : null].filter(Boolean).map((tag: string) => <span key={tag}>{tag}</span>)}
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-white/5 shadow-xl shadow-black/20">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{t("stats.streak")}</p>
-                <p className="text-2xl font-bold">{trainingStats?.progress?.current_streak || 0} {t("player.training.dayStreak")}</p>
-              </div>
-              <Activity className="h-8 w-8 text-primary" />
+          </div>
+          <div className="design-player-score-row">
+            <div className="design-player-score"><strong>{latestAnalysis?.overall?.toFixed(1) ?? "—"}</strong><span>/100</span></div>
+            <div className="design-player-trend">
+              <span className="design-eyebrow">{copy("Overall")}</span>
+              {growth != null && <div className={`design-growth ${growth < 0 ? "design-growth-negative" : ""}`}>{growth >= 0 ? "▲ +" : "▼ "}{growth.toFixed(1)}<span className="design-trend-caption"> {copy("since last upload")}</span></div>}
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-white/5 shadow-xl shadow-black/20">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{t("stats.xp")}</p>
-                <p className="text-2xl font-bold">{trainingStats?.progress?.total_xp?.toLocaleString() || 0}</p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card border-white/5 shadow-xl shadow-black/20">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{t("stats.avgScore")}</p>
-                <p className="text-2xl font-bold">
-                  {analyses.length > 0
-                    ? (analyses.reduce((acc, a) => acc + (a.overall || 0), 0) / analyses.length).toFixed(1)
-                    : '0.0'}
-                </p>
-              </div>
-              <Award className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Column 1 & 2: Main Content */}
-        <div className="lg:col-span-2 space-y-8 lg:order-1 order-2">
-          {latestAnalysis ? (
-            <Card className="border-2 border-primary/30 shadow-xl shadow-primary/5">
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle>{t("player.latestAnalysis.title")}</CardTitle>
-                  <Button onClick={() => setUploadModalOpen(true)} size="sm" className="rounded-full px-6">
-                    <Plus className="h-4 w-4 mr-2" />
-                    {t("player.latestAnalysis.newAnalysis")}
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid xl:grid-cols-2 gap-8">
-                  {/* Video */}
-                  <div className="aspect-video bg-black rounded-xl overflow-hidden shadow-inner flex items-center justify-center border border-gray-800 text-white">
-                    <video
-                      controls
-                      playsInline
-                      preload="metadata"
-                      className="w-full h-full object-contain"
-                      src={latestVideoUrl}
-                    />
-                  </div>
-
-                  {/* Stats */}
-                  <div className="space-y-6">
-                    {/* Overall Score */}
-                    <div className="text-center p-6 bg-primary/5 rounded-2xl border border-primary/10">
-                      <p className="text-sm text-muted-foreground mb-1">{t("player.latestAnalysis.overallScore")}</p>
-                      <div className={`text-6xl font-black ${getScoreColor(latestAnalysis.overall)}`}>
-                        {latestAnalysis.overall.toFixed(1)}
-                      </div>
-                    </div>
-
-                    {/* Individual Scores */}
-                    <div className="space-y-4">
-                      <div>
-                        <div className="flex justify-between text-sm mb-2 font-medium">
-                          <span className="text-muted-foreground">{t("player.latestAnalysis.metrics.stability")}</span>
-                          <span className={getScoreColor(latestAnalysis.stability)}>
-                            {latestAnalysis.stability.toFixed(1)}%
-                          </span>
-                        </div>
-                        <Progress value={latestAnalysis.stability} className="h-2.5" />
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between text-sm mb-2 font-medium">
-                          <span className="text-muted-foreground">{t("player.latestAnalysis.metrics.power")}</span>
-                          <span className={getScoreColor(latestAnalysis.power)}>
-                            {latestAnalysis.power.toFixed(1)}%
-                          </span>
-                        </div>
-                        <Progress value={latestAnalysis.power} className="h-2.5" />
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between text-sm mb-2 font-medium">
-                          <span className="text-muted-foreground">{t("player.latestAnalysis.metrics.technique")}</span>
-                          <span className={getScoreColor(latestAnalysis.technique)}>
-                            {latestAnalysis.technique.toFixed(1)}%
-                          </span>
-                        </div>
-                        <Progress value={latestAnalysis.technique} className="h-2.5" />
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between text-sm mb-2 font-medium">
-                          <span className="text-muted-foreground">{t("player.latestAnalysis.metrics.balance")}</span>
-                          <span className={getScoreColor(latestAnalysis.balance)}>
-                            {latestAnalysis.balance.toFixed(1)}%
-                          </span>
-                        </div>
-                        <Progress value={latestAnalysis.balance} className="h-2.5" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* AI Recommendations */}
-                {latestRecommendations.length > 0 && (
-                  <div className="mt-8 pt-8 border-t border-primary/10">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <Trophy className="h-6 w-6 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold">{t("player.latestAnalysis.recommendations.title")}</h3>
-                        <p className="text-xs text-muted-foreground">{t("player.latestAnalysis.recommendations.description")}</p>
-                      </div>
-                    </div>
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      {latestRecommendations.map((level: any) => (
-                        <Card
-                          key={level.id}
-                          className="cursor-pointer hover:border-primary/50 transition-all group bg-card border-primary/5 overflow-hidden shadow-lg shadow-black/20"
-                          onClick={() => {
-                            navigate(demoNav(`/training?tab=exercises&skill=${level.skill_id}&level=${level.level_name}`));
-                          }}
-                        >
-                          <CardContent className="p-4 text-white">
-                            <div className="flex items-center gap-4">
-                              <div className="transition-all duration-500 transform group-hover:scale-110">
-                                <SkillIconDash icon={level.skills?.icon || '⚽'} size="lg" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-bold text-sm group-hover:text-primary transition-colors text-white">
-                                  {level.skills?.name}
-                                </h4>
-                                <p className="text-[10px] text-muted-foreground line-clamp-1 mb-2">
-                                  {level.video_title}
-                                </p>
-                                <div className="flex items-center gap-2">
-                                  <Badge variant="outline" className="text-[9px] px-2 py-0 h-4 uppercase font-black tracking-tighter">
-                                    {level.level_name}
-                                  </Badge>
-                                  <span className="text-[9px] font-bold text-primary">+{level.xp_reward} XP</span>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="border-2 border-dashed border-primary/20 bg-primary/5">
-              <CardContent className="pt-6 flex flex-col items-center justify-center min-h-[450px] text-center">
-                <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-                  <Upload className="h-12 w-12 text-primary" />
-                </div>
-                <h3 className="text-2xl font-bold mb-3 italic tracking-tight">{t("player.latestAnalysis.empty.title")}</h3>
-                <p className="text-muted-foreground mb-10 max-w-sm text-lg leading-relaxed">
-                  {t("player.latestAnalysis.empty.description")}
-                </p>
-                <button
-                  onClick={() => setUploadModalOpen(true)}
-                  className="rounded-full px-12 h-14 text-lg font-bold shadow-xl shadow-primary/20 hover:scale-105 transition-transform bg-primary text-black flex items-center justify-center"
-                >
-                  <Plus className="h-6 w-6 mr-3" />
-                  {t("player.latestAnalysis.empty.button")}
-                </button>
-              </CardContent>
-            </Card>
-          )}
-
-          <Card className="bg-primary/5 border-primary/20 overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full -translate-y-16 translate-x-16 blur-3xl" />
-            <CardContent className="p-6 relative z-10">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-2xl flex justify-center pt-1">
-                  <AlertCircle className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-lg text-primary italic uppercase tracking-tighter">{t("player.tips.title")}</h4>
-                  <p className="text-muted-foreground mt-2 leading-relaxed">
-                    {t("player.tips.description")}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* History Section moved here or stays in 3rd col? The design had it in Column 1 (Narrow) before. Let's stick to the 3-col grid requested logic if any. */}
-          {/* Previous design had History in Column 1, so let's put it back if needed. */}
-          <div>
-            <h2 className="text-xl font-bold mb-4">{t("player.allAnalyses")}</h2>
-            {videos.length === 0 ? (
-              <Card>
-                <CardContent className="p-8 text-center text-muted-foreground">
-                  <Video className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-                  <p>{t("player.noVideos")}</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {(showAllVideos ? videos : videos.slice(0, 4)).map((video: any) => (
-                    <Card key={video.id} className="overflow-hidden hover:shadow-lg transition-shadow border-primary/10 bg-card/50">
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 bg-muted rounded-xl flex items-center justify-center flex-shrink-0">
-                            <Video className="h-6 w-6 text-muted-foreground" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold truncate text-sm">{video.filename}</h4>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                              <span>{new Date(video.uploaded_at).toLocaleDateString()}</span>
-                              <Badge variant={video.status === 'completed' ? 'default' : video.status === 'processing' ? 'secondary' : 'destructive'} className="scale-75 origin-left">
-                                {video.status === 'processing' && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
-                                {video.status}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={video.status !== 'completed'}
-                          onClick={() => openResultsModal(video.id)}
-                          className="w-full mt-4 text-xs font-bold rounded-lg border-primary/20 hover:bg-primary/5 transition-colors"
-                        >
-                          {video.status === 'completed' ? t("player.viewResults") : t("player.processing")}
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-
-                {videos.length > 4 && (
-                  <div className="flex justify-center pt-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowAllVideos(!showAllVideos)}
-                      className="text-muted-foreground hover:text-foreground text-xs font-bold"
-                    >
-                      {showAllVideos ? (
-                        <>{t("player.showLess")} <ChevronUp className="ml-2 h-4 w-4" /></>
-                      ) : (
-                        <>{t("player.showMore", { count: videos.length - 4 })} <ChevronDown className="ml-2 h-4 w-4" /></>
-                      )}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
+          </div>
+          <div className="design-player-actions">
+            <button className="design-button" data-onboarding="player-upload" onClick={() => setUploadModalOpen(true)}>{copy("Upload video")}</button>
+            <button className="design-button design-button-outline design-button-dark-outline" onClick={() => setProfileModalOpen(true)}>{copy("Edit profile")}</button>
+            <button className="design-button design-button-outline design-button-dark-outline" onClick={shareProfile}>{copy("Share profile")}</button>
           </div>
         </div>
-
-        {/* Column 3: Sidebar (Standard) */}
-        <div className="space-y-6 lg:order-3 order-3">
-
-          <Card className="border border-primary/10 bg-muted/20">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-bold flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                {t("player.profile.title")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">{t("player.profile.age")}</label>
-                  <input
-                    type="number"
-                    min="0"
-                    className="flex h-9 w-full rounded-xl border border-input bg-background/50 px-3 py-1 text-sm focus:border-primary/50 transition-colors"
-                    value={localUser?.age || ''}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value);
-                      setLocalUser({ ...localUser, age: isNaN(val) ? null : Math.max(0, val) });
-                    }}
-                    onBlur={() => updateProfile('age', localUser?.age)}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">{t("player.profile.position")}</label>
-                  <Select
-                    value={localUser?.position || ''}
-                    onValueChange={(value) => {
-                      setLocalUser({ ...localUser, position: value });
-                      updateProfile('position', value);
-                    }}
-                  >
-                    <SelectTrigger className="h-9 rounded-xl bg-background/50 text-xs">
-                      <SelectValue placeholder={t("player.profile.position")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Forward">{t("player.profile.positions.forward")}</SelectItem>
-                      <SelectItem value="Midfielder">{t("player.profile.positions.midfielder")}</SelectItem>
-                      <SelectItem value="Defender">{t("player.profile.positions.defender")}</SelectItem>
-                      <SelectItem value="Goalkeeper">{t("player.profile.positions.goalkeeper")}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">{t("player.profile.club")}</label>
-                <input
-                  type="text"
-                  className="flex h-9 w-full rounded-xl border border-input bg-background/50 px-3 py-1 text-sm focus:border-primary/50 transition-colors"
-                  value={localUser?.club || ''}
-                  onChange={(e) => setLocalUser({ ...localUser, club: e.target.value })}
-                  onBlur={() => updateProfile('club', localUser?.club)}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">{t("player.profile.height")}</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    className="flex h-9 w-full rounded-xl border border-input bg-background/50 px-3 py-1 text-sm focus:border-primary/50 transition-colors"
-                    value={localUser?.height || ''}
-                    onChange={(e) => {
-                      const val = parseFloat(e.target.value);
-                      setLocalUser({ ...localUser, height: isNaN(val) ? null : Math.max(0, val) });
-                    }}
-                    onBlur={() => updateProfile('height', localUser?.height)}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">{t("player.profile.weight")}</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.1"
-                    className="flex h-9 w-full rounded-xl border border-input bg-background/50 px-3 py-1 text-sm focus:border-primary/50 transition-colors"
-                    value={localUser?.weight || ''}
-                    onChange={(e) => {
-                      const val = parseFloat(e.target.value);
-                      setLocalUser({ ...localUser, weight: isNaN(val) ? null : Math.max(0, val) });
-                    }}
-                    onBlur={() => updateProfile('weight', localUser?.weight)}
-                  />
-                </div>
-              </div>
-
-              <div className="pt-4 border-t space-y-3">
-                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">{t("player.profile.legal")}</p>
-                <div className="flex flex-col gap-2">
-                  <button
-                    onClick={() => window.open('/terms', '_blank')}
-                    className="text-[11px] font-bold text-muted-foreground hover:text-primary transition-colors flex items-center justify-between group"
-                  >
-                    {t("player.profile.terms")}
-                    <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-all -translate-x-1 group-hover:translate-x-0" />
-                  </button>
-                  <button
-                    onClick={() => window.open('/privacy', '_blank')}
-                    className="text-[11px] font-bold text-muted-foreground hover:text-primary transition-colors flex items-center justify-between group"
-                  >
-                    {t("player.profile.privacy")}
-                    <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-all -translate-x-1 group-hover:translate-x-0" />
-                  </button>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="pt-0 pb-6 px-6">
-              <Button
-                variant="outline"
-                className="w-full rounded-xl border-primary/20 hover:bg-primary/5 hover:text-primary transition-all font-bold"
-                onClick={() => navigate(demoNav('/join-team'))}
-              >
-                <Users className="h-4 w-4 mr-2" />
-                {t("player.teams.join")}
-              </Button>
-            </CardFooter>
-          </Card>
-
-
-          <Card className="border border-primary/10">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                {t("player.teams.title")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {loadingTeams ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                </div>
-              ) : myTeams.length > 0 ? (
-                <div className="space-y-3">
-                  {myTeams.map((team) => (
-                    <div key={team.roster_id} className="group bg-muted/30 hover:bg-muted/50 rounded-2xl p-4 transition-colors border border-transparent hover:border-primary/20">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="min-w-0">
-                          <p className="font-bold text-sm truncate">{team.team_name}</p>
-                          <p className="text-[10px] text-gray-300 font-medium uppercase tracking-wider">
-                            {team.club_name} • {team.age_group}
-                          </p>
-                        </div>
-                        <Badge variant={team.status === 'active' ? 'default' : 'secondary'} className="rounded-md scale-90">
-                          {team.status}
-                        </Badge>
-                      </div>
-
-                      {team.status === 'active' && (
-                        <div className="flex gap-2">
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            className="flex-1 rounded-xl text-xs font-bold h-8"
-                            onClick={() => {
-                              setSelectedTeamProfileId(team.team_id);
-                              setTeamProfileOpen(true);
-                            }}
-                          >
-                            {t("player.teams.teamPage")}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="w-10 rounded-xl text-muted-foreground hover:text-red-500 h-8"
-                            onClick={() => handleLeaveTeam(team.roster_id, team.team_name)}
-                          >
-                            <LogOut className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-10 bg-muted/20 rounded-2xl border border-dashed">
-                  <Users className="h-10 w-10 mx-auto mb-3 opacity-20" />
-                  <p className="text-xs font-medium text-muted-foreground">{t("player.teams.notJoined")}</p>
-                  <Button variant="link" size="sm" className="mt-1 text-primary text-xs" onClick={() => navigate(demoNav('/join-team'))}>
-                    {t("player.teams.findClub")}
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Training Progress Card */}
-          <Card className="overflow-hidden">
-            <div className="h-1.5 bg-primary w-full" />
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                  <Crosshair className="h-4 w-4 text-primary" />
-                </div>
-                {t("player.training.title")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Level & XP */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="px-3 py-1 bg-primary/10 rounded-full border border-primary/20">
-                    <span className="text-xs font-black text-primary">{t("player.training.level", { level: trainingStats?.progress?.level ?? 1 })}</span>
-                  </div>
-                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                    {t("player.training.totalXp", { total: trainingStats?.progress?.total_xp ?? 0 })}
-                  </span>
-                </div>
-                <Progress
-                  value={((trainingStats?.progress?.total_xp ?? 0) % 100)}
-                  className="h-3"
-                />
-              </div>
-
-              {/* Streak */}
-              <div className="flex items-center justify-between p-4 bg-orange-500/10 dark:bg-orange-500/5 rounded-2xl border border-orange-500/20">
-                <div className="flex items-center gap-4">
-                  <Flame className="text-3xl h-8 w-8 text-orange-500 filter drop-shadow-sm" />
-                  <div>
-                    <div className="font-black text-2xl text-orange-600 dark:text-orange-400">
-                      {trainingStats?.progress?.current_streak || 0}
-                    </div>
-                    <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
-                      {t("player.training.dayStreak")}
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-xs font-bold text-muted-foreground">{t("player.training.best")}</div>
-                  <div className="font-black text-sm">{trainingStats?.progress?.longest_streak || 0}</div>
-                </div>
-              </div>
-
-              {/* Skills Completed */}
-              <div className="flex items-center justify-between px-2">
-                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t("player.training.skillMastery")}</span>
-                <span className="font-black text-lg text-primary">
-                  {trainingStats?.skills?.filter((sp: any) => sp.is_completed).length || 0}/10
-                </span>
-              </div>
-
-              {/* Button to Training */}
-              <Button
-                className="w-full rounded-2xl h-12 font-bold group shadow-md hover:shadow-primary/20"
-                onClick={() => navigate(demoNav('/training'))}
-              >
-                {t("player.training.goToCenter")}
-                <ChevronRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </CardContent>
-          </Card>
-
-        </div>
+        <aside className="design-player-overview">
+          <div className="design-profile-stats">
+            {[{ label:t("stats.level"), value:trainingStats?.progress?.level ?? 1 }, { label:t("stats.streak"), value:trainingStats?.progress?.current_streak ?? 0 }, { label:t("stats.xp"), value:totalXp.toLocaleString() }, { label:t("stats.avgScore"), value:averageScore?.toFixed(1) ?? "—" }].map(stat => <div key={stat.label}><span className="design-eyebrow">{stat.label}</span><strong>{stat.value}</strong></div>)}
+          </div>
+          <section className="design-profile-teams">
+            <div className="design-section-heading"><h2>{copy("My teams")}</h2><Link className="design-link" to={demoNav("/join-team")}>{copy("Join a team →")}</Link></div>
+            {loadingTeams ? <Loader2 className="animate-spin" /> : myTeams.map(team => <div className="design-profile-team" key={team.roster_id}>
+              <div><strong>{team.team_name}</strong><p>{[team.club_name, team.age_group].filter(Boolean).join(" · ")} · {copy(team.status === "active" ? "Active" : "Pending")}</p></div>
+              {team.status === "active" && <button className="design-link" onClick={() => { setSelectedTeamProfileId(team.team_id); setTeamProfileOpen(true); }}>{copy("Open")} →</button>}
+              <button aria-label={`${copy("Leave team")} ${team.team_name}`} className="design-icon-button" onClick={() => handleLeaveTeam(team.roster_id, team.team_name)}><LogOut /></button>
+            </div>)}
+            {!loadingTeams && !myTeams.length && <p className="design-teams-empty">{copy("You have not joined a team yet.")}</p>}
+          </section>
+        </aside>
+      </section>
+      <div className="design-player-body">
+        <section className="design-breakdown" data-onboarding="player-results">
+          <div className="design-section-heading">
+            <h2>{copy("Breakdown")}</h2>
+            <button className="design-link design-link-underlined" onClick={() => setMethodModalOpen(true)}><span className="design-method-desktop">{copy("What each score measures")}</span><span className="design-method-mobile">{copy("Method")}</span></button>
+          </div>
+          <MetricList scores={metricScores} labels={metricLabels} />
+          <div className="design-camera-note">
+            <Info />
+            <p>{copy("Camera angle affects the score. For a more reliable reading, film from the side, with your whole body in frame.")}</p>
+          </div>
+        </section>
+        <AnalysisVideo video={latestVideo} onUpload={() => setUploadModalOpen(true)} onOpenResults={() => latestCompletedVideoId && openResultsModal(latestCompletedVideoId)} />
       </div>
-
+      {latestAnalysis?.feedback && <section className="design-analysis-feedback"><span className="design-eyebrow">{copy("Analysis feedback")}</span><p>{latestAnalysis.feedback}</p></section>}
+      <div className="design-player-followup">
+        <section className="design-next" data-onboarding="player-training">
+          <div className="design-section-heading">
+            <h2>{copy("Do next")}</h2>
+            <span className="design-eyebrow">{latestRecommendations.length} {" "}{copy("drills")}</span>
+          </div>
+          {latestRecommendations.length ? latestRecommendations.map(level => (
+            <Link key={level.id} className="design-drill" to={demoNav(`/training?tab=exercises&skill=${level.skill_id}&level=${level.level_name}`)}>
+              <span className="design-drill-category">{level.skills?.name || level.target_metrics?.join(" · ")}</span>
+              <span className="design-drill-title">{level.video_title || level.skills?.name}</span>
+              <span className="design-drill-meta">{level.duration_minutes} min · {level.level_name} · +{level.xp_reward} XP</span>
+            </Link>
+          )) : <Link className="design-drill" to={demoNav("/training")}><span className="design-drill-category">{copy("Training")}</span><span className="design-drill-title">{copy("Explore drills for your next session")}</span></Link>}
+        </section>
+        <section className="design-player-training">
+          <div className="design-section-heading"><h2>{t("player.training.title")}</h2><Link className="design-link" to={demoNav("/training")}>{t("player.training.goToCenter")} →</Link></div>
+          <div className="design-training-summary">
+            <div><span className="design-eyebrow">{t("player.training.level", { level:trainingStats?.progress?.level ?? 1 })}</span><strong>{totalXp.toLocaleString()} <small>XP</small></strong></div>
+            <div><span className="design-eyebrow">{t("player.training.best")}</span><strong>{trainingStats?.progress?.longest_streak ?? 0} <small>{t("player.training.dayStreak")}</small></strong></div>
+            <div><span className="design-eyebrow">{t("player.training.skillMastery")}</span><strong>{completedSkills}<small>/{trainingStats?.skillCount ?? 0}</small></strong></div>
+          </div>
+          <div className="design-training-xp"><div className="design-meter"><span style={{ width:`${(totalXp % 500) / 5}%` }} /></div><p>{copy("Next level")} · {totalXp % 500}/500 XP</p></div>
+          <div className="design-skill-progress">
+            {trainingStats?.skills.map(progress => <Link key={progress.skill_id} className="design-link" to={demoNav(`/training?tab=interactive&skill=${progress.skill_id}`)}><span>{trainingStats.skillNames?.[progress.skill_id] || copy("Skill")}</span><span className="design-mono">{progress.completed_levels.length} {copy("tiers complete")} {progress.is_completed ? "✓" : "→"}</span></Link>)}
+          </div>
+        </section>
+      </div>
+      <section className="design-history">
+        <div className="design-section-heading">
+          <h2>{copy("All analyses")}</h2>
+          {videos.length > 4 && <button className="design-history-more" onClick={() => setShowAllVideos(!showAllVideos)}>{showAllVideos ? `${t("player.showLess")} ↑` : `${t("player.showMore", { count:videos.length - 4 })} ↓`}</button>}
+        </div>
+        <AnalysisHistoryTable videos={showAllVideos ? videos : videos.slice(0, 4)} onOpen={openResultsModal} />
+      </section>
+      <Dialog open={profileModalOpen} onOpenChange={setProfileModalOpen}>
+        <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{copy("Edit player profile")}</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4">
+            {profileFields.map(({ key, label, type }) => <div key={key} className={key === "name" ? "col-span-2" : ""}>
+              <label htmlFor={`profile-${key}`} className="design-eyebrow block mb-2">{label}</label>
+              {key === "position" ? <Select value={PLAYER_POSITIONS.find(position => position.code === positionCode(localUser?.position))?.value || ""} onValueChange={value => { setLocalUser({ ...localUser, position:value }); void updateProfile("position", value); }}><SelectTrigger id="profile-position"><SelectValue placeholder={label} /></SelectTrigger><SelectContent>{PLAYER_POSITIONS.map(position => <SelectItem key={position.value} value={position.value}>{t(`player.profile.positions.${position.label}`)}</SelectItem>)}</SelectContent></Select> : <input id={`profile-${key}`} className="design-search !w-full" type={type} min={type === "number" ? 0 : undefined} step={key === "height" || key === "weight" ? "0.1" : undefined} value={localUser?.[key] ?? ""} onChange={event => setLocalUser({ ...localUser, [key]: type === "number" ? event.target.value === "" ? null : Math.max(0, Number(event.target.value)) : event.target.value })} onBlur={() => updateProfile(key, localUser?.[key] ?? null)} />}
+            </div>)}
+          </div>
+          <div className="design-profile-legal"><Link to="/terms" target="_blank">{t("player.profile.terms")} ↗</Link><Link to="/privacy" target="_blank">{t("player.profile.privacy")} ↗</Link></div>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={methodModalOpen} onOpenChange={setMethodModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>How we measure technique</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm leading-relaxed text-muted-foreground">The analysis tracks body keypoints throughout your kick and reports stability, power, technique and balance on a scale from 0 to 100. Use repeated recordings from the same camera angle to compare your progress.</p>
+          <Link to={`${isDemo ? "/demo/home" : "/"}#science`} className="design-link design-link-underlined">{copy("Read about the method →")}</Link>
+        </DialogContent>
+      </Dialog>
       <Dialog open={uploadModalOpen} onOpenChange={(open) => {
         setUploadModalOpen(open);
         if (!open) setSelectedFile(null); // Reset when closed
       }}>
-        <DialogContent className="sm:max-w-md bg-background text-white border-white/5 shadow-2xl">
+        <DialogContent className="sm:max-w-md bg-background text-foreground border-border ">
           <DialogHeader>
             <DialogTitle>{t("modals.upload.title")}</DialogTitle>
           </DialogHeader>
@@ -1328,7 +735,7 @@ export default function PlayerDashboard() {
               </div>
             ) : (
               <div className="flex flex-col gap-4">
-                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
+                <div className="border-2 border-dashed border-border rounded-sm p-6 text-center hover:border-primary/50 transition-colors">
                   <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
                   <p className="text-sm text-muted-foreground mb-3">
                     {selectedFile ? selectedFile.name : t("modals.upload.dropzone")}
@@ -1347,14 +754,13 @@ export default function PlayerDashboard() {
                     </label>
                   </Button>
                 </div>
-
                 {selectedFile && (
                   <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Camera Angle</label>
                         <Select value={cameraAngle} onValueChange={setCameraAngle}>
-                          <SelectTrigger className="bg-white/5 border-white/10">
+                          <SelectTrigger className="bg-secondary/35 border-border">
                             <SelectValue placeholder="Select angle" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1365,11 +771,10 @@ export default function PlayerDashboard() {
                           </SelectContent>
                         </Select>
                       </div>
-
                       <div className="space-y-2">
                         <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Kicking Foot</label>
                         <Select value={kickingFoot} onValueChange={setKickingFoot}>
-                          <SelectTrigger className="bg-white/5 border-white/10">
+                          <SelectTrigger className="bg-secondary/35 border-border">
                             <SelectValue placeholder="Select foot" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1380,9 +785,8 @@ export default function PlayerDashboard() {
                         </Select>
                       </div>
                     </div>
-
                     <Button
-                      className="w-full bg-primary text-black font-bold h-12 shadow-lg shadow-primary/20 hover:scale-[1.02] transition-transform"
+                      className="w-full bg-primary text-primary-foreground font-bold h-12 hover:scale-[1.02] transition-transform"
                       onClick={handleUploadAndAnalyze}
                     >
                       <Video className="w-5 h-5 mr-2" />
@@ -1395,10 +799,9 @@ export default function PlayerDashboard() {
           </div>
         </DialogContent>
       </Dialog>
-
       {/* Results Modal */}
       <Dialog open={resultsModalOpen} onOpenChange={setResultsModalOpen}>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto bg-background text-white border-white/5 shadow-2xl custom-scrollbar">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto bg-background text-foreground border-border custom-scrollbar">
           <DialogHeader>
             <DialogTitle>{t("player.results.title")}</DialogTitle>
           </DialogHeader>
@@ -1406,7 +809,7 @@ export default function PlayerDashboard() {
             <div className="space-y-6">
               {/* Video and Overall Score */}
               <div className="grid md:grid-cols-2 gap-6">
-                <div className="aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center">
+                <div className="aspect-video bg-black rounded-sm overflow-hidden flex items-center justify-center">
                   {selectedVideoUrl ? (
                     <video
                       controls
@@ -1423,57 +826,19 @@ export default function PlayerDashboard() {
                   )}
                 </div>
                 <div className="flex flex-col justify-center">
-                  <div className="text-center p-6 bg-primary/5 rounded-lg">
-                    <p className="text-sm text-gray-300 mb-2">{t("player.results.overall")}</p>
+                  <div className="text-center p-6 bg-primary/5 rounded-sm">
+                    <p className="text-sm text-muted-foreground mb-2">{t("player.results.overall")}</p>
                     <div className={`text-6xl font-bold ${getScoreColor(selectedAnalysis.overall)}`}>
                       {selectedAnalysis.overall.toFixed(1)}
                     </div>
-                    <p className="text-sm text-gray-300 mt-2">{t("player.results.outOf")}</p>
+                    <p className="text-sm text-muted-foreground mt-2">{t("player.results.outOf")}</p>
                   </div>
                 </div>
               </div>
-
-              {/* Detailed Metrics */}
-              <div className="space-y-3">
-                <h3 className="font-semibold">{t("player.results.detailed")}</h3>
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>{t("player.latestAnalysis.metrics.stability")}</span>
-                    <span className={`font-bold ${getScoreColor(selectedAnalysis.stability)}`}>
-                      {selectedAnalysis.stability.toFixed(1)}
-                    </span>
-                  </div>
-                  <Progress value={selectedAnalysis.stability} className="h-2" />
-                </div>
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>{t("player.latestAnalysis.metrics.power")}</span>
-                    <span className={`font-bold ${getScoreColor(selectedAnalysis.power)}`}>
-                      {selectedAnalysis.power.toFixed(1)}
-                    </span>
-                  </div>
-                  <Progress value={selectedAnalysis.power} className="h-2" />
-                </div>
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>{t("player.latestAnalysis.metrics.technique")}</span>
-                    <span className={`font-bold ${getScoreColor(selectedAnalysis.technique)}`}>
-                      {selectedAnalysis.technique.toFixed(1)}
-                    </span>
-                  </div>
-                  <Progress value={selectedAnalysis.technique} className="h-2" />
-                </div>
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>{t("player.latestAnalysis.metrics.balance")}</span>
-                    <span className={`font-bold ${getScoreColor(selectedAnalysis.balance)}`}>
-                      {selectedAnalysis.balance.toFixed(1)}
-                    </span>
-                  </div>
-                  <Progress value={selectedAnalysis.balance} className="h-2" />
-                </div>
-              </div>
-
+              <section>
+                <h3 className="font-semibold mb-3">{t("player.results.detailed")}</h3>
+                <MetricList scores={selectedAnalysis} labels={metricLabels} />
+              </section>
               {/* Feedback */}
               <div>
                 <h3 className="font-semibold mb-2">{t("player.results.feedback")}</h3>
@@ -1481,13 +846,12 @@ export default function PlayerDashboard() {
                   {selectedAnalysis.feedback}
                 </p>
               </div>
-
               {/* Tags */}
-              {selectedAnalysis.tags && selectedAnalysis.tags.length > 0 && (
+              {selectedTags.length > 0 && (
                 <div>
                   <h3 className="font-semibold mb-2">{t("player.results.tags")}</h3>
                   <div className="flex flex-wrap gap-2">
-                    {selectedAnalysis.tags.map((tag, index) => (
+                    {selectedTags.map((tag, index) => (
                       <Badge key={index} variant="secondary">
                         {tag.replace(/_/g, ' ')}
                       </Badge>
@@ -1495,7 +859,6 @@ export default function PlayerDashboard() {
                   </div>
                 </div>
               )}
-
               {/* Recommended Training */}
               {recommendedTraining.length > 0 && (
                 <div className="pt-4 border-t">
@@ -1510,7 +873,7 @@ export default function PlayerDashboard() {
                     {recommendedTraining.map((level) => (
                       <Card
                         key={level.id}
-                        className="cursor-pointer hover:border-primary transition-colors group bg-card border-primary/10 overflow-hidden shadow-lg shadow-black/20"
+                        className="cursor-pointer hover:border-primary transition-colors group bg-card border-primary/10 overflow-hidden "
                         onClick={() => {
                           setResultsModalOpen(false);
                           navigate(demoNav(`/training?tab=exercises&skill=${level.skill_id}&level=${level.level_name}`));
@@ -1519,21 +882,21 @@ export default function PlayerDashboard() {
                         <CardContent className="p-4">
                           <div className="flex items-center gap-3">
                             <div className="transition-all group-hover:scale-110">
-                              <SkillIconDash icon={level.skills?.icon || '⚽'} size="md" />
+                              <SkillIcon icon={level.skills?.icon || '⚽'} size="md" />
                             </div>
                             <div className="flex-1">
-                              <h4 className="font-semibold text-sm text-white group-hover:text-primary transition-colors">
+                              <h4 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
                                 {level.skills?.name} - {level.level_name.charAt(0).toUpperCase() + level.level_name.slice(1)}
                               </h4>
                               <p className="text-xs text-muted-foreground line-clamp-1">
                                 {level.video_title}
                               </p>
-                              <div className="flex items-center gap-3 mt-2 text-[10px] uppercase font-bold tracking-widest text-slate-400">
+                              <div className="flex items-center gap-3 mt-2 text-[10px] uppercase font-bold tracking-widest text-muted-foreground">
                                 <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {level.duration_minutes} min</span>
                                 <span>+{level.xp_reward} XP</span>
                               </div>
                             </div>
-                            <Button variant="outline" size="sm" className="rounded-xl px-4">
+                            <Button variant="outline" size="sm" className="rounded-sm px-4">
                               {t("player.results.startTraining")}
                             </Button>
                           </div>
@@ -1544,25 +907,26 @@ export default function PlayerDashboard() {
                 </div>
               )}
             </div>
+          ) : !loadingResults ? (
+            <p className="py-8 text-center text-muted-foreground">Could not load this analysis. Close this window and try again.</p>
           ) : (
             <div className="space-y-6">
               {/* Loading Skeleton for Video and Score */}
               <div className="grid md:grid-cols-2 gap-6">
-                <div className="aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center">
+                <div className="aspect-video bg-black rounded-sm overflow-hidden flex items-center justify-center">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <Loader2 className="h-8 w-8 animate-spin" />
                     <span className="text-xs">Loading...</span>
                   </div>
                 </div>
                 <div className="flex flex-col justify-center">
-                  <div className="text-center p-6 bg-primary/5 rounded-lg space-y-3">
+                  <div className="text-center p-6 bg-primary/5 rounded-sm space-y-3">
                     <Skeleton className="h-4 w-24 mx-auto" />
                     <Skeleton className="h-16 w-32 mx-auto" />
                     <Skeleton className="h-4 w-20 mx-auto" />
                   </div>
                 </div>
               </div>
-
               {/* Loading Skeleton for Metrics */}
               <div className="space-y-3">
                 <Skeleton className="h-5 w-40" />
@@ -1571,7 +935,6 @@ export default function PlayerDashboard() {
                 <Skeleton className="h-8 w-full" />
                 <Skeleton className="h-8 w-full" />
               </div>
-
               {/* Loading Skeleton for Feedback */}
               <div className="space-y-2">
                 <Skeleton className="h-5 w-24" />
@@ -1586,6 +949,6 @@ export default function PlayerDashboard() {
         isOpen={teamProfileOpen}
         onClose={() => setTeamProfileOpen(false)}
       />
-    </div>
+    </main>
   );
 }

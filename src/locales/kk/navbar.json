@@ -11,5 +11,36 @@
     },
     "buttons": {
         "getStarted": "Бастау"
+    },
+    "controls": {
+        "mainNavigation": "Негізгі навигация",
+        "quickNavigation": "Жылдам навигация",
+        "account": "Тіркелгі",
+        "menu": "Мәзір",
+        "language": "Тіл",
+        "tryDemo": "Демоны байқап көру",
+        "signIn": "Кіру",
+        "register": "Тіркелгі құру",
+        "myProfile": "Менің профилім",
+        "coachWorkspace": "Бапкер кабинеті",
+        "demoLabel": "Демо режимі",
+        "demoDescription": "Үлгі деректер. Ойыншы профилі мен бапкер кабинетін тіркелмей көріңіз.",
+        "demoShort": "Үлгі деректер. Тіркелу қажет емес.",
+        "demoNavigation": "Демо навигациясы",
+        "exitDemo": "Демодан шығу",
+        "playerDemo": "Ойыншы демосы",
+        "coachDemo": "Бапкер демосы",
+        "uploadVideo": "Видео жүктеу",
+        "mobileUpload": "Бейне",
+        "signOut": "Шығу",
+        "signOutError": "Шығу мүмкін болмады. Қайта көріңіз.",
+        "demoAction": "Өз видеоларыммен бастау",
+        "guestDescription": "Тіркелусіз демо",
+        "languages": {
+            "en": "English",
+            "ru": "Русский",
+            "kk": "Қазақша"
+        },
+        "returnToAccount": "Жеке кабинетіме оралу"
     }
 }

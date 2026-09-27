@@ -1,3 +1,4 @@
+import { SkillIcon } from "@/components/training/SkillIcon";
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,11 +10,9 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useDemoContext } from "@/demo";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useSearchParams } from "react-router-dom";
-import { Play, Target, Loader2, Filter, Lock, CheckCircle, Circle, Trophy, Flame, Star, Zap, ChevronRight, ExternalLink, Footprints, Crosshair, Shield, Dumbbell, Brain, Swords, Goal, CircleDot, Gauge, HeartPulse, Clock, Users, type LucideIcon } from "lucide-react";
-
-
+import { Play, Target, Loader2, Lock, CheckCircle, Trophy, ChevronRight, ExternalLink, Clock, Users } from "lucide-react";
 
 interface Skill {
   id: string;
@@ -50,44 +49,6 @@ interface SkillProgress {
   is_completed: boolean;
 }
 
-// Map database emoji icons to styled lucide icon boxes
-const emojiToIcon: Record<string, LucideIcon> = {
-  '⚽': Goal,          // football → goal
-  '🎯': Crosshair,    // target → crosshair for precision
-  '🏃': Footprints,   // running → footprints
-  '🦶': CircleDot,    // foot → ball control
-  '🔥': Flame,        // fire → intensity
-  '💪': Dumbbell,     // strength → weights
-  '🧠': Brain,        // brain → mental skills
-  '🛡️': Shield,      // shield → defensive
-  '🛡': Shield,
-  '⭐': Star,          // star → excellence
-  '🏆': Trophy,       // trophy → achievement
-  '⚡': Zap,           // lightning → speed/power
-  '🎮': Swords,       // gamepad → tactical
-  '🤾': HeartPulse,   // handball → agility/cardio
-  '🧘': Gauge,        // yoga → balance/stamina
-};
-
-const SkillIcon = ({ icon, size = 'lg' }: { icon: string; size?: 'sm' | 'lg' | 'xl' }) => {
-  const IconComponent = emojiToIcon[icon] || Target;
-  const sizeClasses = {
-    sm: 'w-8 h-8 rounded-lg',
-    lg: 'w-14 h-14 rounded-xl',
-    xl: 'w-20 h-20 rounded-2xl',
-  };
-  const iconSizes = {
-    sm: 'h-4 w-4',
-    lg: 'h-7 w-7',
-    xl: 'h-10 w-10',
-  };
-  return (
-    <div className={`${sizeClasses[size]} bg-[#9FE870]/10 flex items-center justify-center`}>
-      <IconComponent className={`${iconSizes[size]} text-[#9FE870]`} />
-    </div>
-  );
-};
-
 const Training = () => {
   const { t } = useTranslation(["training", "common"]);
   const { user, isLoaded } = useCurrentUser();
@@ -108,7 +69,7 @@ const Training = () => {
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [activeTab, setActiveTab] = useState("interactive");
   const [coachAssignments, setCoachAssignments] = useState<any[]>([]);
-  const [isLoadingAssignments, setIsLoadingAssignments] = useState(false);
+  const [assignment, setAssignment] = useState<(typeof coachAssignments)[number] | null>(null);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [searchParams] = useSearchParams();
   const skillDetailsRef = useRef<HTMLDivElement>(null);
@@ -116,7 +77,7 @@ const Training = () => {
   // Auto-scroll when skill is selected
   useEffect(() => {
     if (selectedSkill && skillDetailsRef.current) {
-      const navbarOffset = 300; // Account for sticky navbar + extra breathing room
+      const navbarOffset = 24;
       const elementPosition = skillDetailsRef.current.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - navbarOffset;
 
@@ -170,7 +131,6 @@ const Training = () => {
   const userXP = playerProgress?.total_xp || 0;
   const userLevel = playerProgress?.level || 1;
   const streak = playerProgress?.current_streak || 0;
-  const xpToNextLevel = userLevel * 500; // Simple scaling
   const xpProgress = (userXP % 500 / 500) * 100;
 
   // 1. Fetch DB User ID from Clerk ID
@@ -264,18 +224,15 @@ const Training = () => {
     if (demo) return;
     const fetchAssignments = async () => {
       if (!dbUserId) return;
-      setIsLoadingAssignments(true);
       try {
         const { data, error } = await supabase
           .from("training_session_players")
-          .select("*, training_sessions(*)")
+          .select("*, training_sessions(*, training_session_exercises(*, exercises(name, description)))")
           .eq("player_id", dbUserId)
           .eq("status", "assigned")
           .order("created_at", { ascending: false });
         if (!error && data) setCoachAssignments(data);
-      } catch { /* ignore */ } finally {
-        setIsLoadingAssignments(false);
-      }
+      } catch (error) { console.error("Could not load assigned training", error); }
     };
     fetchAssignments();
   }, [dbUserId, demo]);
@@ -438,92 +395,34 @@ const Training = () => {
     }
   };
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'beginner': return 'bg-success';
-      case 'intermediate': return 'bg-warning';
-      case 'advanced': return 'bg-destructive';
-      default: return 'bg-muted';
-    }
-  };
-
-  const getTierColor = (tier: number) => {
-    switch (tier) {
-      case 1: return 'from-success to-success/70';
-      case 2: return 'from-info to-cyber-blue';
-      case 3: return 'from-warning to-gold';
-      case 4: return 'from-xp to-primary';
-      default: return 'from-muted to-muted-foreground';
-    }
-  };
-
   return (
-    <div className="container px-4 md:px-6 py-6 md:py-8 space-y-8 max-w-7xl mx-auto">
+    <div className="design-page design-secondary-page space-y-8">
       {/* Header with Stats */}
       <div className="space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="design-training-header flex flex-col gap-6 border-b border-border pb-8 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-gradient mb-2">{t("header.title")}</h1>
+            <p className="editorial-eyebrow mb-3">OPENSPORT / TRAINING</p>
+            <h1 className="mb-3 text-4xl font-extrabold uppercase tracking-[-.04em] md:text-6xl">{t("header.title")}</h1>
             <p className="text-muted-foreground text-sm md:text-base">
               {t("header.subtitle")}
             </p>
           </div>
 
-          {/* User Stats */}
-          <div className="grid grid-cols-3 md:flex gap-2 md:gap-4 w-full md:w-auto">
-            <Card className="glass-card">
-              <CardContent className="p-3 md:p-4 flex items-center gap-2 md:gap-3">
-                <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-gradient-xp flex items-center justify-center flex-shrink-0">
-                  <Star className="h-4 w-4 md:h-6 md:w-6 text-white" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] md:text-xs text-muted-foreground uppercase font-bold tracking-wider">{t("stats.level")}</p>
-                  <p className="text-lg md:text-2xl font-bold">{userLevel}</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="glass-card">
-              <CardContent className="p-3 md:p-4 flex items-center gap-2 md:gap-3">
-                <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-gradient-premium flex items-center justify-center flex-shrink-0">
-                  <Flame className="h-4 w-4 md:h-6 md:w-6 text-white" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] md:text-xs text-muted-foreground uppercase font-bold tracking-wider">{t("stats.streak")}</p>
-                  <p className="text-lg md:text-2xl font-bold">{streak}</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="glass-card">
-              <CardContent className="p-3 md:p-4 flex items-center gap-2 md:gap-3">
-                <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-gradient-skill flex items-center justify-center flex-shrink-0">
-                  <Zap className="h-4 w-4 md:h-6 md:w-6 text-white" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] md:text-xs text-muted-foreground uppercase font-bold tracking-wider">{t("stats.xp")}</p>
-                  <p className="text-lg md:text-2xl font-bold">{userXP}</p>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="design-training-stats">
+            <div><span className="design-eyebrow">{t("stats.level")}</span><strong>{userLevel}</strong></div>
+            <div><span className="design-eyebrow">{t("stats.streak")}</span><strong>{streak}</strong></div>
+            <div><span className="design-eyebrow">{t("stats.xp")}</span><strong>{userXP}</strong></div>
           </div>
         </div>
-
-        {/* XP Progress Bar */}
-        <Card className="bg-gradient-card border-2 border-primary/20">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-bold">{t("progress.levelProgress", { level: userLevel })}</span>
-              <span className="text-sm text-muted-foreground">{t("progress.xpToNext", { current: userXP % 500, total: 500 })}</span>
-            </div>
-            <Progress value={xpProgress} className="h-3 bg-muted" />
-          </CardContent>
-        </Card>
+        <div className="pb-6 border-b">
+          <div className="flex items-center justify-between mb-3 text-sm"><span>{t("progress.levelProgress", { level:userLevel })}</span><span className="design-mono text-xs text-muted-foreground">{t("progress.xpToNext", { current:userXP % 500, total:500 })}</span></div>
+          <Progress value={xpProgress} className="h-[3px]" />
+        </div>
       </div>
 
       {/* Coach Assignments */}
       {coachAssignments.length > 0 && (
-        <Card className="glass-card border-primary/20">
+        <Card className="border-primary/20">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
@@ -535,15 +434,15 @@ const Training = () => {
           </CardHeader>
           <CardContent className="space-y-3">
             {coachAssignments.map((a: any) => (
-              <div key={a.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-white/5">
+              <div key={a.id} className="flex items-center justify-between p-3 rounded-sm bg-muted/50 border border-border">
                 <div className="flex items-center gap-3">
                   <Clock className="h-5 w-5 text-muted-foreground" />
                   <div>
-                    <p className="font-medium text-sm">{a.training_sessions?.title || `Session #${a.session_id?.slice(0, 8)}`}</p>
+                    <p className="font-medium text-sm">{a.training_sessions?.name || `Session #${a.session_id?.slice(0, 8)}`}</p>
                     <p className="text-xs text-muted-foreground">{a.training_sessions?.description || ""}</p>
                   </div>
                 </div>
-                <Button size="sm" variant="outline" className="gap-1">
+                <Button size="sm" variant="outline" className="gap-1" onClick={() => setAssignment(a)}>
                   <Play className="h-3.5 w-3.5" />
                   {t("coachAssignments.start", "Начать")}
                 </Button>
@@ -553,13 +452,22 @@ const Training = () => {
         </Card>
       )}
 
+      <Dialog open={!!assignment} onOpenChange={open => { if (!open) setAssignment(null); }}>
+        <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>{assignment?.training_sessions?.name || t("coachAssignments.title")}</DialogTitle><DialogDescription>{assignment?.training_sessions?.objective || assignment?.training_sessions?.description}</DialogDescription></DialogHeader>
+          <p className="design-eyebrow">{assignment?.training_sessions?.date} · {assignment?.training_sessions?.duration_minutes} min</p>
+          {assignment?.training_sessions?.training_session_exercises?.map((exercise: { id:string; duration_minutes:number; notes?:string; exercises?:{ name:string; description:string } }) => <div key={exercise.id} className="design-drill"><span className="design-drill-category">{exercise.duration_minutes} min</span><h3 className="design-drill-title">{exercise.exercises?.name || "Exercise"}</h3><p className="text-sm text-muted-foreground">{exercise.notes || exercise.exercises?.description}</p></div>)}
+          <Button variant="outline" onClick={() => setAssignment(null)}>{t("modal.close")}</Button>
+        </DialogContent>
+      </Dialog>
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 h-14 p-1 bg-card border border-white/5 rounded-xl">
-          <TabsTrigger value="interactive" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-black text-muted-foreground font-bold">
+        <TabsList className="w-full justify-start gap-7 rounded-none bg-transparent border-b h-auto p-0">
+          <TabsTrigger value="interactive" className="rounded-none border-b-2 border-transparent px-0 pb-3 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground text-muted-foreground font-medium">
             <Trophy className="h-4 w-4 mr-2" />
             {t("tabs.skillTree")}
           </TabsTrigger>
-          <TabsTrigger value="exercises" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-black text-muted-foreground font-bold">
+          <TabsTrigger value="exercises" className="rounded-none border-b-2 border-transparent px-0 pb-3 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground text-muted-foreground font-medium">
             <Target className="h-4 w-4 mr-2" />
             {t("tabs.library")}
           </TabsTrigger>
@@ -590,34 +498,34 @@ const Training = () => {
                         key={skill.id}
                         onClick={() => unlocked && setSelectedSkill(skill)}
                         disabled={!unlocked}
-                        className={`group relative p-4 md:p-8 rounded-3xl border-2 transition-all duration-300 text-center flex flex-col items-center gap-2 md:gap-4 ${unlocked
-                          ? 'bg-card border-white/5 hover:border-primary hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1'
+                        className={`group relative p-4 md:p-8 rounded-sm border transition-all duration-300 text-center flex flex-col items-center gap-2 md:gap-4 ${unlocked
+                          ? 'bg-card border-border hover:border-primary '
                           : 'bg-background/5 border-transparent opacity-40 cursor-not-allowed'
-                          } ${isFullyCompleted ? 'ring-4 ring-primary/10 border-primary' : ''}`}
+                          } ${isFullyCompleted ? ' border-primary' : ''}`}
                       >
                         <div className={`transition-transform group-hover:scale-110 ${!unlocked && 'grayscale opacity-50'}`}>
                           <SkillIcon icon={skill.icon} size="lg" />
                         </div>
                         <div>
-                          <h3 className="font-bold text-white group-hover:text-primary transition-colors">{skill.name}</h3>
-                          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-300 mt-1">{skill.category}</p>
+                          <h3 className="font-bold text-foreground group-hover:text-primary transition-colors">{skill.name}</h3>
+                          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mt-1">{skill.category}</p>
                         </div>
 
                         {unlocked ? (
                           <div className="w-full mt-2">
-                            <div className="flex justify-between text-[10px] font-bold text-slate-500 mb-1.5 px-1">
+                            <div className="flex justify-between text-[10px] font-bold text-muted-foreground mb-1.5 px-1">
                               <span>{t("skillTree.progress")}</span>
                               <span>{Math.round((completedCount / (levels.length || 1)) * 100)}%</span>
                             </div>
                             <Progress value={(completedCount / (levels.length || 1)) * 100} className="h-1.5" />
                             {isFullyCompleted && (
-                              <div className="absolute top-4 right-4 text-primary bg-primary/10 p-1.5 rounded-full">
+                              <div className="absolute top-4 right-4 text-primary bg-primary/10 p-1.5 rounded-none">
                                 <CheckCircle className="h-4 w-4" />
                               </div>
                             )}
                           </div>
                         ) : (
-                          <div className="mt-2 text-slate-300">
+                          <div className="mt-2 text-muted-foreground">
                             <Lock className="h-6 w-6" />
                           </div>
                         )}
@@ -632,18 +540,18 @@ const Training = () => {
           {/* Detailed Skill View Modal/Section could go here */}
           {selectedSkill && (
             <div ref={skillDetailsRef} className="pb-36">
-              <Card className="mt-8 mb-12 border-2 border-primary/20 bg-background p-8 rounded-[2rem] shadow-xl animate-in fade-in slide-in-from-bottom-4">
+              <Card className="mt-8 mb-12 border border-primary/20 bg-background p-8 rounded-none animate-in fade-in slide-in-from-bottom-4">
                 <div className="flex flex-col md:flex-row gap-8">
                   <div className="md:w-1/3 space-y-4">
                     <div className="mb-4"><SkillIcon icon={selectedSkill.icon} size="xl" /></div>
                     <h2 className="text-3xl font-bold">{selectedSkill.name}</h2>
                     <p className="text-slate-600 leading-relaxed font-medium">{selectedSkill.description}</p>
-                    <Button variant="outline" onClick={() => setSelectedSkill(null)} className="w-full rounded-2xl">
+                    <Button variant="outline" onClick={() => setSelectedSkill(null)} className="w-full rounded-sm">
                       {t("skillTree.back")}
                     </Button>
                   </div>
                   <div className="md:w-2/3 space-y-4">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">{t("skillTree.availableTiers")}</h3>
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t("skillTree.availableTiers")}</h3>
                     <div className="grid gap-3">
                       {getLevelsForSkill(selectedSkill.id).map((level) => {
                         const unlocked = isLevelUnlocked(selectedSkill.id, level.level_order);
@@ -652,19 +560,19 @@ const Training = () => {
                         return (
                           <div
                             key={level.id}
-                            className={`p-5 rounded-2xl border-2 flex items-center justify-between transition-all ${unlocked
-                              ? 'border-slate-100 bg-background hover:border-primary/30'
-                              : 'border-transparent bg-slate-50 opacity-40'
+                            className={`p-5 rounded-sm border flex items-center justify-between transition-all ${unlocked
+                              ? 'border-border bg-background hover:border-primary/30'
+                              : 'border-transparent bg-secondary/40 opacity-40'
                               }`}
                           >
                             <div className="flex items-center gap-4">
-                              <div className={`h-10 w-10 rounded-xl flex items-center justify-center font-bold ${isCompleted ? 'bg-green-500 text-white' : 'bg-slate-100 text-slate-400'
+                              <div className={`h-10 w-10 rounded-sm flex items-center justify-center font-bold ${isCompleted ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'
                                 }`}>
                                 {isCompleted ? <CheckCircle className="h-6 w-6" /> : level.level_order}
                               </div>
                               <div>
-                                <p className="font-bold text-white capitalize">{t("skillTree.tier", { name: level.level_name })}</p>
-                                <p className="text-xs font-semibold text-gray-300 uppercase tracking-widest">{level.video_title}</p>
+                                <p className="font-bold text-foreground capitalize">{t("skillTree.tier", { name: level.level_name })}</p>
+                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">{level.video_title}</p>
                               </div>
                             </div>
                             <div className="flex items-center gap-3">
@@ -672,7 +580,7 @@ const Training = () => {
                               <Button
                                 size="sm"
                                 disabled={!unlocked}
-                                className="rounded-xl px-6"
+                                className="rounded-sm px-6"
                                 onClick={() => {
                                   setSelectedLevel(level);
                                   setShowVideoModal(true);
@@ -693,29 +601,15 @@ const Training = () => {
         </TabsContent>
 
         <TabsContent value="exercises" className="space-y-6">
-          <div className="grid md:grid-cols-4 gap-6">
-            <div className="md:col-span-1 space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm font-bold uppercase tracking-widest text-slate-400">{t("library.categories")}</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-2">
-                  {['all', 'passing', 'technical', 'dribbling', 'shooting', 'defensive', 'physical', 'mental'].map(cat => (
-                    <Button
-                      key={cat}
-                      variant={categoryFilter === cat ? 'default' : 'ghost'}
-                      onClick={() => setCategoryFilter(cat)}
-                      className="justify-start text-xs font-bold uppercase tracking-widest px-4 h-10 rounded-xl"
-                    >
-                      {t(`library.cat.${cat}`)}
-                    </Button>
-                  ))}
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="md:col-span-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="space-y-6">
+            <section className="design-library-filters" aria-label={t("library.categories")}>
+              <h2 className="design-eyebrow">{t("library.categories")}</h2>
+              <div className="design-category-options">
+                {['all', 'passing', 'technical', 'dribbling', 'shooting', 'defensive', 'physical', 'mental'].map(cat => <Button key={cat} variant={categoryFilter === cat ? 'default' : 'ghost'} aria-pressed={categoryFilter === cat} onClick={() => setCategoryFilter(cat)} className="text-xs font-semibold px-4 h-10">{t(`library.cat.${cat}`)}</Button>)}
+              </div>
+            </section>
+            <div>
+              <div className="design-exercise-grid">
                 {skillLevels
                   .filter(level => {
                     if (categoryFilter === 'all') return true;
@@ -729,29 +623,29 @@ const Training = () => {
                     return (
                       <Card
                         key={level.id}
-                        className="group overflow-hidden border-slate-100 hover:border-primary/50 transition-all cursor-pointer hover:shadow-xl rounded-3xl"
+                        className="group overflow-hidden border-border hover:border-primary/50 transition-all cursor-pointer rounded-sm"
                         onClick={() => {
                           setSelectedLevel(level);
                           setShowVideoModal(true);
                         }}
                       >
-                        <div className="aspect-video bg-slate-900 relative overflow-hidden">
+                        <div className="aspect-video bg-secondary relative overflow-hidden">
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <Play className="h-10 w-10 text-white/50 group-hover:scale-125 group-hover:text-primary transition-all duration-300" />
+                            <Play className="h-10 w-10 text-muted-foreground group-hover:scale-125 group-hover:text-primary transition-all duration-300" />
                           </div>
                           {isCompleted && (
-                            <div className="absolute top-3 right-3 bg-green-500 text-white p-1.5 rounded-full shadow-lg">
+                            <div className="absolute top-3 right-3 bg-primary text-primary-foreground p-1.5 rounded-none ">
                               <CheckCircle className="h-3 w-3" />
                             </div>
                           )}
-                          <Badge className="absolute bottom-3 left-3 bg-black/50 backdrop-blur-md border-none text-[10px] font-bold uppercase">
+                          <Badge className="absolute bottom-3 left-3 bg-primary text-primary-foreground border-none text-[10px] font-bold uppercase">
                             {level.duration_minutes} {t("library.min")}
                           </Badge>
                         </div>
                         <CardHeader className="p-5">
                           <div className="flex items-center gap-2 mb-2">
                             <SkillIcon icon={skill?.icon || '⚽'} size="sm" />
-                            <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
+                            <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
                               {level.level_name}
                             </Badge>
                           </div>
@@ -764,8 +658,8 @@ const Training = () => {
                         </CardHeader>
                         <CardContent className="px-5 pb-5 pt-0">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-black">+{level.xp_reward} XP</span>
-                            <ChevronRight className="h-4 w-4 text-slate-300 group-hover:translate-x-1 transition-transform" />
+                            <span className="font-mono text-xs font-medium text-primary">+{level.xp_reward} XP</span>
+                            <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
                           </div>
                         </CardContent>
                       </Card>
@@ -782,7 +676,7 @@ const Training = () => {
       {
         selectedLevel && (
           <Dialog open={showVideoModal} onOpenChange={setShowVideoModal}>
-            <DialogContent className="sm:max-w-[1000px] p-0 overflow-hidden bg-background text-white border-white/5 shadow-2xl rounded-3xl">
+            <DialogContent className="sm:max-w-[1000px] p-0 overflow-hidden bg-background text-foreground border-border rounded-sm">
               <div className="aspect-video w-full">
                 {/* Replace URL with proper embed if needed */}
                 <iframe
@@ -795,13 +689,13 @@ const Training = () => {
               <div className="p-8 bg-background space-y-6">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h2 className="text-2xl font-bold text-white">{selectedLevel.video_title}</h2>
+                    <h2 className="text-2xl font-bold text-foreground">{selectedLevel.video_title}</h2>
                     <div className="flex items-center gap-2 mt-2">
                       <Badge className="bg-primary/10 text-primary border-none text-[10px] font-bold uppercase tracking-widest">
                         {t("skillTree.tier", { name: selectedLevel.level_name })}
                       </Badge>
-                      <span className="text-slate-300">•</span>
-                      <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">{selectedLevel.duration_minutes} {t("library.min")}</span>
+                      <span className="text-muted-foreground">•</span>
+                      <span className="text-muted-foreground text-xs font-bold uppercase tracking-widest">{selectedLevel.duration_minutes} {t("library.min")}</span>
                     </div>
                   </div>
                   <div className="text-right">
@@ -810,21 +704,21 @@ const Training = () => {
                   </div>
                 </div>
 
-                <div className="h-px bg-slate-100" />
+                <div className="h-px bg-secondary" />
 
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-slate-500">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <ExternalLink className="h-4 w-4" />
                     <a href={selectedLevel.youtube_url} target="_blank" rel="noopener noreferrer" className="text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors">
                       {t("modal.watchOnYoutube")}
                     </a>
                   </div>
                   <div className="flex gap-3">
-                    <Button variant="outline" onClick={() => setShowVideoModal(false)} className="rounded-2xl px-8">
+                    <Button variant="outline" onClick={() => setShowVideoModal(false)} className="rounded-sm px-8">
                       {t("modal.close")}
                     </Button>
                     <Button
-                      className="rounded-2xl px-12 shadow-xl shadow-primary/20"
+                      className="rounded-sm px-12 "
                       onClick={() => {
                         completeLevel(selectedLevel.id, selectedLevel.skill_id, selectedLevel.level_name);
                         setShowVideoModal(false);

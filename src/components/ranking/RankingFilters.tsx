@@ -22,8 +22,8 @@ export function RankingFilters({ filters, onFilterChange, onReset }: RankingFilt
     const ageGroups = ["U14", "U15", "U16", "U17", "U18", "U19+"];
 
     return (
-        <div className="flex flex-col md:flex-row gap-4 items-end bg-card/50 p-4 rounded-xl border border-white/5">
-            <div className="w-full md:w-48 space-y-2">
+        <div className="design-ranking-filters">
+            <div className="w-full space-y-2">
                 <label className="text-sm font-medium text-muted-foreground">{t("filters.position")}</label>
                 <Select
                     value={filters.position}
@@ -43,7 +43,7 @@ export function RankingFilters({ filters, onFilterChange, onReset }: RankingFilt
                 </Select>
             </div>
 
-            <div className="w-full md:w-48 space-y-2">
+            <div className="w-full space-y-2">
                 <label className="text-sm font-medium text-muted-foreground">{t("filters.ageGroup")}</label>
                 <Select
                     value={filters.ageGroup}
@@ -63,7 +63,7 @@ export function RankingFilters({ filters, onFilterChange, onReset }: RankingFilt
                 </Select>
             </div>
 
-            <div className="w-full md:w-48 space-y-2">
+            <div className="w-full space-y-2">
                 <label className="text-sm font-medium text-muted-foreground">{t("filters.country")}</label>
                 <Input
                     placeholder={t("filters.countryPlaceholder")}
@@ -72,7 +72,7 @@ export function RankingFilters({ filters, onFilterChange, onReset }: RankingFilt
                 />
             </div>
 
-            <div className="w-full md:w-48 space-y-2">
+            <div className="w-full space-y-2">
                 <label className="text-sm font-medium text-muted-foreground">{t("filters.city")}</label>
                 <Input
                     placeholder={t("filters.cityPlaceholder")}
@@ -83,12 +83,12 @@ export function RankingFilters({ filters, onFilterChange, onReset }: RankingFilt
 
             <Button
                 variant="ghost"
-                size="icon"
+                size="sm"
                 onClick={onReset}
-                className="shrink-0 text-muted-foreground hover:text-white mb-0.5"
+                className="shrink-0 text-muted-foreground hover:text-foreground mb-0.5"
                 title={t("filters.reset")}
             >
-                <RotateCcw className="h-5 w-5" />
+                <RotateCcw className="h-4 w-4 mr-2" />{t("filters.reset")}
             </Button>
         </div>
     );

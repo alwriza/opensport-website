@@ -1,162 +1,55 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Loader2, User, Trophy, Activity, Zap, Move, Shield } from "lucide-react";
+import { useDesignCopy } from "@/hooks/useDesignCopy";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { MetricList, type ScoreValues } from "@/components/redesign/primitives";
+import type { RankingPlayer } from "@/types/ranking";
 import { supabase } from "@/integrations/supabase/client";
-import { useTranslation } from "react-i18next";
-import { Badge } from "@/components/ui/badge";
-import { useDemoContext } from "@/demo/DemoContext";
+import { useDemoContext } from "@/demo";
 
-interface PlayerPreviewModalProps {
-    player: any; // Using any for now to avoid duplicate interface, or import shared one
-    isOpen: boolean;
-    onClose: () => void;
-}
-
-interface Analysis {
-    stability: number;
-    power: number;
-    technique: number;
-    balance: number;
-}
-
-export function PlayerPreviewModal({ player, isOpen, onClose }: PlayerPreviewModalProps) {
-    const { t } = useTranslation("ranking");
-
-    const demo = useDemoContext();
-
-    const DEMO_ANALYSES: Record<string, Analysis> = {
-        "demo-other-1": { stability: 82, power: 91, technique: 85, balance: 78 },
-        "demo-other-2": { stability: 79, power: 74, technique: 94, balance: 82 },
-        "demo-other-3": { stability: 92, power: 70, technique: 76, balance: 88 },
-        "demo-other-4": { stability: 95, power: 66, technique: 72, balance: 84 },
-        "demo-other-5": { stability: 70, power: 78, technique: 88, balance: 76 },
-    };
-
-    const { data: bestAnalysis, isLoading } = useQuery<Analysis | null>({
-        queryKey: ['best-analysis', player?.user_id],
-        queryFn: async () => {
-            if (!player?.user_id) return null;
-            if (demo) {
-                return DEMO_ANALYSES[player.user_id] ?? { stability: 75, power: 75, technique: 75, balance: 75 };
-            }
-            const { data, error } = await supabase
-                .from('analyses')
-                .select('*')
-                .eq('user_id', player.user_id)
-                .order('overall', { ascending: false })
-                .limit(1)
-                .single();
-
-            if (error) throw error;
-            return data as Analysis;
-        },
-        enabled: !!player?.user_id && isOpen,
-    });
-
-    if (!player) return null;
-
-    return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-md bg-card border-white/10 text-card-foreground">
-                <DialogHeader>
-                    <DialogTitle className="text-center">{t("modal.title")}</DialogTitle>
-                </DialogHeader>
-
-                <div className="flex flex-col items-center space-y-4 py-4">
-                    <Avatar className="h-24 w-24 border-2 border-primary/20">
-                        <AvatarImage src={player.avatar_url} />
-                        <AvatarFallback className="bg-primary/10 text-primary text-2xl">
-                            {player.name?.charAt(0) || <User className="h-10 w-10" />}
-                        </AvatarFallback>
-                    </Avatar>
-
-                    <div className="text-center space-y-1">
-                        <h3 className="text-2xl font-bold">{player.name}</h3>
-                        <p className="text-muted-foreground flex items-center justify-center gap-2">
-                            <span className="font-medium text-foreground">{player.position || "-"}</span>
-                            <span>•</span>
-                            <span>U{player.age || "??"}</span>
-                            <span>•</span>
-                            <span>{player.city}, {player.country}</span>
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 w-full">
-                        <div className="bg-primary/10 p-4 rounded-xl text-center border border-primary/20">
-                            <p className="text-sm text-muted-foreground uppercase tracking-wider">{t("modal.bestScore")}</p>
-                            <p className="text-4xl font-black text-primary">{player.best_score?.toFixed(1) || "0.0"}</p>
-                        </div>
-                        <div className="bg-white/5 p-4 rounded-xl text-center border border-white/10">
-                            <p className="text-sm text-muted-foreground uppercase tracking-wider">{t("modal.totalAnalyses")}</p>
-                            <p className="text-4xl font-bold text-white">{player.total_analyses || 0}</p>
-                        </div>
-                    </div>
-
-                    {isLoading ? (
-                        <div className="py-8">
-                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                        </div>
-                    ) : bestAnalysis ? (
-                        <div className="w-full space-y-3">
-                            <h4 className="font-medium text-muted-foreground text-sm uppercase mb-2">{t("modal.breakdown")}</h4>
-
-                            <div className="space-y-3">
-                                <ScoreRow
-                                    label={t("scores.stability")}
-                                    value={bestAnalysis.stability}
-                                    icon={<Shield className="h-4 w-4 text-emerald-400" />}
-                                />
-                                <ScoreRow
-                                    label={t("scores.power")}
-                                    value={bestAnalysis.power}
-                                    icon={<Zap className="h-4 w-4 text-amber-400" />}
-                                />
-                                <ScoreRow
-                                    label={t("scores.technique")}
-                                    value={bestAnalysis.technique}
-                                    icon={<Activity className="h-4 w-4 text-blue-400" />}
-                                />
-                                <ScoreRow
-                                    label={t("scores.balance")}
-                                    value={bestAnalysis.balance}
-                                    icon={<Move className="h-4 w-4 text-purple-400" />}
-                                />
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="text-center py-4 text-muted-foreground">
-                            {t("modal.noData")}
-                        </div>
-                    )}
-
-                    <div className="flex gap-3 w-full pt-4">
-                        <Button className="flex-1" variant="outline" onClick={onClose}>
-                            {t("modal.close")}
-                        </Button>
-                        <Button className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90">
-                            {t("modal.viewProfile")}
-                        </Button>
-                    </div>
-                </div>
-            </DialogContent>
-        </Dialog>
-    );
-}
-
-function ScoreRow({ label, value, icon }: { label: string, value: number, icon: any }) {
-    return (
-        <div className="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors">
-            <div className="flex items-center gap-3">
-                <div className="p-2 bg-white/5 rounded-full">
-                    {icon}
-                </div>
-                <span className="font-medium">{label}</span>
-            </div>
-            <Badge variant="outline" className="text-lg px-3 py-1 bg-background/50 border-white/10">
-                {value?.toFixed(0)}
-            </Badge>
+export function PlayerPreviewModal({ player, isOpen, onClose, onCompare, selectedForComparison }: {
+  player: RankingPlayer | null; isOpen: boolean; onClose: () => void; onCompare: (id: string) => void; selectedForComparison: boolean;
+}) {
+  const demo = useDemoContext();
+  const copy = useDesignCopy();
+  const { data: analysis, isLoading, isError } = useQuery<ScoreValues | null>({
+    queryKey: ["ranking-player-analysis", player?.id, !!demo],
+    enabled: isOpen && !!player,
+    queryFn: async () => {
+      if (!player) return null;
+      if (demo) return demo.roster.find(person => person.name === player.name)?.metrics ?? null;
+      const { data: videos, error } = await supabase.from("videos").select("id").eq("user_id", player.id).eq("status", "completed");
+      if (error) throw error;
+      if (!videos?.length) return null;
+      const { data, error: analysisError } = await supabase.from("analyses").select("stability, power, technique, balance").in("video_id", videos.map(video => video.id)).order("overall", { ascending: false }).limit(1).maybeSingle();
+      if (analysisError) throw analysisError;
+      return data;
+    },
+  });
+  return <Dialog open={isOpen} onOpenChange={open => { if (!open) onClose(); }}>
+    <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle>{player?.name}</DialogTitle>
+      </DialogHeader>
+      {player && <>
+        <p className="design-eyebrow">{player.position} · {player.age != null ? `U${player.age}` : "Age not set"} · {player.city || "City not set"}</p>
+        <div className="flex justify-between border-y py-5">
+          <div>
+            <span className="design-eyebrow">Best score</span>
+            <p className="design-mono text-4xl mt-2">{player.aiScore.toFixed(1)}<small className="text-sm text-muted-foreground"> /100</small></p>
+          </div>
+          <div>
+            <span className="design-eyebrow">Rank</span>
+            <p className="design-mono text-4xl mt-2">{player.rank}</p>
+          </div>
         </div>
-    );
+        {isLoading ? <Loader2 className="animate-spin my-4" /> : analysis ? <MetricList scores={analysis} /> : <p className="text-sm text-muted-foreground">{isError ? "Could not load the technique breakdown." : "No detailed analysis available."}</p>}
+        <div className="flex gap-3">
+          <button className="design-button design-button-outline" onClick={() => onCompare(player.id)}>{copy(selectedForComparison ? "Remove from comparison" : "Compare")}</button>
+          <Link className="design-button flex-1" to={`${demo ? "/demo" : ""}/player/${player.id}`} onClick={onClose}>{copy("Open profile →")}</Link>
+        </div>
+      </>}
+    </DialogContent>
+  </Dialog>;
 }

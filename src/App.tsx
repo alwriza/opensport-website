@@ -3,18 +3,16 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Outlet, useLocation, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet, Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import Navbar from "@/components/ui/navbar";
-import DemoNavbar from "@/components/ui/DemoNavbar";
 import ScrollToTop from "@/components/ScrollToTop";
 import Home from "./pages/Home";
 import PlayerDashboard from "./pages/PlayerDashboard";
 import Training from "./pages/Training";
 import Ranking from "./pages/Ranking";
 import Duels from "./pages/Duels";
-import About from "./pages/About";
 
 const PlayerProfile = lazy(() => import("./pages/PlayerProfile"));
 const CoachDashboard = lazy(() => import("./pages/CoachDashboard"));
@@ -31,22 +29,15 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Footer from "@/components/ui/Footer";
 import { DemoProvider } from "@/demo/DemoContext";
+import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
 
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoaded } = useCurrentUser();
-  if (!isLoaded) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-8 w-8 animate-spin text-[#9FE870]" /></div>;
+  if (!isLoaded) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   if (!user) return <Navigate to="/login" replace />;
   return <>{children}</>;
-}
-
-function AppNavbar() {
-  const location = useLocation();
-  if (location.pathname.startsWith("/demo")) {
-    return <DemoNavbar />;
-  }
-  return <Navbar />;
 }
 
 const App = () => (
@@ -57,7 +48,7 @@ const App = () => (
       <BrowserRouter>
         <ScrollToTop />
         <div className="min-h-screen bg-background">
-          <AppNavbar />
+          <Navbar />
           <Routes>
             <Route path="/" element={<Home />} />
 
@@ -96,8 +87,9 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <Footer />
         </div>
-        <Footer />
+        <OnboardingTour />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

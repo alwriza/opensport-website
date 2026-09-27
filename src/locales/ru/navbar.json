@@ -11,5 +11,36 @@
     },
     "buttons": {
         "getStarted": "Начать"
+    },
+    "controls": {
+        "mainNavigation": "Основная навигация",
+        "quickNavigation": "Быстрая навигация",
+        "account": "Аккаунт",
+        "menu": "Меню",
+        "language": "Язык",
+        "tryDemo": "Попробовать демо",
+        "signIn": "Войти",
+        "register": "Создать аккаунт",
+        "myProfile": "Мой профиль",
+        "coachWorkspace": "Кабинет тренера",
+        "demoLabel": "Демо-режим",
+        "demoDescription": "Пример данных. Изучите профиль игрока и кабинет тренера без регистрации.",
+        "demoShort": "Данные для примера. Без регистрации.",
+        "demoNavigation": "Навигация демо",
+        "exitDemo": "Выйти из демо",
+        "playerDemo": "Демо игрока",
+        "coachDemo": "Демо тренера",
+        "uploadVideo": "Загрузить видео",
+        "mobileUpload": "Видео",
+        "signOut": "Выйти",
+        "signOutError": "Не удалось выйти. Попробуйте ещё раз.",
+        "demoAction": "Начать со своими видео",
+        "guestDescription": "Демо без регистрации",
+        "languages": {
+            "en": "English",
+            "ru": "Русский",
+            "kk": "Қазақша"
+        },
+        "returnToAccount": "Вернуться в мой кабинет"
     }
 }

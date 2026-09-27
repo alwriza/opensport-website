@@ -16,6 +16,8 @@ import trainingEN from './locales/en/training.json';
 import termsEN from './locales/en/terms.json';
 import privacyEN from './locales/en/privacy.json';
 import rankingEN from './locales/en/ranking.json';
+import redesignEN from './locales/en/redesign.json';
+import onboardingEN from './locales/en/onboarding.json';
 
 // RU
 import commonRU from './locales/ru/common.json';
@@ -31,6 +33,8 @@ import trainingRU from './locales/ru/training.json';
 import termsRU from './locales/ru/terms.json';
 import privacyRU from './locales/ru/privacy.json';
 import rankingRU from './locales/ru/ranking.json';
+import redesignRU from './locales/ru/redesign.json';
+import onboardingRU from './locales/ru/onboarding.json';
 
 // KK
 import commonKK from './locales/kk/common.json';
@@ -46,6 +50,8 @@ import trainingKK from './locales/kk/training.json';
 import termsKK from './locales/kk/terms.json';
 import privacyKK from './locales/kk/privacy.json';
 import rankingKK from './locales/kk/ranking.json';
+import redesignKK from './locales/kk/redesign.json';
+import onboardingKK from './locales/kk/onboarding.json';
 
 export const defaultNS = 'common';
 export const resources = {
@@ -63,6 +69,8 @@ export const resources = {
         terms: termsEN,
         privacy: privacyEN,
         ranking: rankingEN,
+        redesign: redesignEN,
+        onboarding: onboardingEN,
     },
     ru: {
         common: commonRU,
@@ -78,6 +86,8 @@ export const resources = {
         terms: termsRU,
         privacy: privacyRU,
         ranking: rankingRU,
+        redesign: redesignRU,
+        onboarding: onboardingRU,
     },
     kk: {
         common: commonKK,
@@ -93,6 +103,8 @@ export const resources = {
         terms: termsKK,
         privacy: privacyKK,
         ranking: rankingKK,
+        redesign: redesignKK,
+        onboarding: onboardingKK,
     },
 } as const;
 

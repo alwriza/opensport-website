@@ -1,0 +1,35 @@
+# Frontend & Builds (Next.js)
+.next/
+out/
+dist/
+build/
+coverage/
+
+# Python & ML (PyTorch / MediaPipe / OpenCV)
+*.pt
+*.pth
+*.onnx
+*.bin
+*.h5
+*.weights
+runs/
+.pt_cache/
+
+# Datasets & Heavy Media (Видео, кадры, разметка)
+datasets/
+data/
+videos/
+media/
+uploads/
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.jpg
+*.jpeg
+*.png
+
+# Environment & Keys
+.env
+.env.local
+.env.*.local

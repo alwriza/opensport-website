@@ -1,252 +1,169 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLayoutEffect, useRef, useState } from "react";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import { Menu, X, Globe } from "lucide-react";
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { ChartNoAxesColumn, ChevronDown, Dumbbell, Globe, Home, LogOut, Menu, Play, Upload, UserRound, Users } from "lucide-react";
+import { Brand } from "@/components/redesign/primitives";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useDesignCopy } from "@/hooks/useDesignCopy";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
+  DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator,
+  DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
+const languages = ["en", "ru", "kk"] as const;
+type AccountRouteState = { profile?: number; onboarding?: "replay"; onboardingRole?: "player" | "coach" };
 
 export default function Navbar() {
-  const { t, i18n } = useTranslation("navbar");
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const copy = useDesignCopy();
+  const { i18n, t } = useTranslation("navbar");
+  const { t: onboardingCopy } = useTranslation("onboarding");
+  const { toast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isSignedIn } = useCurrentUser();
+  const [accountOpen, setAccountOpen] = useState(false);
+  const navigationRef = useRef<HTMLDivElement>(null);
+  const openingDialog = useRef(false);
+  const demo = location.pathname === "/demo" || location.pathname.startsWith("/demo/");
+  const landing = location.pathname === "/" || location.pathname === "/demo/home";
+  const workspace = demo || isSignedIn;
+  const homePath = demo ? "/demo/home" : "/";
+  const playerPath = demo ? "/demo" : "/player-dashboard";
+  const demoActionPath = isSignedIn ? "/player-dashboard" : "/register";
+  const demoActionLabel = t(isSignedIn ? "controls.returnToAccount" : "controls.demoAction");
+  const route = (path: string) => `${demo ? "/demo" : ""}${path}`;
+  const language = (i18n.resolvedLanguage || i18n.language).split("-")[0];
+  const languageCode = language === "kk" ? "KZ" : language.toUpperCase();
+  const accountName = user?.user_metadata?.nickname || user?.user_metadata?.name || t("controls.account");
+  const items = [
+    { to: homePath, label: t("nav.home"), icon: Home },
+    { to: playerPath, label: t("controls.myProfile"), icon: UserRound },
+    { to: route("/coach-dashboard"), label: t("controls.coachWorkspace"), icon: Users },
+    { to: route("/training"), label: t("nav.training"), icon: Dumbbell },
+    { to: route("/ranking"), label: t("nav.ranking"), icon: ChartNoAxesColumn },
+    { to: route("/duels"), label: t("nav.duels") },
+  ];
+  const marketingItems = [
+    { to: `${homePath}#how`, label: copy("How it works") },
+    { to: `${homePath}#science`, label: copy("The method") },
+    { to: `${homePath}#roadmap`, label: copy("Roadmap") },
+    { to: `${homePath}#clubs`, label: copy("For clubs") },
+  ];
 
-  const isActive = (path: string) => location.pathname === path;
+  // Share the actual sticky height with anchor scrolling and the guided tour.
+  useLayoutEffect(() => {
+    const element = navigationRef.current;
+    if (!element) return;
+    const update = () => document.documentElement.style.setProperty("--navigation-height", `${element.offsetHeight}px`);
+    const observer = new ResizeObserver(update);
+    observer.observe(element);
+    update();
+    return () => { observer.disconnect(); document.documentElement.style.removeProperty("--navigation-height"); };
+  }, []);
 
-  const changeLanguage = (lng: string) => {
-    i18n.changeLanguage(lng);
-    setMobileMenuOpen(false);
+  const openAccountRoute = (path: string, state?: AccountRouteState) => {
+    openingDialog.current = !!state;
+    setAccountOpen(false);
+    if (state) requestAnimationFrame(() => navigate(path, { state }));
+    else navigate(path);
   };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
+  const signOut = async () => {
+    setAccountOpen(false);
+    const { error } = await supabase.auth.signOut();
+    if (error) { toast({ title: t("controls.signOutError"), variant: "destructive" }); return; }
     navigate("/");
   };
 
-  const languages = [
-    { code: 'en', label: 'EN' },
-    { code: 'ru', label: 'RU' },
-    { code: 'kk', label: 'KZ' }
-  ];
+  const languageChoices = <DropdownMenuRadioGroup value={language} onValueChange={value => { void i18n.changeLanguage(value); }}>
+    {languages.map(code => <DropdownMenuRadioItem key={code} value={code}>{t(`controls.languages.${code}`)}</DropdownMenuRadioItem>)}
+  </DropdownMenuRadioGroup>;
 
-  const initials = (user?.email || "?").slice(0, 2).toUpperCase();
-
-  return (
-    <header className="sticky top-0 z-50 w-full bg-black/95 backdrop-blur-sm border-b border-gray-800">
-      <div className="max-w-none mx-auto px-8">
-        <div className="flex items-center justify-between h-20 gap-16">
-
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity shrink-0">
-            <img src="/logo.svg" alt="OPENsport" className="w-full h-14" />
-          </Link>
-
-          {/* Navigation Items */}
-          <nav className="hidden lg:flex items-center gap-12 flex-1 justify-center">
-            <Link
-              to="/"
-              className={`text-lg font-medium transition-colors whitespace-nowrap ${isActive('/') ? 'text-white' : 'text-gray-400 hover:text-white'
-                }`}
-            >
-              {t("nav.home")}
-            </Link>
-
-            <Link
-              to="/player-dashboard"
-              className={`text-lg font-medium transition-colors whitespace-nowrap ${isActive('/player-dashboard') ? 'text-white' : 'text-gray-400 hover:text-white'
-                }`}
-            >
-              {t("nav.playerDashboard")}
-            </Link>
-
-            <Link
-              to="/coach-dashboard"
-              className={`text-lg font-medium transition-colors whitespace-nowrap ${isActive('/coach-dashboard') ? 'text-white' : 'text-gray-400 hover:text-white'
-                }`}
-            >
-              {t("nav.coachDashboard")}
-            </Link>
-
-            <Link
-              to="/training"
-              className={`text-lg font-medium transition-colors whitespace-nowrap ${isActive('/training') ? 'text-white' : 'text-gray-400 hover:text-white'
-                }`}
-            >
-              {t("nav.training")}
-            </Link>
-
-            <Link
-              to="/ranking"
-              className={`text-lg font-medium transition-colors whitespace-nowrap ${isActive('/ranking') ? 'text-white' : 'text-gray-400 hover:text-white'
-                }`}
-            >
-              {t("nav.ranking")}
-            </Link>
-
-            <Link
-              to="/duels"
-              className={`text-lg font-medium transition-colors whitespace-nowrap ${isActive('/duels') ? 'text-white' : 'text-gray-400 hover:text-white'
-                }`}
-            >
-              {t("nav.duels")}
-            </Link>
-          </nav>
-
-          {/* CTA Button & Language Switcher & User/Auth */}
-          <div className="hidden lg:flex items-center gap-6 shrink-0">
-            {/* Language Switcher (Desktop) */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full text-gray-400 hover:text-white hover:bg-white/10">
-                  <Globe className="h-5 w-5" />
-                  <span className="sr-only">Switch Language</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-black/95 border-gray-800 text-gray-200">
-                {languages.map((lang) => (
-                  <DropdownMenuItem
-                    key={lang.code}
-                    onClick={() => changeLanguage(lang.code)}
-                    className={`cursor-pointer hover:bg-white/10 hover:text-white ${i18n.language === lang.code ? 'text-[#9FE870] font-bold' : ''}`}
-                  >
-                    {lang.label}
-                  </DropdownMenuItem>
-                ))}
+  return <>
+    <div ref={navigationRef} className="design-navigation" data-workspace={demo || isSignedIn && !landing ? "true" : undefined}>
+      <header className={`design-header ${landing ? "design-header-dark" : ""}`}>
+        <Brand to={homePath} />
+        <nav className="design-header-nav" aria-label={t("controls.mainNavigation")}>
+          {demo || !landing && isSignedIn
+            ? items.map(item => <NavLink key={item.to} to={item.to} end className={({ isActive }) => isActive ? "active" : ""}>{item.label}</NavLink>)
+            : marketingItems.map(item => <Link key={item.to} to={item.to}>{item.label}</Link>)}
+        </nav>
+        <div className="design-header-controls">
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild><button className="design-language" aria-label={`${t("controls.language")}: ${t(`controls.languages.${language}`)}`}><Globe aria-hidden="true" /><span>{languageCode}</span><ChevronDown aria-hidden="true" /></button></DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="design-navigation-menu">{languageChoices}</DropdownMenuContent>
+          </DropdownMenu>
+          {!workspace && <>
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild><button className="design-demo-trigger" aria-label={t("controls.tryDemo")}><Play aria-hidden="true" /><span className="design-demo-full-label">{t("controls.tryDemo")}</span><span className="design-demo-short-label">{t("nav.demo")}</span><ChevronDown aria-hidden="true" /></button></DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="design-navigation-menu design-demo-menu">
+                <DropdownMenuLabel>{t("controls.guestDescription")}</DropdownMenuLabel>
+                <DropdownMenuItem asChild><Link to="/demo"><UserRound aria-hidden="true" />{t("controls.playerDemo")}</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link to="/demo/coach-dashboard"><Users aria-hidden="true" />{t("controls.coachDemo")}</Link></DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            <Link to="/demo" className="text-sm font-medium text-gray-400 hover:text-[#9FE870] transition-colors whitespace-nowrap">
-              {t("nav.demo", "Demo")}
-            </Link>
-
-            <div className="h-8 w-px bg-gray-800" /> {/* Divider */}
-
-            {!isSignedIn ? (
-              <Button
-                onClick={() => navigate("/login")}
-                className="bg-[#9FE870] hover:bg-[#8DD760] text-black font-semibold px-8 h-12 text-base rounded-full whitespace-nowrap"
-              >
-                {t("buttons.getStarted")}
-              </Button>
-            ) : (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="rounded-full">
-                    <Avatar className="w-10 h-10">
-                      <AvatarFallback className="bg-[#9FE870]/20 text-[#9FE870] font-semibold">
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-black/95 border-gray-800 text-gray-200">
-                  <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer hover:bg-white/10 hover:text-white">
-                    Sign out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden text-white p-2"
-          >
-            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
+            <Link className="design-auth-link" to="/login">{t("controls.signIn")}</Link>
+            <Link className="design-button design-header-primary" to="/register">{t("controls.register")}</Link>
+          </>}
+          {demo && <Link className="design-button design-header-primary" to={demoActionPath}>{demoActionLabel}</Link>}
+          {isSignedIn && !demo && landing && <Link className="design-button design-header-primary" to={playerPath}>{t("controls.myProfile")}</Link>}
+          <DropdownMenu modal={false} open={accountOpen} onOpenChange={setAccountOpen}>
+            <DropdownMenuTrigger asChild>
+              <button className={`design-account ${!workspace ? "design-guest-menu-trigger" : ""}`} aria-label={workspace && !demo ? t("controls.account") : t("controls.menu")}>
+                {workspace && !demo ? <UserRound aria-hidden="true" /> : <Menu aria-hidden="true" />}
+                <span className="design-account-name">{demo ? t("controls.menu") : accountName}</span><ChevronDown className="design-account-chevron" aria-hidden="true" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="design-navigation-menu design-account-menu" onCloseAutoFocus={event => {
+              if (openingDialog.current) event.preventDefault();
+              openingDialog.current = false;
+            }}>
+              <DropdownMenuLabel>{demo ? t("controls.demoNavigation") : workspace ? accountName : t("controls.mainNavigation")}</DropdownMenuLabel>
+              {workspace ? items.map(({ to, label, icon: Icon }) => <DropdownMenuItem key={to} asChild><NavLink to={to} end>{Icon && <Icon aria-hidden="true" />}{label}</NavLink></DropdownMenuItem>)
+                : marketingItems.map(item => <DropdownMenuItem key={item.to} asChild><Link to={item.to}>{item.label}</Link></DropdownMenuItem>)}
+              <DropdownMenuSeparator />
+              {workspace && <>
+                <DropdownMenuItem onSelect={() => openAccountRoute(playerPath, { profile: Date.now() })}>{copy("Edit profile")}</DropdownMenuItem>
+                <DropdownMenuItem data-onboarding-replay onSelect={() => {
+                  const role = location.pathname.includes("coach-dashboard") ? "coach" : "player";
+                  openAccountRoute(role === "coach" ? route("/coach-dashboard") : playerPath, { onboarding: "replay", onboardingRole: role });
+                }}>{onboardingCopy("actions.replay")}</DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>}
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger><Globe className="mr-2 h-4 w-4" aria-hidden="true" />{t("controls.language")} · {languageCode}</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="design-navigation-menu">{languageChoices}</DropdownMenuSubContent>
+              </DropdownMenuSub>
+              {!workspace && <>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>{t("controls.guestDescription")}</DropdownMenuLabel>
+                <DropdownMenuItem asChild><Link to="/demo"><UserRound aria-hidden="true" />{t("controls.playerDemo")}</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link to="/demo/coach-dashboard"><Users aria-hidden="true" />{t("controls.coachDemo")}</Link></DropdownMenuItem>
+              </>}
+              <DropdownMenuSeparator />
+              {demo ? <>
+                <DropdownMenuItem asChild><Link to={demoActionPath}>{demoActionLabel}</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link to="/"><LogOut aria-hidden="true" />{t("controls.exitDemo")}</Link></DropdownMenuItem>
+              </> : isSignedIn ? <DropdownMenuItem onSelect={() => { void signOut(); }}><LogOut aria-hidden="true" />{t("controls.signOut")}</DropdownMenuItem> : <>
+                <DropdownMenuItem asChild><Link to="/login">{t("controls.signIn")}</Link></DropdownMenuItem>
+                <DropdownMenuItem asChild><Link to="/register">{t("controls.register")}</Link></DropdownMenuItem>
+              </>}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="lg:hidden py-6 border-t border-gray-800">
-            <nav className="flex flex-col gap-4">
-              <Link
-                to="/"
-                onClick={() => setMobileMenuOpen(false)}
-                className={`text-base font-medium py-2 ${isActive('/') ? 'text-white' : 'text-gray-400'}`}
-              >
-                {t("nav.home")}
-              </Link>
-              <Link
-                to="/player-dashboard"
-                onClick={() => setMobileMenuOpen(false)}
-                className={`text-base font-medium py-2 ${isActive('/player-dashboard') ? 'text-white' : 'text-gray-400'}`}
-              >
-                {t("nav.playerDashboard")}
-              </Link>
-              <Link
-                to="/coach-dashboard"
-                onClick={() => setMobileMenuOpen(false)}
-                className={`text-base font-medium py-2 ${isActive('/coach-dashboard') ? 'text-white' : 'text-gray-400'}`}
-              >
-                {t("nav.coachDashboard")}
-              </Link>
-              <Link
-                to="/training"
-                onClick={() => setMobileMenuOpen(false)}
-                className={`text-base font-medium py-2 ${isActive('/training') ? 'text-white' : 'text-gray-400'}`}
-              >
-                {t("nav.training")}
-              </Link>
-              <Link
-                to="/ranking"
-                onClick={() => setMobileMenuOpen(false)}
-                className={`text-base font-medium py-2 ${isActive('/ranking') ? 'text-white' : 'text-gray-400'}`}
-              >
-                {t("nav.ranking")}
-              </Link>
-
-              <Link
-                to="/duels"
-                onClick={() => setMobileMenuOpen(false)}
-                className={`text-base font-medium py-2 ${isActive('/duels') ? 'text-white' : 'text-gray-400'}`}
-              >
-                {t("nav.duels")}
-              </Link>
-
-              {/* Mobile Language Switcher */}
-              <div className="py-4 border-t border-b border-gray-800 flex gap-4 justify-center">
-                {languages.map((lang) => (
-                  <button
-                    key={lang.code}
-                    onClick={() => changeLanguage(lang.code)}
-                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${i18n.language === lang.code
-                      ? 'bg-[#9FE870]/20 text-[#9FE870]'
-                      : 'text-gray-400 hover:text-white'
-                      }`}
-                  >
-                    {lang.label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="pt-4">
-                <Link to="/demo" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium py-2 text-gray-400">
-                  {t("nav.demo", "Demo")}
-                </Link>
-
-                {isSignedIn && (
-                  <div className="flex justify-center pt-4">
-                    <Button variant="outline" onClick={handleSignOut}>
-                      Sign out
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </nav>
-          </div>
-        )}
-      </div>
-    </header>
-  );
+      </header>
+      {demo && <aside className="design-demo-bar" aria-label={t("controls.demoLabel")}>
+        <div className="design-demo-context"><span className="design-demo-badge">{t("controls.demoLabel")}</span><p className="design-demo-description">{t("controls.demoDescription")}</p><p className="design-demo-description-short">{t("controls.demoShort")}</p></div>
+        <Link className="design-demo-exit" to="/">{t("controls.exitDemo")}<LogOut aria-hidden="true" /></Link>
+      </aside>}
+    </div>
+    {!landing && workspace && <nav className="design-mobile-nav" aria-label={t("controls.quickNavigation")}>
+      {items.slice(0, 2).map(({ to, icon: Icon }, index) => <NavLink key={to} to={to} end className={({ isActive }) => isActive ? "active" : ""}>{Icon && <Icon aria-hidden="true" />}<span>{index === 0 ? t("nav.home") : t("nav.playerDashboard")}</span></NavLink>)}
+      <button className="design-upload-nav" aria-label={t("controls.uploadVideo")} onClick={() => navigate(playerPath, { state: { upload: Date.now() } })}><Upload aria-hidden="true" /><span>{t("controls.mobileUpload")}</span></button>
+      {items.slice(3, 5).map(({ to, icon: Icon }, index) => <NavLink key={to} to={to} end className={({ isActive }) => isActive ? "active" : ""}>{Icon && <Icon aria-hidden="true" />}<span>{copy(index === 0 ? "Train" : "Rank")}</span></NavLink>)}
+    </nav>}
+  </>;
 }

@@ -1,4 +1,6 @@
-import { useState, useMemo } from "react";
+import { getErrorMessage } from "@/lib/errors";
+import { useDesignCopy } from "@/hooks/useDesignCopy";
+import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -6,9 +8,8 @@ import { useDemoContext, useDemoMutationGuard } from "@/demo";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Loader2 } from "lucide-react";
 import { CoachLayout, type CoachTab } from "@/components/coach/CoachLayout";
 import { OverviewTab } from "@/components/coach/overview/OverviewTab";
 import { SquadTab } from "@/components/coach/squad/SquadTab";
@@ -16,17 +17,23 @@ import { StatisticsTab } from "@/components/coach/statistics/StatisticsTab";
 import { MatchesTab } from "@/components/coach/matches/MatchesTab";
 import { EvaluationsTab } from "@/components/coach/evaluations/EvaluationsTab";
 import { TrainingTab } from "@/components/coach/training/TrainingTab";
+import { InvitePlayersModal } from "@/components/ui/InvitePlayersModal";
 import { CreateTeamModal } from "@/components/ui/CreateTeamModal";
 
 export default function CoachDashboard() {
+  const copy = useDesignCopy();
   const { t } = useTranslation("dashboard");
   const { user, isLoaded } = useCurrentUser();
   const demo = useDemoContext();
+  const { guard } = useDemoMutationGuard();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = (searchParams.get("tab") as CoachTab) || "overview";
+  const requestedTab = searchParams.get("tab");
+  const activeTab: CoachTab = ["overview", "squad", "statistics", "matches", "evaluations", "training"].includes(requestedTab || "") ? requestedTab as CoachTab : "overview";
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const openInvite = () => { if (!guard()) setShowInviteModal(true); };
 
   const handleTabChange = (tab: CoachTab) => {
     const p = new URLSearchParams(searchParams);
@@ -34,7 +41,7 @@ export default function CoachDashboard() {
     setSearchParams(p, { replace: true });
   };
 
-  const { data: coachProfile } = useQuery({
+  const { data: coachProfile, isLoading: loadingProfile } = useQuery({
     queryKey: ["coach-profile", user?.id],
     queryFn: async () => {
       if (demo) return demo.coachProfile;
@@ -46,7 +53,7 @@ export default function CoachDashboard() {
     enabled: !!user || !!demo,
   });
 
-  const coachDbId = (coachProfile as any)?.id;
+  const coachDbId = coachProfile?.id;
 
   const { data: teams = [], isLoading: loadingTeams } = useQuery({
     queryKey: ["coach-teams", coachDbId],
@@ -55,15 +62,15 @@ export default function CoachDashboard() {
       const { data, error } = await supabase
         .from("team_coaches")
         .select(`team_id, role, teams (id, name, age_group, season, invite_code, clubs (name))`)
-        .eq("coach_id", coachDbId) as any;
+        .eq("coach_id", coachDbId!);
       if (error) throw error;
-      return (data || []).map((ct: any) => ct.teams);
+      return (data || []).flatMap(ct => ct.teams ? [ct.teams] : []);
     },
     enabled: !!coachDbId || !!demo,
   });
 
-  const teamId = searchParams.get("team") || teams[0]?.id || undefined;
-  const selectedTeam = teams.find((t: any) => t.id === teamId);
+  const teamId = teams.find((team: { id: string; }) => team.id === searchParams.get("team"))?.id || teams[0]?.id || undefined;
+  const selectedTeam = teams.find((t) => t.id === teamId);
 
   const handleTeamChange = (newTeamId: string) => {
     const p = new URLSearchParams(searchParams);
@@ -72,18 +79,18 @@ export default function CoachDashboard() {
   };
 
   const handleDeleteTeam = async (teamId: string, teamName: string) => {
-    if (!confirm(t("coach.confirms.deleteTeam", { name: teamName }))) return;
+    if (guard() || !confirm(t("coach.confirms.deleteTeam", { name: teamName }))) return;
     try {
       const { error } = await supabase.from("teams").delete().eq("id", teamId);
       if (error) throw error;
       toast({ title: t("coach.toasts.deleteTeamSuccess.title"), description: t("coach.toasts.deleteTeamSuccess.description", { name: teamName }) });
       queryClient.invalidateQueries({ queryKey: ["coach-teams", coachDbId] });
-    } catch (err: any) {
-      toast({ title: t("coach.toasts.deleteTeamError.title"), description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      toast({ title: t("coach.toasts.deleteTeamError.title"), description: getErrorMessage(err), variant: "destructive" });
     }
   };
 
-  if (!isLoaded || loadingTeams) {
+  if (!isLoaded || loadingProfile || loadingTeams) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-4">
@@ -95,42 +102,38 @@ export default function CoachDashboard() {
   }
 
   return (
-    <div>
-      <div className="container mx-auto px-4 md:px-6 py-6 flex items-center justify-between border-b border-white/5">
-        <div className="flex items-center gap-4">
-          <Select value={teamId ?? ""} onValueChange={handleTeamChange}>
-            <SelectTrigger className="w-[220px] bg-card border-white/5">
-              <SelectValue placeholder={t("coach.selectTeam")} />
-            </SelectTrigger>
-            <SelectContent>
-              {teams.map((team: any) => (
-                <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {selectedTeam && (
-            <Button variant="outline" size="sm" className="border-destructive/30 text-destructive hover:bg-destructive/10" onClick={() => handleDeleteTeam(selectedTeam.id, selectedTeam.name)}>
-              <Trash2 className="h-4 w-4 mr-2" /> {t("coach.deleteTeam")}
-            </Button>
-          )}
+    <main className="design-page design-coach" data-onboarding-dashboard={coachDbId ? "coach" : undefined} data-onboarding-has-team={selectedTeam ? "true" : "false"}>
+      <header className="design-team-header" data-onboarding="coach-team">
+        <div className="design-team-identity">
+          <span className="design-eyebrow">{selectedTeam?.age_group || "Team"} · {selectedTeam?.clubs?.name || "Your academy"}</span>
+          <div className="design-team-title">
+            <h1>{selectedTeam?.name || "Your team"}</h1>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild><button className="design-button design-button-outline design-team-switch">{copy("SWITCH TEAM ↓")}</button></DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                {teams.map((team: { id: string; name: string; }) => <DropdownMenuItem key={team.id} onSelect={() => handleTeamChange(team.id)}>{team.name}</DropdownMenuItem>)}
+                {selectedTeam && <><DropdownMenuSeparator /><DropdownMenuItem className="text-destructive" onSelect={() => handleDeleteTeam(selectedTeam.id, selectedTeam.name)}>{t("coach.deleteTeam")}</DropdownMenuItem></>}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-        <Button className="bg-primary hover:bg-primary/90 text-black font-bold" onClick={() => setShowCreateModal(true)}>
-          <Plus className="h-4 w-4 mr-2" /> {t("coach.createTeam")}
-        </Button>
-      </div>
-
+        <div className="design-team-actions">
+          <button className="design-button design-button-outline" data-onboarding="coach-create" onClick={() => { if (!guard()) setShowCreateModal(true); }}>{t("coach.createTeam")}</button>
+          <button className="design-button" data-onboarding="coach-invite" disabled={!selectedTeam} onClick={openInvite}>{t("coach.invitePlayers")}</button>
+        </div>
+      </header>
       <CoachLayout activeTab={activeTab} onTabChange={handleTabChange}>
-        {activeTab === "overview" && <OverviewTab teamId={teamId} />}
+        {activeTab === "overview" && <OverviewTab teamId={teamId} onInvite={openInvite} />}
         {activeTab === "squad" && <SquadTab teamId={teamId} />}
         {activeTab === "statistics" && <StatisticsTab teamId={teamId} />}
         {activeTab === "matches" && <MatchesTab teamId={teamId} />}
         {activeTab === "evaluations" && <EvaluationsTab teamId={teamId} />}
         {activeTab === "training" && <TrainingTab teamId={teamId} />}
       </CoachLayout>
-
       {showCreateModal && coachDbId && (
         <CreateTeamModal open={showCreateModal} onClose={() => setShowCreateModal(false)} coachId={coachDbId} onSuccess={() => queryClient.invalidateQueries({ queryKey: ["coach-teams", coachDbId] })} />
       )}
-    </div>
+      {selectedTeam && <InvitePlayersModal open={showInviteModal} onClose={() => setShowInviteModal(false)} team={selectedTeam} onSuccess={() => queryClient.invalidateQueries({ queryKey: ["coach-squad", teamId] })} />}
+    </main>
   );
 }

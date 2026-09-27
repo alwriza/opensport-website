@@ -11,5 +11,36 @@
     },
     "buttons": {
         "getStarted": "Get Started"
+    },
+    "controls": {
+        "mainNavigation": "Main navigation",
+        "quickNavigation": "Quick navigation",
+        "account": "Account",
+        "menu": "Menu",
+        "language": "Language",
+        "tryDemo": "Try demo",
+        "signIn": "Sign in",
+        "register": "Create account",
+        "myProfile": "My profile",
+        "coachWorkspace": "Coach workspace",
+        "demoLabel": "Demo mode",
+        "demoDescription": "Example data. Explore the player profile and coach workspace without signing up.",
+        "demoShort": "Sample data. No account needed.",
+        "demoNavigation": "Demo navigation",
+        "exitDemo": "Exit demo",
+        "playerDemo": "Player demo",
+        "coachDemo": "Coach demo",
+        "uploadVideo": "Upload video",
+        "mobileUpload": "Video",
+        "signOut": "Sign out",
+        "signOutError": "Could not sign out. Try again.",
+        "demoAction": "Start with my own videos",
+        "guestDescription": "Demo without an account",
+        "languages": {
+            "en": "English",
+            "ru": "Русский",
+            "kk": "Қазақша"
+        },
+        "returnToAccount": "Back to my account"
     }
 }

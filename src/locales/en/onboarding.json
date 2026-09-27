@@ -1,0 +1,72 @@
+{
+  "welcome": {
+    "eyebrow": "WELCOME TO OPENSPORT",
+    "title": "Your next step starts here",
+    "description": "Choose what you want to do. We’ll show you the first three steps.",
+    "playerTitle": "Player",
+    "playerDescription": "Analyse your kick and find your next training focus.",
+    "coachTitle": "Coach",
+    "coachDescription": "Set up a team and follow your players’ progress.",
+    "duration": "3 steps · at your pace"
+  },
+  "actions": {
+    "start": "Start tour",
+    "next": "Next",
+    "back": "Back",
+    "skip": "Skip",
+    "close": "Close tutorial",
+    "upload": "Analyse my first video",
+    "createTeam": "Create my team",
+    "invitePlayers": "Invite players",
+    "openSquad": "Open my squad",
+    "replay": "Replay guide"
+  },
+  "progress": {
+    "step": "Step {{current}} of {{total}}"
+  },
+  "player": {
+    "upload": {
+      "title": "Start with one kick",
+      "description": "Film one kick from the side at 90°, with your whole body and the ball visible. Upload the clip to start analysis.",
+      "tip": "MP4, MOV, AVI or MKV · up to 50 MB."
+    },
+    "results": {
+      "title": "See what to work on",
+      "description": "After processing, your breakdown shows stability, power, technique and balance. Watch the video alongside your results.",
+      "tip": "Each metric is scored from 0 to 100."
+    },
+    "training": {
+      "title": "Train, film, see your progress",
+      "description": "Choose drills from your results, then film another kick from the same angle. Compare your analyses to see what changes.",
+      "tip": "Start with one area you want to improve."
+    }
+  },
+  "coach": {
+    "team": {
+      "title": "Start with your team",
+      "description": "Select a team to open its workspace. This is where you manage your squad and follow its progress.",
+      "emptyDescription": "Create your first team to open a workspace for your squad and its progress.",
+      "tip": "Switch teams here whenever you need to."
+    },
+    "invite": {
+      "title": "Bring your players together",
+      "description": "Share your team’s invitation link or code. Players can use either to join your squad.",
+      "emptyDescription": "Once your team is created, share its invitation link or code so players can join.",
+      "tip": "The invitation link and code become available after team creation."
+    },
+    "workspace": {
+      "title": "Follow the squad’s next steps",
+      "description": "Use Squad, Statistics and Training to see your players, review their development and plan sessions.",
+      "emptyDescription": "Squad, Statistics and Training bring your team’s activity together as players join and add analyses.",
+      "tip": "Start with your squad, then open a player for more detail."
+    }
+  },
+  "art": {
+    "record": "Film",
+    "analyse": "Analyse",
+    "improve": "Improve",
+    "create": "Create",
+    "invite": "Invite",
+    "follow": "Follow"
+  }
+}
