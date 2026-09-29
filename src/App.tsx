@@ -14,9 +14,12 @@ import PlayerDashboard from "./pages/PlayerDashboard";
 import Training from "./pages/Training";
 import Ranking from "./pages/Ranking";
 import Duels from "./pages/Duels";
+import About from "./pages/About";
 
 const PlayerProfile = lazy(() => import("./pages/PlayerProfile"));
 const CoachDashboard = lazy(() => import("./pages/CoachDashboard"));
+const MatchAnalysis = lazy(() => import("./pages/MatchAnalysis"));
+const MatchAnalysisDetail = lazy(() => import("./pages/MatchAnalysisDetail"));
 
 import NotFound from "./pages/NotFound";
 import JoinTeam from "./pages/JoinTeam";
@@ -68,8 +71,10 @@ const App = () => (
             <Route path="/ranking" element={<ProtectedRoute><Ranking /></ProtectedRoute>} />
             <Route path="/duels" element={<ProtectedRoute><Duels /></ProtectedRoute>} />
             <Route path="/join-team" element={<ProtectedRoute><JoinTeam /></ProtectedRoute>} />
+            <Route path="/match-analysis" element={<ProtectedRoute><Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>}><MatchAnalysis /></Suspense></ProtectedRoute>} />
+            <Route path="/match-analysis/:id" element={<ProtectedRoute><Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>}><MatchAnalysisDetail /></Suspense></ProtectedRoute>} />
 
-            {/* <Route path="/about" element={<About />} /> */}
+            <Route path="/about" element={<About />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
 

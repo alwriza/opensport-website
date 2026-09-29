@@ -1,0 +1,15 @@
+# Pinned pipeline: github.com/roboflow/sports @ 42c80c06b6b65a7f89455b89fe31cdf4c38ba227
+git+https://github.com/roboflow/sports.git@42c80c06b6b65a7f89455b89fe31cdf4c38ba227
+ultralytics
+supervision==0.30.5   # API verified against this exact version
+transformers
+umap-learn
+scikit-learn
+sentencepiece
+protobuf
+tqdm
+numpy
+opencv-python-headless
+supabase
+gdown
+pytest

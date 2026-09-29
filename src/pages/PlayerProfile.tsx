@@ -138,7 +138,7 @@ export default function PlayerProfile() {
           <section className="design-breakdown">
             <div className="design-section-heading">
               <h2>{copy("Breakdown")}</h2>
-              <Link className="design-link design-link-underlined" to={`${demo ? "/demo/home" : "/"}#science`}>{copy("What each score measures")}</Link>
+              <Link className="design-link design-link-underlined" to="/about#science">{copy("What each score measures")}</Link>
             </div>
             <MetricList scores={latest || { stability: NaN, power: NaN, technique: NaN, balance: NaN }} />
           </section>

@@ -5,7 +5,7 @@ import { Brand } from "@/components/redesign/primitives";
 export default function Footer() {
   const copy = useDesignCopy();
   const { pathname } = useLocation();
-  if (!["/", "/demo/home", "/terms", "/privacy", "/login", "/register", "/forgot-password", "/reset-password", "/verify-email"].includes(pathname)) return null;
+  if (!["/", "/demo/home", "/terms", "/privacy", "/login", "/register", "/forgot-password", "/reset-password", "/verify-email", "/about"].includes(pathname)) return null;
   const homePath = pathname.startsWith("/demo") ? "/demo/home" : "/";
 
   return (
@@ -23,8 +23,8 @@ export default function Footer() {
       </div>
       <div className="design-footer-column">
         <span className="design-eyebrow">{copy("Company")}</span>
-        <Link to={`${homePath}#mission`}>{copy("Mission")}</Link>
-        <Link to={`${homePath}#science`}>{copy("The method")}</Link>
+        <Link to="/about">{copy("Mission")}</Link>
+        <Link to="/about#science">{copy("The method")}</Link>
         <a href="mailto:contact@opensport.app?subject=League%20pilot">Pilots &amp; partners</a>
       </div>
       <div className="design-footer-legal">

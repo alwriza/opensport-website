@@ -19,6 +19,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { MetricList } from "@/components/redesign/primitives";
 import { AnalysisVideo } from "@/components/redesign/AnalysisVideo";
 import { AnalysisHistoryTable } from "@/components/redesign/AnalysisHistoryTable";
+import { AnalysisStages, NextStep } from "@/components/redesign/NextStep";
 import { TeamProfileOverlay } from "@/components/ui/TeamProfileOverlay";
 import { Info } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -70,6 +71,7 @@ export default function PlayerDashboard() {
 
   // State
   const [uploading, setUploading] = useState(false);
+  const [uploadStage, setUploadStage] = useState(0);
   const [localUser, setLocalUser] = useState<Partial<UserRecord> | null>(null);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [resultsModalOpen, setResultsModalOpen] = useState(false);
@@ -89,6 +91,14 @@ export default function PlayerDashboard() {
     if (location.state?.profile) setProfileModalOpen(true);
     if (location.state?.upload || location.state?.profile) navigate(location.pathname, { replace: true, state: null });
   }, [location.state, location.pathname, navigate]);
+
+  // The edge function reports nothing until it finishes, so the analysis stages advance on a timer and stop at the last one.
+  const analysing = uploading && uploadStage > 0;
+  useEffect(() => {
+    if (!analysing) return;
+    const timer = window.setInterval(() => setUploadStage(stage => Math.min(stage + 1, 4)), 6000);
+    return () => window.clearInterval(timer);
+  }, [analysing]);
 
   // Metadata state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -325,6 +335,7 @@ export default function PlayerDashboard() {
     if (guardMutation() || !selectedFile || !dbUser?.id) return;
     const file = selectedFile;
     setUploading(true);
+    setUploadStage(0);
     console.log("Starting upload:", file.name);
 
     try {
@@ -362,6 +373,7 @@ export default function PlayerDashboard() {
       }
 
       console.log("✓ Video record created:", newVideo.id);
+      setUploadStage(1);
 
       // 3. Call Edge Function to process video securely
       try {
@@ -653,6 +665,16 @@ export default function PlayerDashboard() {
           </section>
         </aside>
       </section>
+      <NextStep
+        processing={uploading || videos.some(video => video.status === "processing" && Date.now() - new Date(video.uploaded_at).getTime() < 10 * 60 * 1000)}
+        lastFailed={videos[0]?.status === "failed"}
+        scores={latestAnalysis ? { stability: latestAnalysis.stability, power: latestAnalysis.power, technique: latestAnalysis.technique, balance: latestAnalysis.balance } : null}
+        overall={latestAnalysis?.overall ?? null}
+        lastTestAt={latestVideo?.uploaded_at ?? null}
+        labels={metricLabels}
+        trainingPath={demoNav(latestRecommendations[0] ? `/training?tab=exercises&skill=${latestRecommendations[0].skill_id}&level=${latestRecommendations[0].level_name}` : "/training")}
+        onUpload={() => setUploadModalOpen(true)}
+      />
       <div className="design-player-body">
         <section className="design-breakdown" data-onboarding="player-results">
           <div className="design-section-heading">
@@ -662,7 +684,7 @@ export default function PlayerDashboard() {
           <MetricList scores={metricScores} labels={metricLabels} />
           <div className="design-camera-note">
             <Info />
-            <p>{copy("Camera angle affects the score. For a more reliable reading, film from the side, with your whole body in frame.")}</p>
+            <p>{copy("Any camera angle works. Filming from the side gives the most accurate reading, and using the same angle every time keeps your retests comparable.")}</p>
           </div>
         </section>
         <AnalysisVideo video={latestVideo} onUpload={() => setUploadModalOpen(true)} onOpenResults={() => latestCompletedVideoId && openResultsModal(latestCompletedVideoId)} />
@@ -722,7 +744,7 @@ export default function PlayerDashboard() {
             <DialogTitle>How we measure technique</DialogTitle>
           </DialogHeader>
           <p className="text-sm leading-relaxed text-muted-foreground">The analysis tracks body keypoints throughout your kick and reports stability, power, technique and balance on a scale from 0 to 100. Use repeated recordings from the same camera angle to compare your progress.</p>
-          <Link to={`${isDemo ? "/demo/home" : "/"}#science`} className="design-link design-link-underlined">{copy("Read about the method →")}</Link>
+          <Link to="/about#science" className="design-link design-link-underlined">{copy("Read about the method →")}</Link>
         </DialogContent>
       </Dialog>
       <Dialog open={uploadModalOpen} onOpenChange={(open) => {
@@ -735,12 +757,17 @@ export default function PlayerDashboard() {
           </DialogHeader>
           <div className="space-y-4">
             {uploading ? (
-              <div className="flex flex-col items-center justify-center py-8 space-y-4">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">{t("modals.upload.uploading")}</p>
+              <div className="design-upload-progress" aria-live="polite">
+                <p className="design-eyebrow">{copy("Keep this window open")}</p>
+                <AnalysisStages active={uploadStage} />
               </div>
             ) : (
               <div className="flex flex-col gap-4">
+                {!selectedFile && <ol className="design-upload-guide">
+                  <li><span>01</span>{copy("Any angle works; from the side at 90° is most accurate · hip height, 3–5 m away")}</li>
+                  <li><span>02</span>{copy("One kick per clip, whole body and ball in frame")}</li>
+                  <li><span>03</span>{copy("Same angle every time, so your retests are comparable")}</li>
+                </ol>}
                 <div className="border-2 border-dashed border-border rounded-sm p-6 text-center hover:border-primary/50 transition-colors">
                   <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
                   <p className="text-sm text-muted-foreground mb-3">
@@ -756,7 +783,7 @@ export default function PlayerDashboard() {
                   />
                   <Button asChild variant={selectedFile ? "secondary" : "default"}>
                     <label htmlFor="video-upload-modal" className="cursor-pointer">
-                      {selectedFile ? "Change Video" : t("modals.upload.button")}
+                      {selectedFile ? copy("Change video") : t("modals.upload.button")}
                     </label>
                   </Button>
                 </div>
@@ -764,29 +791,29 @@ export default function PlayerDashboard() {
                   <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Camera Angle</label>
+                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{copy("Camera angle")}</label>
                         <Select value={cameraAngle} onValueChange={setCameraAngle}>
                           <SelectTrigger className="bg-secondary/35 border-border">
-                            <SelectValue placeholder="Select angle" />
+                            <SelectValue placeholder={copy("Camera angle")} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="side">Side</SelectItem>
-                            <SelectItem value="diagonal">Diagonal</SelectItem>
-                            <SelectItem value="behind">Behind</SelectItem>
-                            <SelectItem value="unknown">Unknown</SelectItem>
+                            <SelectItem value="side">{copy("Side")}</SelectItem>
+                            <SelectItem value="diagonal">{copy("Diagonal")}</SelectItem>
+                            <SelectItem value="behind">{copy("Behind")}</SelectItem>
+                            <SelectItem value="unknown">{copy("Unknown")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Kicking Foot</label>
+                        <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{copy("Kicking foot")}</label>
                         <Select value={kickingFoot} onValueChange={setKickingFoot}>
                           <SelectTrigger className="bg-secondary/35 border-border">
-                            <SelectValue placeholder="Select foot" />
+                            <SelectValue placeholder={copy("Kicking foot")} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="right">Right</SelectItem>
-                            <SelectItem value="left">Left</SelectItem>
-                            <SelectItem value="unknown">Unknown</SelectItem>
+                            <SelectItem value="right">{copy("Right")}</SelectItem>
+                            <SelectItem value="left">{copy("Left")}</SelectItem>
+                            <SelectItem value="unknown">{copy("Unknown")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -796,7 +823,7 @@ export default function PlayerDashboard() {
                       onClick={handleUploadAndAnalyze}
                     >
                       <Video className="w-5 h-5 mr-2" />
-                      Upload & Analyze
+                      {copy("Upload & analyse")}
                     </Button>
                   </div>
                 )}

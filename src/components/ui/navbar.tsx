@@ -28,7 +28,7 @@ export default function Navbar() {
   const navigationRef = useRef<HTMLDivElement>(null);
   const openingDialog = useRef(false);
   const demo = location.pathname === "/demo" || location.pathname.startsWith("/demo/");
-  const landing = location.pathname === "/" || location.pathname === "/demo/home";
+  const landing = ["/", "/demo/home", "/about"].includes(location.pathname);
   const workspace = demo || isSignedIn;
   const homePath = demo ? "/demo/home" : "/";
   const playerPath = demo ? "/demo" : "/player-dashboard";
@@ -48,9 +48,9 @@ export default function Navbar() {
   ];
   const marketingItems = [
     { to: `${homePath}#how`, label: copy("How it works") },
-    { to: `${homePath}#science`, label: copy("The method") },
-    { to: `${homePath}#roadmap`, label: copy("Roadmap") },
-    { to: `${homePath}#clubs`, label: copy("For clubs") },
+    { to: `${homePath}#example`, label: copy("Example analysis") },
+    { to: `${homePath}#coaches`, label: copy("For coaches") },
+    { to: "/about", label: copy("About") },
   ];
 
   useEffect(() => { setAccountOpen(false); }, [location.pathname]);
