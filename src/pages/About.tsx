@@ -69,7 +69,7 @@ export default function About() {
           </li>
         </ol>
       </section>
-      <section className="landing-science journey-about-science" id="science">
+      <section className="landing-science journey-about-science" id="method">
         <div className="landing-science-intro">
           <span className="landing-science-eyebrow">{copy("The method")}</span>
           <h2 className="landing-science-title">{copy("Not a")}<br />{copy("black box")}</h2>

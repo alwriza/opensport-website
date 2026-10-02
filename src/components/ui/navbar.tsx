@@ -48,8 +48,9 @@ export default function Navbar() {
   ];
   const marketingItems = [
     { to: `${homePath}#how`, label: copy("How it works") },
-    { to: `${homePath}#example`, label: copy("Example analysis") },
-    { to: `${homePath}#coaches`, label: copy("For coaches") },
+    { to: `${homePath}#pipeline`, label: copy("Pipeline") },
+    { to: `${homePath}#roles`, label: copy("Who it is for") },
+    { to: `${homePath}#science`, label: copy("Science") },
     { to: "/about", label: copy("About") },
   ];
 

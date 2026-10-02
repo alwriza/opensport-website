@@ -6,8 +6,8 @@ import { CameraSetup } from "@/components/redesign/CameraSetup";
 import { kickData } from "@/lib/kickPose";
 import { useTranslation } from "react-i18next";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
+import { Decisions, EXAMPLE_PLAYER, Pipeline, Roadmap, Roles, Trust } from "@/components/redesign/Ecosystem";
 
 // The example player shown on the landing page is the demo profile, so "open the demo" shows the same numbers.
 const exampleScores = { stability: 78, power: 65, technique: 82, balance: 71 };
@@ -94,48 +94,33 @@ export default function Home() {
   const copy = useDesignCopy();
   const { i18n } = useTranslation();
   const { user } = useCurrentUser();
-  const { pathname, hash } = useLocation();
+  const { pathname } = useLocation();
   const isDemo = pathname.startsWith("/demo");
   const startPath = isDemo ? "/demo" : user ? "/player-dashboard" : "/register";
   const profilePath = user && !isDemo ? "/player-dashboard" : "/demo";
-  const [audience, setAudience] = useState(hash === "#clubs" ? "scouts" : "players");
+  const startState = user || isDemo ? { upload: Date.now() } : undefined;
 
   const loop = [
-    { title: copy("Record"), text: copy("Film one kick from any angle. Any phone works.") },
-    { title: copy("Upload"), text: copy("Send the clip and tell us which foot you kick with.") },
-    { title: copy("Analyse"), text: copy("Under a minute later: four scores out of 100.") },
-    { title: copy("Train"), text: copy("Drills chosen for your weakest area.") },
-    { title: copy("Retest"), text: copy("Film the same kick again and see what changed.") },
-  ];
-  const outputs = [
-    { value: "74", unit: "/100", title: copy("Performance score"), text: copy("Technique, power, stability and balance, each scored from 0 to 100.") },
-    { value: copy("POWER"), unit: "65", title: copy("What to improve"), text: copy("Your lowest score is named plainly, so you know where to start.") },
-    { value: "3", unit: copy("drills"), title: copy("Training plan"), text: copy("Exercises picked around your weakest area, with video and time needed.") },
-    { value: "+12.8", unit: copy("pts"), title: copy("Player profile"), text: copy("Every test builds a measurable profile you can share with coaches and scouts.") },
-  ];
-  const pipeline = [
-    { marker: copy("MATCH"), status: "beta", title: copy("Upload a match video"), text: copy("One static camera with the whole pitch in view. The video goes straight from your browser to private storage.") },
-    { marker: copy("TRACKING"), status: "beta", title: copy("Every player on a 2D pitch map"), text: copy("Players, referees and the ball are detected, tracked and split into teams automatically. Replay the match as a minimap next to the video.") },
-    { marker: copy("TEAM DATA"), status: "beta", title: copy("Distance, speed, heatmaps, pitch control, possession"), text: copy("Team totals first, individual tracks second. We always show how much of the match could be measured, so you know which numbers to trust.") },
-    { marker: copy("TECHNIQUE"), status: "live", title: copy("Individual kick analysis"), text: copy("Each player films their kicks. Four scores per kick, comparable across the whole squad.") },
-    { marker: copy("TRAINING"), status: "live", title: copy("Plans for the team, a group or one player"), text: copy("Build sessions around the weaknesses the data shows, and assign them in the same workspace.") },
-    { marker: copy("PROGRESS"), status: "live", title: copy("Squad development over the season"), text: copy("Statistics, evaluations and retests in one place. See who is improving and who needs your attention.") },
+    { title: copy("Film"), art: 0, text: copy("Record one kick on your phone. Any angle works.") },
+    { title: copy("Upload"), art: 1, text: copy("Send the clip and tell us which foot you kick with.") },
+    { title: copy("Analyze"), art: 2, text: copy("Computer vision tracks your movement frame by frame.") },
+    { title: copy("Understand"), art: 2, text: copy("Four scores out of 100 and your main priority.") },
+    { title: copy("Train"), art: 3, text: copy("Drills picked for your weakest area.") },
+    { title: copy("Retest"), art: 4, text: copy("Film the same kick again and compare.") },
   ];
 
   return (
     <main className="design-page landing" lang={i18n.resolvedLanguage}>
       <section className="landing-hero" id="top">
         <div className="landing-intro">
-          <span className="landing-eyebrow">{copy("For football players · Free during the pilot")}</span>
-          <h1 className="landing-title">
-            {copy("Film a kick.")}<br />
-            {copy("Get a plan.")}<br />
-            {copy("Get seen.")}</h1>
+          <span className="landing-eyebrow">{copy("Football development & talent discovery · Free during the pilot")}</span>
+          <h1 className="landing-title landing-title-statement">
+            {copy("Turn football performance into measurable progress.")}</h1>
           <p className="landing-description">
-            {copy("Record one kick on your phone, from any angle. OPENsport scores your technique, power, stability and balance, shows what to improve first and gives you drills for it. Retest, watch your numbers move, and build a profile coaches and scouts can see.")}</p>
+            {copy("Record one kick on your phone. OPENsport analyzes your movement, shows what to improve and helps you track development over time. Coaches use the data to guide training. Scouts use it to find players worth watching.")}</p>
           <div className="landing-actions">
-            <Link className="landing-primary-action" to={startPath} state={user || isDemo ? { upload: Date.now() } : undefined}>
-              {copy("Analyse my first kick")}</Link>
+            <Link className="landing-primary-action" to={startPath} state={startState}>
+              {copy("Analyze my first video")}</Link>
             <a className="landing-secondary-action" href="#example">
               {copy("See an example analysis")}</a>
           </div>
@@ -157,6 +142,10 @@ export default function Home() {
               <span className="landing-fact-caption">{copy("Free during the pilot")}</span>
             </div>
           </div>
+          <p className="landing-flow" aria-label={copy("The OPENsport pipeline")}>
+            {[copy("Analyze"), copy("Improve"), copy("Prove"), copy("Get discovered")].map((w, i) => <span key={w}>{i > 0 && <i aria-hidden="true">→</i>}<a href="#pipeline">{w}</a></span>)}
+          </p>
+          <p className="landing-equipment">{copy("NO SENSORS · NO STUDIO · JUST A PHONE")}</p>
         </div>
         <div className="landing-example">
           <KickPlayer />
@@ -172,18 +161,18 @@ export default function Home() {
 
       <section className="journey-loop" id="how">
         <div className="landing-section-heading">
-          <h2 className="landing-how-title">{copy("One loop,")}<br />{copy("every week")}</h2>
-          <span className="landing-how-caption">{copy("RECORD → ANALYSE → TRAIN → RETEST → GET SEEN")}</span>
+          <h2 className="landing-how-title">{copy("Three minutes,")}<br />{copy("start to finish")}</h2>
+          <span className="landing-how-caption">{copy("FILM → UPLOAD → ANALYZE → UNDERSTAND → TRAIN → RETEST")}</span>
         </div>
         <ol className="journey-loop-steps">
           {loop.map((step, index) => <li className="journey-loop-step" key={step.title}>
             <span className="journey-loop-number">0{index + 1}</span>
-            <LoopArt step={index} />
+            <LoopArt step={step.art} />
             <h3>{step.title}</h3>
             <p>{step.text}</p>
           </li>)}
         </ol>
-        <p className="journey-loop-footnote">{copy("Every result is saved to your player profile, so each week adds to the proof of what you can do.")}</p>
+        <p className="journey-loop-footnote">{copy("Every result is saved to your player profile, so each test adds to your record.")}</p>
       </section>
 
       <section className="journey-first" id="first-test" aria-labelledby="first-test-title">
@@ -201,21 +190,7 @@ export default function Home() {
             <li><span>04</span><div><h3>{copy("Read your report")}</h3><p>{copy("In under a minute: your scores, your weakest area and the drills to start with.")}</p></div></li>
           </ol>
           <p className="journey-honest"><span className="landing-roadmap-status" data-stage="shipped">{copy("Live now")}</span>{copy("OPENsport currently analyses kicking technique. Other skills are not scored yet, so we do not ask you to film them.")}</p>
-          <Link className="design-button journey-first-action" to={startPath} state={user || isDemo ? { upload: Date.now() } : undefined}>{copy("Start my first test")}</Link>
-        </div>
-      </section>
-
-      <section className="journey-outputs" aria-labelledby="outputs-title">
-        <div className="landing-section-heading">
-          <h2 className="landing-roadmap-title" id="outputs-title">{copy("What you get back")}</h2>
-          <span className="landing-how-caption">{copy("AFTER EVERY UPLOAD")}</span>
-        </div>
-        <div className="journey-outputs-grid">
-          {outputs.map(output => <div className="journey-output" key={output.title}>
-            <strong>{output.value}<small>{output.unit}</small></strong>
-            <h3>{output.title}</h3>
-            <p>{output.text}</p>
-          </div>)}
+          <Link className="design-button journey-first-action" to={startPath} state={startState}>{copy("Start my first test")}</Link>
         </div>
       </section>
 
@@ -246,6 +221,8 @@ export default function Home() {
         </div>
       </section>
 
+      <Pipeline />
+
       <section className="journey-progress" aria-labelledby="progress-title">
         <div className="journey-progress-copy">
           <span className="design-eyebrow">{copy("Train → retest → improve")}</span>
@@ -259,27 +236,20 @@ export default function Home() {
         <ProgressChart />
       </section>
 
+      <Roles startPath={startPath} startState={startState} />
+
       <section className="journey-profile" aria-labelledby="profile-title">
         <div className="journey-profile-copy">
-          <span className="design-eyebrow">{copy("Your player profile")}</span>
-          <h2 className="landing-roadmap-title" id="profile-title">{copy("Your progress becomes your opportunity")}</h2>
-          <p>{copy("Every analysis is added to your OPENsport player profile. Share the link with a coach, and appear in the national ranking. Players build proof of their ability. Scouts can find it.")}</p>
-          <div className="journey-scout-flow">
-            <span className="design-eyebrow">{copy("How scouts use it")}</span>
-            <ol>
-              <li>{copy("Search")}</li>
-              <li>{copy("Compare")}</li>
-              <li>{copy("Watch the kicks")}</li>
-              <li>{copy("Get in touch")}</li>
-            </ol>
-          </div>
-          <Link className="landing-audience-link" to="/demo">{copy("See a player profile →")}</Link>
+          <span className="design-eyebrow">{copy("What accumulates over time?")}</span>
+          <h2 className="landing-roadmap-title" id="profile-title">{copy("One player. One growing performance record.")}</h2>
+          <p>{copy("Every assessment becomes part of a measurable performance history. Players see their development. Coaches track it. Scouts review the evidence.")}</p>
+          <Link className="landing-audience-link" to={profilePath}>{copy("See a player profile →")}</Link>
         </div>
         <div className="journey-profile-card" aria-label={copy("Example player profile")}>
           <div className="journey-profile-card-head">
-            <span className="design-eyebrow">{copy("OPENsport player profile")}</span>
-            <h3>{copy("Example player")}</h3>
-            <div className="journey-tags"><span>{copy("Forward")}</span><span>{copy("17 years")}</span><span>{copy("Right foot")}</span><span>{copy("Almaty")}</span></div>
+            <span className="design-eyebrow">{copy("OPENsport player profile")} · {copy("Sample data")}</span>
+            <h3>{EXAMPLE_PLAYER.name}</h3>
+            <div className="journey-tags"><span>{EXAMPLE_PLAYER.age}</span><span>{EXAMPLE_PLAYER.position}</span><span>{EXAMPLE_PLAYER.city}</span><span>{copy("Right foot")}</span></div>
           </div>
           <dl className="journey-profile-stats">
             <div><dt>{copy("Overall")}</dt><dd>74.0</dd></div>
@@ -291,73 +261,21 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="landing-audience" id="clubs" aria-labelledby="audience-title">
-        <h2 className="landing-audience-heading" id="audience-title">{copy("Who is OPENsport for?")}</h2>
-        <Tabs value={audience} onValueChange={setAudience} className="landing-audience-tabs">
-          <TabsList className="landing-audience-options" aria-label={copy("Choose your role")}>
-            <TabsTrigger className="landing-audience-option" value="players">{copy("I'm a player")}</TabsTrigger>
-            <TabsTrigger className="landing-audience-option" value="coaches">{copy("I'm a coach")}</TabsTrigger>
-            <TabsTrigger className="landing-audience-option" value="scouts">{copy("Scout or club")}</TabsTrigger>
-          </TabsList>
-          <TabsContent className="landing-audience-panel" value="players">
-            <div className="journey-audience-heading">
-              <span className="journey-audience-flow">{copy("ANALYSE → IMPROVE → BUILD PROFILE")}</span>
-              <h3 className="landing-audience-title">{copy("Know what to fix, and prove you fixed it")}</h3>
-            </div>
-            <div className="landing-audience-copy">
-              <p className="landing-audience-description">{copy("Film a kick, get your scores and your weakest area, train it, retest. Your profile keeps the record.")}</p>
-              <Link className="landing-audience-link" to={startPath} state={user || isDemo ? { upload: Date.now() } : undefined}>{copy("Analyse my first kick →")}</Link>
-            </div>
-          </TabsContent>
-          <TabsContent className="landing-audience-panel" value="coaches">
-            <div className="journey-audience-heading">
-              <span className="journey-audience-flow">{copy("MATCH → TRACKING → TEAM DATA → TECHNIQUE → TRAINING → PROGRESS")}</span>
-              <h3 className="landing-audience-title">{copy("The full pipeline in one workspace")}</h3>
-            </div>
-            <div className="landing-audience-copy">
-              <p className="landing-audience-description">{copy("From a match video to team numbers, individual technique reports, training plans and each player's development.")}</p>
-              <a className="landing-audience-link" href="#coaches">{copy("See the coach pipeline ↓")}</a>
-            </div>
-          </TabsContent>
-          <TabsContent className="landing-audience-panel" value="scouts">
-            <div className="journey-audience-heading">
-              <span className="journey-audience-flow">{copy("SEARCH → COMPARE → WATCH → CONTACT")}</span>
-              <h3 className="landing-audience-title">{copy("Find players beyond the usual routes")}</h3>
-            </div>
-            <div className="landing-audience-copy">
-              <p className="landing-audience-description">{copy("Compare players across clubs and cities by measured technique and progress, with the video behind every score.")}</p>
-              <a className="landing-audience-link" href="mailto:contact@opensport.app?subject=League%20pilot">{copy("Talk about a pilot →")}</a>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </section>
+      <Decisions />
 
-      <section className="journey-coaches" id="coaches" aria-labelledby="coaches-title">
-        <div className="landing-science-intro">
-          <span className="landing-science-eyebrow">{copy("For coaches & academies")}</span>
-          <h2 className="landing-science-title" id="coaches-title">{copy("From match video")}<br />{copy("to training plan")}</h2>
-          <p className="landing-science-description">{copy("Players get a score. Coaches get the full pipeline: film a match and your players' kicks, and OPENsport turns them into team numbers, individual technique reports, training plans and a record of how every player develops.")}</p>
-          <div className="journey-coaches-actions">
-            <Link className="landing-primary-action" to="/demo/coach-dashboard">{copy("Open the coach demo")}</Link>
-            <a className="landing-secondary-action" href="mailto:contact@opensport.app?subject=Club%20pilot">{copy("Book a club pilot")}</a>
-          </div>
-        </div>
-        <ol className="journey-pipeline">
-          {pipeline.map((stage, index) => <li className="journey-pipeline-stage" key={stage.marker}>
-            <span className="journey-pipeline-marker">0{index + 1}<br />{stage.marker}</span>
-            <div className="landing-science-copy">
-              <span className="journey-pipeline-status" data-stage={stage.status}>{stage.status === "live" ? copy("Live") : copy("Beta")}</span>
-              <span className="landing-science-metric-title">{stage.title}</span>
-              <span className="landing-science-metric-description">{stage.text}</span>
-            </div>
-          </li>)}
-        </ol>
-      </section>
+      <Trust />
+
+      <Roadmap />
 
       <section className="journey-mission" id="mission" aria-labelledby="mission-title">
         <span className="design-eyebrow">{copy("Why we build this")}</span>
         <h2 className="landing-roadmap-title" id="mission-title">{copy("A scout")} {copy("for every")} {copy("auyl")}</h2>
-        <p>{copy("Traditional scouting stops at geography, access and opinion. OPENsport measures any player with a phone, so talent in a small town gets the same chance to be seen as talent in an academy.")}</p>
+        <ul className="eco-barriers">
+          <li><strong>{copy("Geography")}</strong>{copy("Players outside big academy networks are hard to see.")}</li>
+          <li><strong>{copy("Access")}</strong>{copy("Professional evaluation is not available to everyone.")}</li>
+          <li><strong>{copy("Opinion")}</strong>{copy("Big decisions rest on limited viewing and personal networks.")}</li>
+        </ul>
+        <p>{copy("Talent can exist anywhere. Opportunity should too. OPENsport makes performance evidence easier to collect and to see, so scouts know where to look. Their judgment still decides.")}</p>
         <Link className="landing-audience-link" to="/about">{copy("Our method and roadmap →")}</Link>
       </section>
 
@@ -370,10 +288,10 @@ export default function Home() {
             {copy("Free while we are in pilot. No card, no equipment, no waiting list.")}</p>
         </div>
         <div className="landing-cta-actions">
-          <Link className="landing-cta-primary" to={startPath} state={user || isDemo ? { upload: Date.now() } : undefined}>
-            {copy("Analyse my first kick")}</Link>
-          <a className="landing-cta-secondary" href="mailto:contact@opensport.app?subject=Club%20pilot">
-            {copy("Book a club pilot")}</a>
+          <Link className="landing-cta-primary" to={startPath} state={startState}>{copy("Analyze my first video")}</Link>
+          <Link className="landing-cta-secondary" to="/demo/coach-dashboard">{copy("Coach: see a player report")}</Link>
+          <Link className="landing-cta-secondary" to="/demo/ranking">{copy("Scout: explore the workflow")}</Link>
+          <a className="landing-cta-secondary" href="mailto:contact@opensport.app?subject=League%20pilot">{copy("Academy or league: book a pilot")}</a>
         </div>
       </section>
     </main>
