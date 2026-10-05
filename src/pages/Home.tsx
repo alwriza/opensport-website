@@ -105,7 +105,7 @@ export default function Home() {
     { title: copy("Upload"), art: 1, text: copy("Send the clip and tell us which foot you kick with.") },
     { title: copy("Analyze"), art: 2, text: copy("Computer vision tracks your movement frame by frame.") },
     { title: copy("Understand"), art: 2, text: copy("Four scores out of 100 and your main priority.") },
-    { title: copy("Train"), art: 3, text: copy("Drills picked for your weakest area.") },
+    { title: copy("Practice"), art: 3, text: copy("Drills picked for your weakest area.") },
     { title: copy("Retest"), art: 4, text: copy("Film the same kick again and compare.") },
   ];
 
@@ -248,8 +248,8 @@ export default function Home() {
         <div className="journey-profile-card" aria-label={copy("Example player profile")}>
           <div className="journey-profile-card-head">
             <span className="design-eyebrow">{copy("OPENsport player profile")} · {copy("Sample data")}</span>
-            <h3>{EXAMPLE_PLAYER.name}</h3>
-            <div className="journey-tags"><span>{EXAMPLE_PLAYER.age}</span><span>{EXAMPLE_PLAYER.position}</span><span>{EXAMPLE_PLAYER.city}</span><span>{copy("Right foot")}</span></div>
+            <h3>{copy(EXAMPLE_PLAYER.name)}</h3>
+            <div className="journey-tags"><span>{EXAMPLE_PLAYER.age}</span><span>{EXAMPLE_PLAYER.position}</span><span>{copy(EXAMPLE_PLAYER.city)}</span><span>{copy("Right foot")}</span></div>
           </div>
           <dl className="journey-profile-stats">
             <div><dt>{copy("Overall")}</dt><dd>74.0</dd></div>

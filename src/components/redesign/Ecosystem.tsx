@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useDesignCopy } from "@/hooks/useDesignCopy";
 import { PoseFigure } from "@/components/redesign/primitives";
@@ -18,10 +18,6 @@ export function StatusBadge({ status }: { status: Status }) {
   const copy = useDesignCopy();
   const label = { live: "Live now", pilot: "Pilot", next: "Coming next" }[status];
   return <span className="eco-status" data-status={status}>{copy(label)}</span>;
-}
-
-function prefersReducedMotion() {
-  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 function Sparkline({ values, label }: { values: number[]; label: string }) {
@@ -45,7 +41,7 @@ function ScoreBars({ highlight = false }: { highlight?: boolean }) {
 
 function PlayerLine() {
   const copy = useDesignCopy();
-  return <span className="eco-player">{EXAMPLE_PLAYER.name} · {EXAMPLE_PLAYER.age} · {EXAMPLE_PLAYER.position} · {copy(EXAMPLE_PLAYER.region)}</span>;
+  return <span className="eco-player">{copy(EXAMPLE_PLAYER.name)} · {EXAMPLE_PLAYER.age} · {EXAMPLE_PLAYER.position} · {copy(EXAMPLE_PLAYER.region)}</span>;
 }
 
 function ScoutMock() {
@@ -58,7 +54,7 @@ function ScoutMock() {
       {filters.map(([k, v]) => <li key={k}><small>{copy(k)}</small> {copy(v)}</li>)}
     </ul>
     <div className="eco-result">
-      <div className="eco-result-head"><strong>{EXAMPLE_PLAYER.name}</strong><PlayerLine /></div>
+      <div className="eco-result-head"><strong>{copy(EXAMPLE_PLAYER.name)}</strong><PlayerLine /></div>
       <dl className="eco-result-stats">
         <div><dt>{copy("Technique")}</dt><dd>82</dd></div>
         <div><dt>{copy("Progress")}</dt><dd className="eco-up">+12.8</dd></div>
@@ -79,7 +75,7 @@ function CoachMock() {
   return <div className="eco-mock">
     <div className="eco-mock-bar"><span>{copy("MY SQUAD")}</span><span className="eco-sample">{copy("Sample data")}</span></div>
     <ul className="eco-rows">
-      {rows.map(([name, note, mark]) => <li key={name}><strong>{name}</strong><span>{copy(note)}</span><span className="eco-mark" data-mark={mark}>{mark}</span></li>)}
+      {rows.map(([name, note, mark]) => <li key={name}><strong>{copy(name)}</strong><span>{copy(note)}</span><span className="eco-mark" data-mark={mark}>{mark}</span></li>)}
     </ul>
   </div>;
 }
@@ -143,7 +139,7 @@ function StagePanel({ stage }: { stage: number }) {
   if (stage === 2) return <div className="eco-stage">
     <div className="eco-stage-body eco-profile">
       <span className="eco-label">{copy("PLAYER PERFORMANCE PROFILE")}</span>
-      <h3>{EXAMPLE_PLAYER.name}</h3>
+      <h3>{copy(EXAMPLE_PLAYER.name)}</h3>
       <PlayerLine />
       <ScoreBars />
     </div>
@@ -162,51 +158,22 @@ function StagePanel({ stage }: { stage: number }) {
 
 export function Pipeline() {
   const copy = useDesignCopy();
-  const [stage, setStage] = useState(0);
-  const [touched, setTouched] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const node = rootRef.current;
-    if (!node || typeof IntersectionObserver === "undefined") return;
-    const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting), { threshold: 0.35 });
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-
-  // Walk through the stages once while the section is on screen; stop as soon as the visitor picks one.
-  useEffect(() => {
-    if (!visible || touched || prefersReducedMotion()) return;
-    const timer = window.setInterval(() => setStage(s => (s + 1) % STAGES.length), 4800);
-    return () => window.clearInterval(timer);
-  }, [visible, touched]);
-
   return <section className="eco-pipeline" id="pipeline" aria-labelledby="pipeline-title">
     <div className="eco-pipeline-intro">
       <span className="landing-science-eyebrow">{copy("What happens after the first analysis?")}</span>
       <h2 className="landing-science-title" id="pipeline-title">{copy("From analysis")}<br />{copy("to opportunity")}</h2>
       <p className="landing-science-description">{copy("One continuous system connecting assessment, development and talent discovery. Follow one example player.")}</p>
     </div>
-    <div className="eco-pipeline-body" ref={rootRef}>
-      <div className="eco-stage-tabs" role="tablist" aria-label={copy("Pipeline stages")}>
-        {STAGES.map((s, i) => <button key={s.key} type="button" role="tab" id={`eco-tab-${s.key}`} aria-selected={stage === i} aria-controls="eco-stage-panel"
-          tabIndex={stage === i ? 0 : -1} data-active={stage === i} onClick={() => { setStage(i); setTouched(true); }}
-          onKeyDown={e => {
-            if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
-            const next = (stage + (e.key === "ArrowRight" ? 1 : STAGES.length - 1)) % STAGES.length;
-            setStage(next); setTouched(true);
-            (e.currentTarget.parentElement?.children[next] as HTMLElement | undefined)?.focus();
-          }}>
+    <ol className="eco-stages">
+      {STAGES.map((s, i) => <li key={s.key} className="eco-stage-row">
+        <div className="eco-stage-head">
           <span className="eco-stage-number">0{i + 1}</span>
-          <span className="eco-stage-title">{copy(s.title)}</span>
-          <span className="eco-stage-line">{copy(s.line)}</span>
-        </button>)}
-      </div>
-      <div className="eco-stage-panel" id="eco-stage-panel" role="tabpanel" aria-labelledby={`eco-tab-${STAGES[stage].key}`} aria-live={touched ? "polite" : "off"}>
-        <StagePanel stage={stage} />
-      </div>
-    </div>
+          <h3 className="eco-stage-title">{copy(s.title)}</h3>
+          <p className="eco-stage-line">{copy(s.line)}</p>
+        </div>
+        <div className="eco-stage-panel"><StagePanel stage={i} /></div>
+      </li>)}
+    </ol>
   </section>;
 }
 
@@ -219,7 +186,6 @@ type Role = {
 
 export function Roles({ startPath, startState }: { startPath: string; startState?: object }) {
   const copy = useDesignCopy();
-  const [open, setOpen] = useState<string | null>(null);
   const roles: Role[] = [
     { key: "player", status: "live", title: "Player", value: "Know what to improve. Prove how you're improving.",
       points: ["Understand your weaknesses", "Train with purpose", "Track progress", "Build performance evidence"],
@@ -249,17 +215,14 @@ export function Roles({ startPath, startState }: { startPath: string; startState
         <h3>{copy(role.value)}</h3>
         <ul>{role.points.map(p => <li key={p}>{copy(p)}</li>)}</ul>
         <span className="eco-flow">{copy(role.flow)}</span>
-        {open === role.key && <div className="eco-role-detail" id={`role-${role.key}`}>
+        <div className="eco-role-detail">
           {role.mock}
           <p>{copy(role.detail)}</p>
-        </div>}
+        </div>
         <div className="eco-role-foot">
           {role.to
             ? <Link className="landing-audience-link" to={role.to} state={role.key === "player" ? startState : undefined}>{copy(role.cta)} →</Link>
             : <a className="landing-audience-link" href={role.href}>{copy(role.cta)} →</a>}
-          <button type="button" className="eco-more" aria-expanded={open === role.key} aria-controls={`role-${role.key}`} onClick={() => setOpen(open === role.key ? null : role.key)}>
-            {open === role.key ? copy("Hide workflow") : copy("Show workflow")}
-          </button>
         </div>
       </article>)}
     </div>
@@ -281,7 +244,7 @@ export function Decisions() {
       <div className="eco-decision-core" aria-label={copy("Player performance data")}>
         <PoseFigure />
         <strong>{copy("PLAYER PERFORMANCE DATA")}</strong>
-        <small>{EXAMPLE_PLAYER.name}</small>
+        <small>{copy(EXAMPLE_PLAYER.name)}</small>
       </div>
       <div className="eco-decision">
         <span className="design-eyebrow">{copy("Scout")}</span>
@@ -304,7 +267,6 @@ const CHAIN = [
 
 export function Trust() {
   const copy = useDesignCopy();
-  const [active, setActive] = useState(2);
   return <section className="eco-trust" id="science" aria-labelledby="trust-title">
     <div className="landing-science-intro">
       <span className="landing-science-eyebrow">{copy("Why trust the score?")}</span>
@@ -312,16 +274,12 @@ export function Trust() {
       <p className="landing-science-description">{copy("Every number traces back to a measurement you can inspect. One kick is one part of your football, not a verdict on your talent.")}</p>
       <Link className="landing-science-link" to="/about#method">{copy("Read the full method →")}</Link>
     </div>
-    <div className="eco-chain">
-      <ol className="eco-chain-steps" aria-label={copy("How a video becomes a score")}>
-        {CHAIN.map((c, i) => <li key={c.key}>
-          <button type="button" aria-pressed={active === i} aria-controls="eco-chain-detail" onClick={() => setActive(i)}>
-            <span>0{i + 1}</span>{copy(c.title)}
-          </button>
-        </li>)}
-      </ol>
-      <p className="eco-chain-detail" id="eco-chain-detail" aria-live="polite">{copy(CHAIN[active].text)}</p>
-    </div>
+    <ol className="eco-chain" aria-label={copy("How a video becomes a score")}>
+      {CHAIN.map((c, i) => <li key={c.key}>
+        <span className="eco-chain-number">0{i + 1}</span>
+        <div><h3>{copy(c.title)}</h3><p>{copy(c.text)}</p></div>
+      </li>)}
+    </ol>
   </section>;
 }
 
