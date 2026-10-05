@@ -1074,3 +1074,9 @@ html { scroll-padding-top:calc(var(--navigation-height) + 20px); }
 .eco-pipeline-intro .landing-science-description { max-width:60ch; }
 @media (min-width:1101px) { .journey-flow::before { right:calc((100% - 120px) / 6 - 14px); } }
 .eco-card-label { font:500 11px/1.4 'IBM Plex Mono',monospace; letter-spacing:.12em; text-transform:uppercase; color:#E7A28A; }
+/* One paper tone for all light sections; pipeline cards share a height. */
+.eco-card { flex:1; }
+.journey-first,.journey-mission { background:var(--paper); }
+.journey-first .camera-setup { background:var(--paper); border:1px solid var(--hairline); border-top:2px solid #A13B18; }
+.journey-first .camera-setup[data-ready] { border-top-color:var(--pitch); }
+.journey-first .camera-setup-plan svg { background:transparent; }
