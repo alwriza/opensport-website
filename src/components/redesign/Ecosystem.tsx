@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useDesignCopy } from "@/hooks/useDesignCopy";
-import { PoseFigure } from "@/components/redesign/primitives";
 
 /** One example player is used by every mockup on the landing page. All numbers are sample data. */
 export const EXAMPLE_PLAYER = { name: "Ayan K.", age: 16, position: "RW", city: "Almaty", region: "Kazakhstan" };
@@ -13,244 +12,134 @@ const WEAKEST = "power";
 const HISTORY = [61.2, 66.0, 70.4, 74.0];
 
 export type Status = "live" | "pilot" | "next";
+const STATUS_LABEL = { live: "Live now", pilot: "Pilot", next: "Coming next" };
 
 export function StatusBadge({ status }: { status: Status }) {
   const copy = useDesignCopy();
-  const label = { live: "Live now", pilot: "Pilot", next: "Coming next" }[status];
-  return <span className="eco-status" data-status={status}>{copy(label)}</span>;
+  return <span className="eco-status" data-status={status}>{copy(STATUS_LABEL[status])}</span>;
 }
 
 function Sparkline({ values, label }: { values: number[]; label: string }) {
   const min = Math.min(...values) - 4, max = Math.max(...values) + 2;
-  const points = values.map((v, i) => [8 + i * (184 / (values.length - 1)), 52 - ((v - min) / (max - min)) * 44]);
-  return <svg className="eco-spark" viewBox="0 0 200 60" fill="none" role="img" aria-label={label}>
+  const points = values.map((v, i) => [6 + i * (188 / (values.length - 1)), 40 - ((v - min) / (max - min)) * 32]);
+  return <svg className="eco-spark" viewBox="0 0 200 46" fill="none" role="img" aria-label={label}>
     <path d={points.map(([x, y], i) => `${i ? "L" : "M"}${x} ${y}`).join(" ")} stroke="#6FD39C" strokeWidth="2" strokeLinejoin="round" />
-    {points.map(([x, y], i) => <circle key={i} cx={x} cy={y} r={i === points.length - 1 ? 4.5 : 3} fill={i === points.length - 1 ? "#6FD39C" : "#14150F"} stroke="#6FD39C" strokeWidth="1.6" />)}
+    {points.map(([x, y], i) => <circle key={i} cx={x} cy={y} r={i === points.length - 1 ? 4 : 2.6} fill={i === points.length - 1 ? "#6FD39C" : "#1D1F18"} stroke="#6FD39C" strokeWidth="1.6" />)}
   </svg>;
 }
 
-function ScoreBars({ highlight = false }: { highlight?: boolean }) {
+function ScoreBars({ highlight = false, only }: { highlight?: boolean; only?: typeof WEAKEST }) {
   const copy = useDesignCopy();
   return <div className="eco-bars">
-    {SCORE_ORDER.map(key => <div key={key} className="eco-bar" data-weak={highlight && key === WEAKEST}>
-      <div><span>{copy(SCORE_LABELS[key])}</span><span>{EXAMPLE_SCORES[key]}</span></div>
+    {SCORE_ORDER.filter(key => !only || key === only).map(key => <div key={key} className="eco-bar" data-weak={highlight && key === WEAKEST}>
+      <span>{copy(SCORE_LABELS[key])}</span>
       <span className="eco-bar-track"><span style={{ width: `${EXAMPLE_SCORES[key]}%` }} /></span>
+      <span>{EXAMPLE_SCORES[key]}</span>
     </div>)}
-  </div>;
-}
-
-function PlayerLine() {
-  const copy = useDesignCopy();
-  return <span className="eco-player">{copy(EXAMPLE_PLAYER.name)} · {EXAMPLE_PLAYER.age} · {EXAMPLE_PLAYER.position} · {copy(EXAMPLE_PLAYER.region)}</span>;
-}
-
-function ScoutMock() {
-  const copy = useDesignCopy();
-  const [shortlisted, setShortlisted] = useState(false);
-  const filters = [["Position", "RW"], ["Age", "15–17"], ["Region", "Kazakhstan"], ["Technique", "75+"], ["Progress", "Positive"]];
-  return <div className="eco-mock eco-scout">
-    <div className="eco-mock-bar"><span>{copy("DISCOVER PLAYERS")}</span><StatusBadge status="pilot" /></div>
-    <ul className="eco-chips" aria-label={copy("Filters")}>
-      {filters.map(([k, v]) => <li key={k}><small>{copy(k)}</small> {copy(v)}</li>)}
-    </ul>
-    <div className="eco-result">
-      <div className="eco-result-head"><strong>{copy(EXAMPLE_PLAYER.name)}</strong><PlayerLine /></div>
-      <dl className="eco-result-stats">
-        <div><dt>{copy("Technique")}</dt><dd>82</dd></div>
-        <div><dt>{copy("Progress")}</dt><dd className="eco-up">+12.8</dd></div>
-        <div><dt>{copy("Tests")}</dt><dd>4</dd></div>
-        <div><dt>{copy("Video")}</dt><dd>{copy("Yes")}</dd></div>
-      </dl>
-      <div className="eco-actions">
-        <span>{copy("View profile")}</span><span>{copy("Watch evidence")}</span><span>{copy("Compare")}</span>
-        <button type="button" aria-pressed={shortlisted} onClick={() => setShortlisted(v => !v)}>{shortlisted ? copy("✓ Shortlisted") : copy("Add to shortlist")}</button>
-      </div>
-    </div>
-  </div>;
-}
-
-function CoachMock() {
-  const copy = useDesignCopy();
-  const rows = [["Ayan K.", "Power 65 · priority area", "↓"], ["Said M.", "Technique +6", "↑"], ["Miras T.", "Retest due", "•"]];
-  return <div className="eco-mock">
-    <div className="eco-mock-bar"><span>{copy("MY SQUAD")}</span><span className="eco-sample">{copy("Sample data")}</span></div>
-    <ul className="eco-rows">
-      {rows.map(([name, note, mark]) => <li key={name}><strong>{copy(name)}</strong><span>{copy(note)}</span><span className="eco-mark" data-mark={mark}>{mark}</span></li>)}
-    </ul>
-  </div>;
-}
-
-function LeagueMock() {
-  const copy = useDesignCopy();
-  return <div className="eco-mock">
-    <div className="eco-mock-bar"><span>{copy("PROGRAM OVERVIEW")}</span><span className="eco-sample">{copy("Sample data")}</span></div>
-    <dl className="eco-result-stats">
-      <div><dt>{copy("Players assessed")}</dt><dd>126</dd></div>
-      <div><dt>{copy("Teams")}</dt><dd>8</dd></div>
-      <div><dt>{copy("Protocol")}</dt><dd>1</dd></div>
-    </dl>
-  </div>;
-}
-
-function PlayerMock() {
-  const copy = useDesignCopy();
-  return <div className="eco-mock">
-    <div className="eco-mock-bar"><span>{copy("YOUR NEXT PRIORITY")}</span><span className="eco-sample">{copy("Sample data")}</span></div>
-    <ScoreBars highlight />
   </div>;
 }
 
 /* ------------------------------------------------------------------ pipeline */
 
-const STAGES = [
-  { key: "analyze", title: "Analyze", line: "Film a kick. Get four scores." },
-  { key: "improve", title: "Improve", line: "Find the weak spot. Train it." },
-  { key: "prove", title: "Prove", line: "Every test builds your profile." },
-  { key: "discover", title: "Get discovered", line: "Scouts search profiles, not rumours." },
-] as const;
-
-function StagePanel({ stage }: { stage: number }) {
+/** The same example player, transformed stage by stage: scores → priority → profile → search result. */
+function StageVisual({ stage }: { stage: number }) {
   const copy = useDesignCopy();
-  if (stage === 0) return <div className="eco-stage">
-    <div className="eco-phone" aria-hidden="true"><PoseFigure highlight /><span>{copy("33 keypoints tracked")}</span></div>
-    <div className="eco-stage-body">
-      <span className="eco-label">{copy("VIDEO → SCORES")}</span>
-      <ScoreBars />
-      <p>{copy("Sample scores. Your own come from your own video.")}</p>
+  const [saved, setSaved] = useState(false);
+  if (stage === 0) return <div className="eco-card"><ScoreBars /></div>;
+  if (stage === 1) return <div className="eco-card">
+    <span className="eco-card-label">{copy("Priority area")}</span>
+    <ScoreBars highlight only={WEAKEST} />
+    <div className="eco-steps" role="img" aria-label={copy("Power 52, then 58, then 63")}>
+      {[52, 58, 63].map((v, i) => <span key={v} data-last={i === 2 || undefined}>{v}</span>)}
     </div>
+    <p className="eco-card-note">{copy("3 power drills → same kick again")}</p>
   </div>;
-  if (stage === 1) return <div className="eco-stage">
-    <div className="eco-stage-body">
-      <span className="eco-label">{copy("PRIORITY AREA")}</span>
-      <ScoreBars highlight />
-      <ul className="eco-drills">
-        <li>{copy("3 power drills, with video")}</li>
-        <li>{copy("Retest: same kick, same angle")}</li>
-      </ul>
+  if (stage === 2) return <div className="eco-card">
+    <div className="eco-profile-head">
+      <strong>{copy(EXAMPLE_PLAYER.name)}</strong>
+      <span>{EXAMPLE_PLAYER.age} · {EXAMPLE_PLAYER.position} · {copy(EXAMPLE_PLAYER.city)}</span>
     </div>
-    <div className="eco-stage-body">
-      <span className="eco-label">{copy("POWER OVER 3 TESTS")}</span>
-      <div className="eco-steps" aria-label={copy("Power 52, then 58, then 63")}>
-        {[52, 58, 63].map((v, i) => <div key={v}><strong>{v}</strong><span className="eco-step-bar" style={{ height: `${v}px` }} /><small>{copy("TEST")} {i + 1}</small></div>)}
-      </div>
-      <p>{copy("Identify weaknesses. Train them. Test again.")}</p>
+    <div className="eco-profile-numbers">
+      <div><b>74.0</b><small>{copy("Overall")}</small></div>
+      <div><b className="eco-up">+12.8</b><small>{copy("Progress")}</small></div>
+      <div><b>4</b><small>{copy("Tests")}</small></div>
     </div>
+    <Sparkline values={HISTORY} label={copy("Overall score rising from 61.2 to 74.0 over four tests")} />
   </div>;
-  if (stage === 2) return <div className="eco-stage">
-    <div className="eco-stage-body eco-profile">
-      <span className="eco-label">{copy("PLAYER PERFORMANCE PROFILE")}</span>
-      <h3>{copy(EXAMPLE_PLAYER.name)}</h3>
-      <PlayerLine />
-      <ScoreBars />
+  return <div className="eco-card">
+    <p className="eco-filters">RW · 15–17 · {copy("Kazakhstan")} · {copy("Technique")} 75+</p>
+    <div className="eco-profile-head">
+      <strong>{copy(EXAMPLE_PLAYER.name)}</strong>
+      <span>{copy("Technique")} 82 · <em className="eco-up">+12.8</em> · {copy("4 videos")}</span>
     </div>
-    <div className="eco-stage-body">
-      <span className="eco-label">{copy("OVERALL, 4 TESTS")}</span>
-      <Sparkline values={HISTORY} label={copy("Overall score rising from 61.2 to 74.0 over four tests")} />
-      <dl className="eco-result-stats"><div><dt>{copy("Progress")}</dt><dd className="eco-up">+12.8</dd></div><div><dt>{copy("Videos")}</dt><dd>4</dd></div></dl>
-      <p className="eco-bridge">{copy("The profile is the bridge between training and scouting.")}</p>
+    <div className="eco-actions">
+      <span>{copy("Profile")}</span><span>{copy("Video")}</span><span>{copy("Compare")}</span>
+      <button type="button" aria-pressed={saved} onClick={() => setSaved(v => !v)}>{saved ? copy("✓ Saved") : copy("Save")}</button>
     </div>
-  </div>;
-  return <div className="eco-stage eco-stage-single">
-    <ScoutMock />
-    <p className="eco-note">{copy("Sample interface. The national ranking already offers search, compare and a saved list; dedicated scout accounts are in pilot.")}</p>
   </div>;
 }
 
-export function Pipeline() {
+const STAGES = [
+  { title: "Analyze", line: "Film a kick. Get four scores.", status: "live" as Status },
+  { title: "Improve", line: "Find the weak spot. Train it. Retest.", status: "live" as Status },
+  { title: "Prove", line: "Every test adds to your profile.", status: "live" as Status },
+  { title: "Become visible", line: "Scouts can find your profile and watch the evidence.", status: "pilot" as Status },
+];
+
+export function Pipeline({ profilePath }: { profilePath: string }) {
   const copy = useDesignCopy();
   return <section className="eco-pipeline" id="pipeline" aria-labelledby="pipeline-title">
     <div className="eco-pipeline-intro">
       <span className="landing-science-eyebrow">{copy("What happens after the first analysis?")}</span>
       <h2 className="landing-science-title" id="pipeline-title">{copy("From analysis")}<br />{copy("to opportunity")}</h2>
-      <p className="landing-science-description">{copy("One continuous system connecting assessment, development and talent discovery. Follow one example player.")}</p>
+      <p className="landing-science-description">{copy("Follow one example player. The same data grows from a single test into a profile scouts can review.")}</p>
     </div>
     <ol className="eco-stages">
-      {STAGES.map((s, i) => <li key={s.key} className="eco-stage-row">
-        <div className="eco-stage-head">
-          <span className="eco-stage-number">0{i + 1}</span>
-          <h3 className="eco-stage-title">{copy(s.title)}</h3>
-          <p className="eco-stage-line">{copy(s.line)}</p>
-        </div>
-        <div className="eco-stage-panel"><StagePanel stage={i} /></div>
+      {STAGES.map((s, i) => <li key={s.title} className="eco-stage">
+        <span className="eco-stage-number">0{i + 1}</span>
+        <h3>{copy(s.title)}{s.status === "pilot" && <StatusBadge status="pilot" />}</h3>
+        <p>{copy(s.line)}</p>
+        <StageVisual stage={i} />
       </li>)}
     </ol>
+    <div className="eco-pipeline-foot">
+      <p>{copy("Players see their development. Coaches track it. Scouts review the evidence.")}</p>
+      <Link className="landing-science-link" to={profilePath}>{copy("See a player profile →")}</Link>
+    </div>
   </section>;
 }
 
 /* --------------------------------------------------------------------- roles */
 
-type Role = {
-  key: string; status: Status; title: string; value: string; points: string[]; flow: string; cta: string; mock: JSX.Element;
-  detail: string; to?: string; href?: string;
-};
+type Role = { key: string; status?: Status; title: string; question: string; value: string; points: string[]; cta: string; to?: string; href?: string };
 
 export function Roles({ startPath, startState }: { startPath: string; startState?: object }) {
   const copy = useDesignCopy();
   const roles: Role[] = [
-    { key: "player", status: "live", title: "Player", value: "Know what to improve. Prove how you're improving.",
-      points: ["Understand your weaknesses", "Train with purpose", "Track progress", "Build performance evidence"],
-      flow: "Record → Analyze → Train → Retest → Profile", cta: "Analyze my first kick", to: startPath, mock: <PlayerMock />,
-      detail: "Every test is saved to your profile. Your next priority is always the lowest score, with drills attached, so you never open an empty dashboard." },
-    { key: "coach", status: "live", title: "Coach", value: "See what the eye can't measure. OPENsport supports your decisions. It doesn't replace you.",
-      points: ["Assess: standardized tests", "Develop: name the technical weakness", "Track: compare tests over time", "Decide: data next to your judgment"],
-      flow: "Assess → Develop → Track → Decide", cta: "See a player report", to: "/demo/coach-dashboard", mock: <CoachMock />,
-      detail: "Build a squad, review each player's report, assign training plans and watch retests come in. Squad, evaluations, training and statistics are in the coach workspace today." },
-    { key: "scout", status: "pilot", title: "Scout / club", value: "Find talent beyond the players you already know. Use data to decide who deserves a closer look.",
-      points: ["Filter by position, age, region, metrics", "Compare players side by side", "Watch the video behind each score", "Shortlist who to see in person"],
-      flow: "Discover → Filter → Compare → Evidence → Shortlist", cta: "Explore scout workflow", to: "/demo/ranking", mock: <ScoutMock />,
-      detail: "Today the national ranking offers search, filters, compare and a saved list. A dedicated scout workspace with remote evidence review is in pilot. It helps you decide where to look. It does not pick players for you." },
-    { key: "academy", status: "pilot", title: "Academy / league", value: "Measure player development at scale.",
-      points: ["Assess many players the same way", "Standardize the data", "Track development", "Review program insights"],
-      flow: "Assess many → Standardize → Track → Review", cta: "Book a pilot", href: "mailto:contact@opensport.app?subject=League%20pilot", mock: <LeagueMock />,
-      detail: "Run one protocol across teams and build a consistent dataset. We are running the first pilots now. Program-level dashboards are still being built, so the numbers shown are a sample." },
+    { key: "player", title: "Player", question: "What should I improve?", value: "Know your weak spot and prove that training works.",
+      points: ["Kick analysis", "Targeted drills", "Progress tracking"], cta: "Analyze my first video", to: startPath },
+    { key: "coach", title: "Coach", question: "How do I make this player better?", value: "Objective data next to your judgment. It supports you, it doesn't replace you.",
+      points: ["Weaknesses", "Development trend", "Training priorities"], cta: "See a player report", to: "/demo/coach-dashboard" },
+    { key: "scout", status: "pilot", title: "Scout / club", question: "Is this player worth watching?", value: "Decide who deserves a closer look, beyond the players you already know.",
+      points: ["Metrics", "Video evidence", "Comparison"], cta: "How search works", to: "/demo/ranking" },
+    { key: "academy", status: "pilot", title: "Academy / league", question: "How do we measure development at scale?", value: "One protocol for every team, one consistent dataset.",
+      points: ["Standardized assessment", "Team data", "Program trends"], cta: "Book a pilot", href: "mailto:contact@opensport.app?subject=League%20pilot" },
   ];
   return <section className="eco-roles" id="roles" aria-labelledby="roles-title">
-    <div className="landing-section-heading">
-      <h2 className="landing-how-title" id="roles-title">{copy("Built for the")}<br />{copy("whole pathway")}</h2>
-      <span className="landing-how-caption">{copy("PLAYER → COACH → SCOUT → ACADEMY")}</span>
+    <div className="eco-roles-intro">
+      <span className="design-eyebrow">{copy("Built for the whole pathway")}</span>
+      <h2 className="landing-roadmap-title" id="roles-title">{copy("Same player data.")} {copy("Different decisions.")}</h2>
     </div>
     <div className="eco-role-grid">
       {roles.map(role => <article className="eco-role" key={role.key} id={role.key === "scout" ? "scouts" : role.key === "coach" ? "coaches" : undefined}>
-        <header><span className="design-eyebrow">{copy(role.title)}</span><StatusBadge status={role.status} /></header>
-        <h3>{copy(role.value)}</h3>
+        <header><span className="design-eyebrow">{copy(role.title)}</span>{role.status && <StatusBadge status={role.status} />}</header>
+        <h3>{copy(role.question)}</h3>
+        <p>{copy(role.value)}</p>
         <ul>{role.points.map(p => <li key={p}>{copy(p)}</li>)}</ul>
-        <span className="eco-flow">{copy(role.flow)}</span>
-        <div className="eco-role-detail">
-          {role.mock}
-          <p>{copy(role.detail)}</p>
-        </div>
-        <div className="eco-role-foot">
-          {role.to
-            ? <Link className="landing-audience-link" to={role.to} state={role.key === "player" ? startState : undefined}>{copy(role.cta)} →</Link>
-            : <a className="landing-audience-link" href={role.href}>{copy(role.cta)} →</a>}
-        </div>
+        {role.to
+          ? <Link className="eco-role-link" to={role.to} state={role.key === "player" ? startState : undefined}>{copy(role.cta)} →</Link>
+          : <a className="eco-role-link" href={role.href}>{copy(role.cta)} →</a>}
       </article>)}
-    </div>
-  </section>;
-}
-
-/* ------------------------------------------------------- same data, decisions */
-
-export function Decisions() {
-  const copy = useDesignCopy();
-  return <section className="eco-decisions" aria-labelledby="decisions-title">
-    <h2 className="landing-roadmap-title" id="decisions-title">{copy("Different decisions.")} {copy("Same player data.")}</h2>
-    <div className="eco-decision-grid">
-      <div className="eco-decision">
-        <span className="design-eyebrow">{copy("Coach")}</span>
-        <h3>{copy("How do I make this player better?")}</h3>
-        <ul><li>{copy("Weaknesses")}</li><li>{copy("Development trend")}</li><li>{copy("Training priorities")}</li><li>{copy("Retest history")}</li></ul>
-      </div>
-      <div className="eco-decision-core" aria-label={copy("Player performance data")}>
-        <PoseFigure />
-        <strong>{copy("PLAYER PERFORMANCE DATA")}</strong>
-        <small>{copy(EXAMPLE_PLAYER.name)}</small>
-      </div>
-      <div className="eco-decision">
-        <span className="design-eyebrow">{copy("Scout")}</span>
-        <h3>{copy("Is this player worth watching?")}</h3>
-        <ul><li>{copy("Performance metrics")}</li><li>{copy("Progress")}</li><li>{copy("Video evidence")}</li><li>{copy("Position and comparison")}</li></ul>
-      </div>
     </div>
   </section>;
 }
@@ -258,11 +147,11 @@ export function Decisions() {
 /* ---------------------------------------------------------------------- trust */
 
 const CHAIN = [
-  { key: "video", title: "Video", text: "One kick from a phone, from any angle. No sensors or markers." },
-  { key: "keypoints", title: "Keypoints", text: "33 body keypoints are tracked frame by frame, so the model works from the movement, not from the picture." },
-  { key: "measure", title: "Measurements", text: "Knee, hip, ankle and trunk angles are measured at contact, along with the order in which hip, knee and ankle fire." },
-  { key: "scores", title: "Scores", text: "Measurements are combined by a deterministic scorer into technique, power, stability and balance, each from 0 to 100." },
-  { key: "report", title: "Report", text: "You get the scores, your weakest area and drills. If a coach disagrees with a number, we can point at the frame and the angle behind it." },
+  { title: "Video", text: "One kick from a phone. No sensors or markers." },
+  { title: "33 body points", text: "Tracked frame by frame, so the model reads movement, not pixels." },
+  { title: "Measurements", text: "Knee, hip, ankle and trunk angles at contact, and the order in which they fire." },
+  { title: "Deterministic scoring", text: "The same movement always gets the same four scores, from 0 to 100." },
+  { title: "Report", text: "If a coach disagrees with a number, we can show the frame and angle behind it." },
 ];
 
 export function Trust() {
@@ -271,12 +160,12 @@ export function Trust() {
     <div className="landing-science-intro">
       <span className="landing-science-eyebrow">{copy("Why trust the score?")}</span>
       <h2 className="landing-science-title" id="trust-title">{copy("Not a")}<br />{copy("black box")}</h2>
-      <p className="landing-science-description">{copy("Every number traces back to a measurement you can inspect. One kick is one part of your football, not a verdict on your talent.")}</p>
+      <p className="landing-science-description">{copy("One kick is only one part of football, not a verdict on talent.")}</p>
       <Link className="landing-science-link" to="/about#method">{copy("Read the full method →")}</Link>
     </div>
     <ol className="eco-chain" aria-label={copy("How a video becomes a score")}>
-      {CHAIN.map((c, i) => <li key={c.key}>
-        <span className="eco-chain-number">0{i + 1}</span>
+      {CHAIN.map((c, i) => <li key={c.title}>
+        <span>0{i + 1}</span>
         <div><h3>{copy(c.title)}</h3><p>{copy(c.text)}</p></div>
       </li>)}
     </ol>
@@ -293,9 +182,9 @@ export function Roadmap() {
     { status: "next", items: ["More football actions", "Position-specific analysis", "League-scale batch processing", "Advanced team dashboards"] },
   ];
   return <section className="eco-roadmap" id="roadmap" aria-labelledby="roadmap-heading">
-    <div className="landing-section-heading">
-      <h2 className="landing-how-title" id="roadmap-heading">{copy("Live now.")}<br />{copy("What's next.")}</h2>
-      <span className="landing-how-caption">{copy("WE LABEL WHAT IS NOT BUILT YET")}</span>
+    <div className="eco-roadmap-intro">
+      <span className="design-eyebrow">{copy("We label what is not built yet")}</span>
+      <h2 className="landing-roadmap-title" id="roadmap-heading">{copy("What works today")}</h2>
     </div>
     <div className="eco-roadmap-grid">
       {columns.map(col => <div key={col.status} className="eco-roadmap-col" data-status={col.status}>
