@@ -30,7 +30,7 @@ export default function About() {
             <span className="landing-fact-caption">{copy("Body keypoints tracked")}</span>
           </div>
           <div className="landing-fact">
-            <span className="landing-fact-value">0₸</span>
+            <span className="landing-fact-value">0</span>
             <span className="landing-fact-caption">{copy("Hardware required")}</span>
           </div>
         </div>

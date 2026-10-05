@@ -82,7 +82,6 @@
   "Talk about a pilot →": "Обсудить пилот →",
   "Film it today.": "Снимите сегодня.",
   "Know by tonight.": "Получите результат.",
-  "Free while we are in pilot. No card, no equipment, no waiting list.": "Бесплатно на время пилота. Без карты, оборудования и очереди.",
   "Book a league pilot": "Запросить пилот для лиги",
   "Home": "Главная",
   "Player": "Игрок",
@@ -282,7 +281,6 @@
   "PROGRESS": "ПРОГРЕСС",
   "Squad development over the season": "Развитие состава за сезон",
   "Statistics, evaluations and retests in one place. See who is improving and who needs your attention.": "Статистика, оценки и повторные тесты в одном месте. Видно, кто прогрессирует, а кому нужно ваше внимание.",
-  "For football players · Free during the pilot": "Для футболистов · Бесплатно на время пилота",
   "Film a kick.": "Сними удар.",
   "Get a plan.": "Получи план.",
   "Get seen.": "Стань заметным.",
@@ -291,7 +289,6 @@
   "See an example analysis": "Пример анализа",
   "Phone is all you need": "Нужен только телефон",
   "Scores per kick": "Оценки за удар",
-  "Free during the pilot": "Бесплатно в пилоте",
   "One loop,": "Один цикл",
   "every week": "каждую неделю",
   "RECORD → ANALYSE → TRAIN → RETEST → GET SEEN": "СНИМИ → АНАЛИЗ → ТРЕНИРУЙСЯ → ПОВТОРИ → СТАНЬ ЗАМЕТНЫМ",
@@ -620,7 +617,6 @@
   "Practice": "Тренируйтесь",
   "Drills picked for your weakest area.": "Упражнения под вашу слабую зону.",
   "Film the same kick again and compare.": "Снимите тот же удар ещё раз и сравните.",
-  "Football development & talent discovery · Free during the pilot": "Развитие футболистов и поиск талантов · Бесплатно на время пилота",
   "Turn football performance into measurable progress.": "Превратите футбольные результаты в измеримый прогресс.",
   "Record one kick on your phone. OPENsport analyzes your movement, shows what to improve and helps you track development over time. Coaches use the data to guide training. Scouts use it to find players worth watching.": "Снимите один удар на телефон. OPENsport анализирует движение, показывает, что улучшить, и помогает следить за развитием. Тренеры используют данные в работе, скауты — чтобы находить игроков, достойных внимания.",
   "The OPENsport pipeline": "Путь в OPENsport",
@@ -641,5 +637,7 @@
   "Academy or league: book a pilot": "Академия или лига: заявка на пилот",
   "Who it is for": "Для кого",
   "Pipeline": "Путь игрока",
-  "Science": "Наука"
+  "Science": "Наука",
+  "Football development & talent discovery": "Развитие футболистов и поиск талантов",
+  "Any phone. Any pitch. No sensors, no studio.": "Любой телефон. Любое поле. Без датчиков и студии."
 }

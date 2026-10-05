@@ -82,7 +82,6 @@
   "Talk about a pilot →": "Пилоттық жобаны талқылау →",
   "Film it today.": "Бүгін түсіріңіз.",
   "Know by tonight.": "Нәтижесін алыңыз.",
-  "Free while we are in pilot. No card, no equipment, no waiting list.": "Пилот кезінде тегін. Карта, жабдық және кезек қажет емес.",
   "Book a league pilot": "Лигаға пилоттық жоба сұрау",
   "Home": "Басты бет",
   "Player": "Ойыншы",
@@ -282,7 +281,6 @@
   "PROGRESS": "ПРОГРЕСС",
   "Squad development over the season": "Құрамның маусым бойы дамуы",
   "Statistics, evaluations and retests in one place. See who is improving and who needs your attention.": "Статистика, бағалау және қайта тесттер бір жерде. Кім дамып жатқанын және кімге назар керегін көресіз.",
-  "For football players · Free during the pilot": "Футболшыларға · Пилот кезінде тегін",
   "Film a kick.": "Соққыны түсір.",
   "Get a plan.": "Жоспар ал.",
   "Get seen.": "Көзге түс.",
@@ -291,7 +289,6 @@
   "See an example analysis": "Талдау мысалы",
   "Phone is all you need": "Тек телефон керек",
   "Scores per kick": "Соққыға баға",
-  "Free during the pilot": "Пилотта тегін",
   "One loop,": "Бір цикл",
   "every week": "әр апта сайын",
   "RECORD → ANALYSE → TRAIN → RETEST → GET SEEN": "ТҮСІР → ТАЛДА → ЖАТТЫҚ → ҚАЙТАЛА → КӨЗГЕ ТҮС",
@@ -620,7 +617,6 @@
   "Practice": "Жаттығыңыз",
   "Drills picked for your weakest area.": "Әлсіз тұсыңызға таңдалған жаттығулар.",
   "Film the same kick again and compare.": "Сол соққыны қайта түсіріп, салыстырыңыз.",
-  "Football development & talent discovery · Free during the pilot": "Футболшылардың дамуы және таланттарды іздеу · Пилот кезінде тегін",
   "Turn football performance into measurable progress.": "Футбол нәтижесін өлшенетін прогреске айналдырыңыз.",
   "Record one kick on your phone. OPENsport analyzes your movement, shows what to improve and helps you track development over time. Coaches use the data to guide training. Scouts use it to find players worth watching.": "Телефонға бір соққы түсіріңіз. OPENsport қозғалысты талдайды, нені жақсарту керегін көрсетеді және дамуды қадағалауға көмектеседі. Жаттықтырушылар деректерді жұмыста қолданады, скауттар — назар аударуға тұрарлық ойыншыларды табу үшін.",
   "The OPENsport pipeline": "OPENsport жолы",
@@ -641,5 +637,7 @@
   "Academy or league: book a pilot": "Академия немесе лига: пилотқа өтінім",
   "Who it is for": "Кімге арналған",
   "Pipeline": "Ойыншы жолы",
-  "Science": "Ғылым"
+  "Science": "Ғылым",
+  "Football development & talent discovery": "Футболшылардың дамуы және таланттарды іздеу",
+  "Any phone. Any pitch. No sensors, no studio.": "Кез келген телефон. Кез келген алаң. Датчиксіз, студиясыз."
 }

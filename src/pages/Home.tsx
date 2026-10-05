@@ -113,7 +113,7 @@ export default function Home() {
     <main className="design-page landing" lang={i18n.resolvedLanguage}>
       <section className="landing-hero" id="top">
         <div className="landing-intro">
-          <span className="landing-eyebrow">{copy("Football development & talent discovery · Free during the pilot")}</span>
+          <span className="landing-eyebrow">{copy("Football development & talent discovery")}</span>
           <h1 className="landing-title landing-title-statement">
             {copy("Turn football performance into measurable progress.")}</h1>
           <p className="landing-description">
@@ -138,8 +138,8 @@ export default function Home() {
               <span className="landing-fact-caption">{copy("Scores per kick")}</span>
             </div>
             <div className="landing-fact">
-              <span className="landing-fact-value">0₸</span>
-              <span className="landing-fact-caption">{copy("Free during the pilot")}</span>
+              <span className="landing-fact-value">33</span>
+              <span className="landing-fact-caption">{copy("Body keypoints tracked")}</span>
             </div>
           </div>
           <p className="landing-flow" aria-label={copy("The OPENsport pipeline")}>
@@ -285,7 +285,7 @@ export default function Home() {
             {copy("Film it today.")}<br />
             {copy("Know by tonight.")}</h2>
           <p className="landing-cta-description">
-            {copy("Free while we are in pilot. No card, no equipment, no waiting list.")}</p>
+            {copy("Any phone. Any pitch. No sensors, no studio.")}</p>
         </div>
         <div className="landing-cta-actions">
           <Link className="landing-cta-primary" to={startPath} state={startState}>{copy("Analyze my first video")}</Link>
