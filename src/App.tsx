@@ -34,8 +34,10 @@ import ResetPassword from "./pages/ResetPassword";
 import Footer from "@/components/ui/Footer";
 import { DemoProvider } from "@/demo/DemoContext";
 import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
+import { startUserIdTracking } from "@/lib/analytics";
 
 const queryClient = new QueryClient();
+startUserIdTracking();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoaded } = useCurrentUser();

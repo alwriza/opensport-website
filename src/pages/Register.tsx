@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, ExternalLink } from "lucide-react";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { registrationFunctions } from "@/integrations/supabase/client";
+import { trackSignUp } from "@/lib/analytics";
 
 export default function Register() {
   const { t } = useTranslation("auth");
@@ -44,6 +45,9 @@ export default function Register() {
       if (data?.error) {
         throw new Error(data.error);
       }
+
+      // The register function has created the Supabase user.
+      trackSignUp();
 
       toast({
         title: t("accountCreated"),

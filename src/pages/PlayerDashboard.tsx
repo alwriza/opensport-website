@@ -25,6 +25,7 @@ import { Info } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDemoContext, useDemoMutationGuard } from "@/demo";
+import { trackAnalysisComplete, trackVideoUpload } from "@/lib/analytics";
 
 type UserRecord = Database["public"]["Tables"]["users"]["Row"];
 type VideoRecord = Pick<Database["public"]["Tables"]["videos"]["Row"], "id" | "filename" | "status" | "uploaded_at" | "duration">;
@@ -373,6 +374,7 @@ export default function PlayerDashboard() {
       }
 
       console.log("✓ Video record created:", newVideo.id);
+      trackVideoUpload(newVideo.id);
       setUploadStage(1);
 
       // 3. Call Edge Function to process video securely
@@ -398,6 +400,7 @@ export default function PlayerDashboard() {
         }
 
         console.log('✓ Edge Function analysis complete');
+        void trackAnalysisComplete(newVideo.id);
 
         toast({
           title: "Analysis Complete! 🎉",

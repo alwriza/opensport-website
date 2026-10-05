@@ -18,6 +18,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Loader2, Upload, Trophy, Clock, X, Check, Video, User } from "lucide-react";
+import { trackAnalysisComplete, trackVideoUpload } from "@/lib/analytics";
 
 interface Duel {
   id: string;
@@ -193,6 +194,7 @@ export default function Duels() {
         .select()
         .single();
       if (insertError) throw insertError;
+      trackVideoUpload(videoRow.id);
 
       const token = await getAccessToken();
       const { data: submitData, error: submitError } = await supabase.functions.invoke(
@@ -205,13 +207,15 @@ export default function Duels() {
       if (submitError) throw new Error((submitError as any)?.context?.error || submitError.message);
       if ((submitData as any)?.error) throw new Error((submitData as any).error);
 
-      const { error: processError } = await supabase.functions.invoke("process-video", {
+      const { data: processData, error: processError } = await supabase.functions.invoke("process-video", {
         body: { video_id: videoRow.id, camera_angle: cameraAngle, kicking_foot: kickingFoot },
       });
       if (processError) {
         await supabase.from("videos").update({ status: "failed" }).eq("id", videoRow.id);
         throw processError;
       }
+      // process-video reports a failed analysis as { error } with HTTP 200.
+      if (!(processData as any)?.error) void trackAnalysisComplete(videoRow.id);
 
       toast({ title: "Video submitted", description: "We'll notify you when your opponent finishes." });
       setUploadDuelId(null);
