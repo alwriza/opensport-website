@@ -1,6 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** First client IP of the request; hashed in the database, never stored raw. */
+function clientIp(req: Request): string | null {
+  const forwarded = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  return req.headers.get("cf-connecting-ip") || forwarded || req.headers.get("x-real-ip") || null;
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -12,7 +20,7 @@ serve(async (req) => {
   }
 
   try {
-    const { email, password, phone, nickname, terms_accepted, privacy_accepted } = await req.json();
+    const { email, password, phone, nickname, terms_accepted, privacy_accepted, referral_visit_id } = await req.json();
 
     if (!email || !password || !phone || !nickname) {
       return new Response(
@@ -92,6 +100,18 @@ serve(async (req) => {
 
       if (updateError) {
         console.error("Failed to set terms acceptance:", updateError);
+      }
+
+      // Creator referral: the database checks the visit, the 14-day window and the
+      // creator's status, and links the account once. It must never block sign-up.
+      if (typeof referral_visit_id === "string" && UUID_RE.test(referral_visit_id)) {
+        const { data: referral, error: referralError } = await supabase.rpc("attach_referral", {
+          p_auth_user_id: authUser.user.id,
+          p_visit_id: referral_visit_id,
+          p_ip: clientIp(req),
+        });
+        if (referralError) console.error("attach_referral error:", referralError);
+        else if (!referral?.ok) console.log("Referral not attached:", referral?.reason);
       }
     }
 

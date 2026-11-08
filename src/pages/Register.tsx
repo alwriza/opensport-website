@@ -12,6 +12,7 @@ import { Loader2, ExternalLink } from "lucide-react";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { registrationFunctions } from "@/integrations/supabase/client";
 import { trackSignUp } from "@/lib/analytics";
+import { clearStoredReferral, getStoredReferral } from "@/lib/referral";
 
 export default function Register() {
   const { t } = useTranslation("auth");
@@ -30,7 +31,12 @@ export default function Register() {
     setLoading(true);
     try {
       const { data, error } = await registrationFunctions.invoke<{ error?: string }>("register", {
-        body: { ...form, terms_accepted: termsAccepted, privacy_accepted: privacyAccepted },
+        body: {
+          ...form,
+          terms_accepted: termsAccepted,
+          privacy_accepted: privacyAccepted,
+          referral_visit_id: getStoredReferral()?.visitId,
+        },
       });
 
       if (error) {
@@ -46,8 +52,9 @@ export default function Register() {
         throw new Error(data.error);
       }
 
-      // The register function has created the Supabase user.
+      // The register function has created the Supabase user and handled the referral.
       trackSignUp();
+      clearStoredReferral();
 
       toast({
         title: t("accountCreated"),

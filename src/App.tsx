@@ -20,6 +20,7 @@ const PlayerProfile = lazy(() => import("./pages/PlayerProfile"));
 const CoachDashboard = lazy(() => import("./pages/CoachDashboard"));
 const MatchAnalysis = lazy(() => import("./pages/MatchAnalysis"));
 const MatchAnalysisDetail = lazy(() => import("./pages/MatchAnalysisDetail"));
+const AdminReferrals = lazy(() => import("./pages/admin/AdminReferrals"));
 
 import NotFound from "./pages/NotFound";
 import JoinTeam from "./pages/JoinTeam";
@@ -35,9 +36,11 @@ import Footer from "@/components/ui/Footer";
 import { DemoProvider } from "@/demo/DemoContext";
 import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
 import { startUserIdTracking } from "@/lib/analytics";
+import { startReferralCapture } from "@/lib/referral";
 
 const queryClient = new QueryClient();
 startUserIdTracking();
+startReferralCapture();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoaded } = useCurrentUser();
@@ -75,6 +78,9 @@ const App = () => (
             <Route path="/join-team" element={<ProtectedRoute><JoinTeam /></ProtectedRoute>} />
             <Route path="/match-analysis" element={<ProtectedRoute><Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>}><MatchAnalysis /></Suspense></ProtectedRoute>} />
             <Route path="/match-analysis/:id" element={<ProtectedRoute><Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>}><MatchAnalysisDetail /></Suspense></ProtectedRoute>} />
+
+            {/* Internal: creator referral program. The page itself checks is_admin(). */}
+            <Route path="/admin/referrals" element={<ProtectedRoute><Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>}><AdminReferrals /></Suspense></ProtectedRoute>} />
 
             <Route path="/about" element={<About />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
