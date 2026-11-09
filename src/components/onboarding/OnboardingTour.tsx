@@ -63,13 +63,20 @@ function RecordingArtwork() {
   </div>;
 }
 
-/** The demo opens the tour by itself once per browser, on the first visit to /demo. */
+/**
+ * The demo opens the tour by itself once per visit: on entering /demo in a new tab,
+ * or again after leaving the demo and coming back. Reloads and moves inside the
+ * demo do not reopen it. Kept in sessionStorage and cleared when the demo is left.
+ */
 const DEMO_TOUR_KEY = "opensport:onboarding:demo-shown";
 function demoTourShown(): boolean {
-  try { return localStorage.getItem(DEMO_TOUR_KEY) === "1"; } catch { return true; }
+  try { return sessionStorage.getItem(DEMO_TOUR_KEY) === "1"; } catch { return true; }
 }
 function markDemoTourShown() {
-  try { localStorage.setItem(DEMO_TOUR_KEY, "1"); } catch { /* storage blocked: the tour simply does not repeat this session */ }
+  try { sessionStorage.setItem(DEMO_TOUR_KEY, "1"); } catch { /* storage blocked: no automatic tour */ }
+}
+function resetDemoTour() {
+  try { sessionStorage.removeItem(DEMO_TOUR_KEY); } catch { /* ignore */ }
 }
 
 export function OnboardingTour() {
@@ -94,6 +101,11 @@ export function OnboardingTour() {
   const maskId = useId();
   const step = steps[role][stepIndex];
   const hasTeam = geometry?.hasTeam ?? false;
+
+  // Leaving the demo ends the visit, so the next entry shows the tour again.
+  useEffect(() => {
+    if (!isDemo) resetDemoTour();
+  }, [isDemo]);
 
   useEffect(() => {
     const request = routeState(location.state);
