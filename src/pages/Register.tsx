@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { registrationFunctions } from "@/integrations/supabase/client";
-import { trackSignUp } from "@/lib/analytics";
+import { trackSignUp, trackSignUpError, trackSignUpStart, trackSignUpView } from "@/lib/analytics";
 import { clearStoredReferral, getStoredReferral } from "@/lib/referral";
 
 export default function Register() {
@@ -23,6 +23,14 @@ export default function Register() {
   // One checkbox covers both documents; the register function still records each.
   const [accepted, setAccepted] = useState(false);
   const canSubmit = accepted;
+  const started = useRef(false);
+
+  useEffect(() => { trackSignUpView(!!getStoredReferral()); }, []);
+  const onFirstInput = () => {
+    if (started.current) return;
+    started.current = true;
+    trackSignUpStart();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,6 +71,7 @@ export default function Register() {
       navigate("/verify-email", { state: { email: form.email } });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";
+      trackSignUpError(msg);
       const normalizedMessage = msg.toLowerCase();
       let description = t("somethingWentWrong");
       if (normalizedMessage.includes("already been registered") || normalizedMessage.includes("already registered")) description = t("emailTaken");
@@ -82,7 +91,7 @@ export default function Register() {
           <CardDescription>{t("joinDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} onInput={onFirstInput} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">{t("emailLabel")}</Label>
               <Input

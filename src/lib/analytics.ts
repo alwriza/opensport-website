@@ -1,8 +1,16 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /** Google Tag Manager events. Push only after the action has actually succeeded, never on click. */
+/** Why a sign-up attempt failed. Codes only: never the email or the raw message. */
+export type SignUpErrorReason = "email_taken" | "invalid_email" | "weak_password" | "network" | "other";
+
 type DataLayerEvent =
+  | { event: "sign_up_view"; referral: boolean }
+  | { event: "sign_up_start" }
+  | { event: "sign_up_error"; reason: SignUpErrorReason }
   | { event: "sign_up"; method: "email" }
+  | { event: "email_verified" }
+  | { event: "email_verify_error" }
   | { event: "video_upload"; video_id: string }
   | { event: "analysis_complete"; video_id: string; analysis_id: string }
   | { event: "user_id_ready"; user_id: string }
@@ -34,6 +42,37 @@ function pushOnce(key: string, payload: DataLayerEvent) {
   sent.add(key);
   try { sessionStorage.setItem(SENT_KEY, JSON.stringify([...sent].slice(-200))); } catch { /* Storage can be blocked; the in-memory set still dedupes. */ }
   pushDataLayer(payload);
+}
+
+/*
+ * Sign-up funnel, in order: sign_up_view → sign_up_start → (sign_up_error)* → sign_up
+ * → email_verified. Each step's drop-off shows where people leave the form.
+ */
+export function trackSignUpView(referral: boolean) {
+  pushOnce("sign_up_view", { event: "sign_up_view", referral });
+}
+
+export function trackSignUpStart() {
+  pushOnce("sign_up_start", { event: "sign_up_start" });
+}
+
+export function trackSignUpError(message: string) {
+  const text = message.toLowerCase();
+  const reason: SignUpErrorReason =
+    text.includes("already") ? "email_taken"
+    : text.includes("email") && (text.includes("invalid") || text.includes("valid")) ? "invalid_email"
+    : text.includes("password") ? "weak_password"
+    : text.includes("fetch") || text.includes("network") ? "network"
+    : "other";
+  pushDataLayer({ event: "sign_up_error", reason });
+}
+
+export function trackEmailVerified() {
+  pushOnce("email_verified", { event: "email_verified" });
+}
+
+export function trackEmailVerifyError() {
+  pushDataLayer({ event: "email_verify_error" });
 }
 
 export function trackSignUp() {

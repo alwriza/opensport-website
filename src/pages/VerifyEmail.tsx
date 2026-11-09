@@ -8,13 +8,14 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { markOnboardingPending, shouldStartOnboarding } from "@/lib/onboarding";
+import { trackEmailVerified, trackEmailVerifyError } from "@/lib/analytics";
 
 export default function VerifyEmail() {
   const { t } = useTranslation("auth");
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const email = (location.state as any)?.email || "";
+  const email = (location.state as { email?: string } | null)?.email || "";
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
@@ -29,6 +30,7 @@ export default function VerifyEmail() {
         type: "signup",
       });
       if (error) throw error;
+      trackEmailVerified();
 
       if (data.user && data.session) {
         // Local pending state is written immediately; remote sync must not delay sign in.
@@ -39,10 +41,11 @@ export default function VerifyEmail() {
       navigate("/player-dashboard", {
         state: data.user && shouldStartOnboarding(data.user) ? { onboarding: true } : undefined,
       });
-    } catch (err: any) {
+    } catch (err) {
+      trackEmailVerifyError();
       toast({
         title: t("invalidCode"),
-        description: err.message || t("codeIncorrect"),
+        description: (err instanceof Error && err.message) || t("codeIncorrect"),
         variant: "destructive",
       });
     } finally {
@@ -57,8 +60,8 @@ export default function VerifyEmail() {
       const { error } = await supabase.auth.resend({ type: "signup", email });
       if (error) throw error;
       toast({ title: t("codeSent"), description: t("checkEmailNewCode") });
-    } catch (err: any) {
-      toast({ title: t("couldNotResend"), description: err.message, variant: "destructive" });
+    } catch (err) {
+      toast({ title: t("couldNotResend"), description: err instanceof Error ? err.message : undefined, variant: "destructive" });
     } finally {
       setResending(false);
     }
