@@ -2,6 +2,12 @@ import { Area, AreaChart, CartesianGrid, ReferenceLine, ResponsiveContainer, Too
 import { TEAM_COLORS } from "@/types/matchAnalysis";
 import type { DominancePoint } from "@/types/matchAnalysis";
 
+/** Seconds as m:ss, rounded first so 59.96 s reads 1:00, not 0:60. */
+const clock = (t: number) => {
+  const total = Math.round(t);
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+};
+
 /** Team A's share of pitch area over time. Frames without enough players are absent. */
 export function DominanceChart({ points }: { points: DominancePoint[] }) {
   return (
@@ -10,14 +16,17 @@ export function DominanceChart({ points }: { points: DominancePoint[] }) {
         <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
         <XAxis
           dataKey="t"
-          tickFormatter={(t: number) => `${Math.round(t)}s`}
+          type="number"
+          domain={["dataMin", "dataMax"]}
+          tickFormatter={clock}
+          minTickGap={32}
           className="text-xs"
           stroke="currentColor"
         />
         <YAxis domain={[0, 100]} className="text-xs" stroke="currentColor" />
         <Tooltip
-          formatter={(value: number) => [`${value}% / ${(100 - value).toFixed(1)}%`, "A / B"]}
-          labelFormatter={(t: number) => `${t.toFixed(1)} s`}
+          formatter={(value: number) => [`${value.toFixed(1)}% / ${(100 - value).toFixed(1)}%`, "A / B"]}
+          labelFormatter={clock}
         />
         <ReferenceLine y={50} stroke="currentColor" strokeDasharray="4 4" opacity={0.5} />
         <Area

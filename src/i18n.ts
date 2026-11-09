@@ -18,6 +18,7 @@ import privacyEN from './locales/en/privacy.json';
 import rankingEN from './locales/en/ranking.json';
 import redesignEN from './locales/en/redesign.json';
 import onboardingEN from './locales/en/onboarding.json';
+import matchEN from './locales/en/match.json';
 
 // RU
 import commonRU from './locales/ru/common.json';
@@ -35,6 +36,7 @@ import privacyRU from './locales/ru/privacy.json';
 import rankingRU from './locales/ru/ranking.json';
 import redesignRU from './locales/ru/redesign.json';
 import onboardingRU from './locales/ru/onboarding.json';
+import matchRU from './locales/ru/match.json';
 
 // KK
 import commonKK from './locales/kk/common.json';
@@ -52,6 +54,7 @@ import privacyKK from './locales/kk/privacy.json';
 import rankingKK from './locales/kk/ranking.json';
 import redesignKK from './locales/kk/redesign.json';
 import onboardingKK from './locales/kk/onboarding.json';
+import matchKK from './locales/kk/match.json';
 
 export const defaultNS = 'common';
 export const resources = {
@@ -71,6 +74,7 @@ export const resources = {
         ranking: rankingEN,
         redesign: redesignEN,
         onboarding: onboardingEN,
+        match: matchEN,
     },
     ru: {
         common: commonRU,
@@ -88,6 +92,7 @@ export const resources = {
         ranking: rankingRU,
         redesign: redesignRU,
         onboarding: onboardingRU,
+        match: matchRU,
     },
     kk: {
         common: commonKK,
@@ -105,6 +110,7 @@ export const resources = {
         ranking: rankingKK,
         redesign: redesignKK,
         onboarding: onboardingKK,
+        match: matchKK,
     },
 } as const;
 

@@ -7,7 +7,8 @@
         "training": "Training",
         "leaderboard": "Ranking",
         "demo": "Demo",
-        "duels": "Duels"
+        "duels": "Duels",
+        "matchAnalysis": "Match analysis"
     },
     "buttons": {
         "getStarted": "Get Started"

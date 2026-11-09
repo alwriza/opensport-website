@@ -3,12 +3,17 @@ import { TEAM_COLORS } from "@/types/matchAnalysis";
 import type { FrameRecord } from "@/types/matchAnalysis";
 import { PitchOutline } from "./PitchOutline";
 
+/** Referees have no team; same yellow as in the annotated video. */
+export const REFEREE_COLOR = "#FFD700";
+
 interface Props {
   frames: FrameRecord[];
   lengthM: number;
   widthM: number;
   analysisFps: number;
   videoRef: React.RefObject<HTMLVideoElement>;
+  /** Shown when the current moment has no mapped frame. */
+  notMappedLabel: string;
 }
 
 /** Index of the frame whose timestamp is closest to t. */
@@ -32,7 +37,7 @@ function nearestIndex(frames: FrameRecord[], t: number): number {
  * frames where the pitch could not be mapped, and the minimap shows nothing for them
  * rather than holding a stale position.
  */
-export function MinimapReplay({ frames, lengthM, widthM, analysisFps, videoRef }: Props) {
+export function MinimapReplay({ frames, lengthM, widthM, analysisFps, videoRef, notMappedLabel }: Props) {
   const [frame, setFrame] = useState<FrameRecord | null>(null);
   const raf = useRef<number>();
   const tolerance = 1.5 / analysisFps;
@@ -69,7 +74,7 @@ export function MinimapReplay({ frames, lengthM, widthM, analysisFps, videoRef }
           cx={x}
           cy={y}
           r={1.3}
-          fill={team ? TEAM_COLORS[team] : "#FFD700"}
+          fill={team ? TEAM_COLORS[team] : REFEREE_COLOR}
           stroke="rgba(0,0,0,0.45)"
           strokeWidth={0.2}
         />
@@ -79,7 +84,7 @@ export function MinimapReplay({ frames, lengthM, widthM, analysisFps, videoRef }
       )}
       {!frame && (
         <text x={lengthM / 2} y={widthM / 2} textAnchor="middle" fontSize={3} fill="currentColor">
-          pitch not mapped at this moment
+          {notMappedLabel}
         </text>
       )}
     </svg>

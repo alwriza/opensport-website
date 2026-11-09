@@ -1,0 +1,107 @@
+{
+    "nav": "Match analysis",
+    "title": "Match analysis",
+    "subtitle": "Upload a match clip and get team numbers: distance covered, speed, pitch control, possession and heatmaps.",
+    "requirements": {
+        "title": "Which clips work",
+        "camera": "A broadcast-style view from a fixed, elevated camera",
+        "pitch": "Most of the pitch and its lines in frame. Close-ups and touchline phone clips won't map",
+        "length": "Only the first 5 minutes are analysed",
+        "format": "MP4 or MOV, up to {{limit}} MB"
+    },
+    "upload": {
+        "button": "Choose a video",
+        "drop": "or drop it here",
+        "dropActive": "Drop the video to upload",
+        "uploading": "Uploading {{name}}",
+        "cancel": "Cancel",
+        "keepOpen": "Keep this tab open until the upload finishes.",
+        "doneTitle": "Clip uploaded",
+        "doneText": "It is in the queue. This page updates by itself.",
+        "failedTitle": "Upload failed",
+        "failedText": "Check your connection and try again.",
+        "wrongType": "Only MP4 and MOV videos are supported.",
+        "tooLarge": "This file is {{size}} MB, the limit is {{limit}} MB. Trim it to the first 5 minutes or export at 720p.",
+        "signInAgain": "Your session has expired. Sign in again and retry."
+    },
+    "list": {
+        "title": "Your analyses",
+        "empty": "No analyses yet. Upload your first match clip above.",
+        "analysed": "{{seconds}} s analysed",
+        "mapped": "pitch mapped in {{percent}}% of frames",
+        "distance": "distance A {{a}} m · B {{b}} m",
+        "open": "Open report"
+    },
+    "status": {
+        "queued": "In queue",
+        "processing": "Analysing",
+        "done": "Ready",
+        "failed": "Failed"
+    },
+    "pending": {
+        "queuedTitle": "Waiting in the queue",
+        "queuedText": "The clip is uploaded and will be picked up by the analysis server. Uploaded {{time}}.",
+        "processingTitle": "Analysing the match",
+        "processingText": "Started {{time}}. A 5-minute clip usually takes several minutes.",
+        "autoRefresh": "You can leave this page. It refreshes by itself, and the report will be in your list."
+    },
+    "errors": {
+        "title": "Analysis failed",
+        "pitch_calibration_insufficient": "The pitch could not be recognised in enough frames. Use a wide, elevated view where the pitch lines are visible.",
+        "no_players": "No players were found in the clip. Make sure it shows a match.",
+        "generic": "Something went wrong while analysing this clip. Try again, or upload a different clip.",
+        "details": "Technical details",
+        "tryAgain": "Upload another clip"
+    },
+    "detail": {
+        "back": "All analyses",
+        "notFound": "This analysis was not found.",
+        "calibration": "Pitch mapped {{percent}}%",
+        "ball": "Ball seen {{percent}}%",
+        "analysed": "{{seconds}} s analysed",
+        "fps": "{{fps}} fps",
+        "honesty": "Every number comes only from frames where the pitch could be mapped ({{percent}}% of {{seconds}} analysed seconds). Tracker IDs break when players are hidden, so per-player rows are shown as tracks.",
+        "team": "Team {{team}}",
+        "distance": "Distance",
+        "topSpeed": "Top speed",
+        "avgSpeed": "Average speed",
+        "dominance": "Pitch control",
+        "possession": "Possession",
+        "unavailable": "Not available",
+        "replay": "Replay",
+        "replayHint": "The minimap follows the video.",
+        "legendTeam": "Team {{team}}",
+        "legendReferee": "Referee",
+        "legendBall": "Ball",
+        "notMapped": "pitch not mapped at this moment",
+        "dominanceTitle": "Pitch control over time",
+        "dominanceHint": "Team A's share of the pitch area. Counted in {{count}} frames that had enough players of both teams on the map.",
+        "dominanceUnavailable": "Not available: no frame had at least 5 mapped players on each team.",
+        "heatmap": "Team {{team}} heatmap",
+        "tracks": "Tracks",
+        "tracksHint": "One row per tracked identity, not per player: when a player is hidden, the tracker may split them into several tracks.",
+        "col": {
+            "track": "Track",
+            "team": "Team",
+            "role": "Role",
+            "mapped": "Time on map",
+            "distance": "Distance",
+            "avg": "Avg km/h",
+            "top": "Top km/h"
+        },
+        "roles": {
+            "player": "Player",
+            "goalkeeper": "Goalkeeper",
+            "referee": "Referee"
+        },
+        "units": {
+            "m": "m",
+            "kmh": "km/h",
+            "s": "s"
+        },
+        "reasons": {
+            "ball": "the ball was seen in only {{percent}}% of frames",
+            "radius": "no player was ever close enough to the ball"
+        }
+    }
+}

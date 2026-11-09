@@ -86,7 +86,8 @@ Tests (no GPU, no weights, no network needed):
 ## Behaviour on failure
 
 One correct path, no retries and no fallbacks. Any exception writes `status='failed'`
-with a readable `error` on the row and re-raises. A clip whose pitch is mapped in under
+with a readable `error` on the row, logs the traceback, and the worker moves on to the
+next job (one bad clip does not stop the server). A clip whose pitch is mapped in under
 30% of analysed frames fails with `pitch_calibration_insufficient` rather than producing
 metrics nobody should trust.
 

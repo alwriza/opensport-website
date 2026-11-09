@@ -7,7 +7,8 @@
         "training": "Тренировки",
         "leaderboard": "Рейтинг",
         "demo": "Демо",
-        "duels": "Дуэли"
+        "duels": "Дуэли",
+        "matchAnalysis": "Анализ матча"
     },
     "buttons": {
         "getStarted": "Начать"

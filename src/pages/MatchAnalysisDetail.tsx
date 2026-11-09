@@ -1,173 +1,234 @@
 import { useRef } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { AlertTriangle, ArrowLeft, Clock, Loader2 } from "lucide-react";
 import { useMatchAnalysis, useMatchResults, useSignedVideoUrl } from "@/hooks/useMatchAnalyses";
 import { TEAM_COLORS, TEAM_KEYS } from "@/types/matchAnalysis";
-import type { MatchAnalysisResults, TeamKey } from "@/types/matchAnalysis";
+import type { MatchAnalysisResults, MatchAnalysisRow, TeamKey } from "@/types/matchAnalysis";
 import { DominanceChart } from "@/components/match/DominanceChart";
-import { MinimapReplay } from "@/components/match/MinimapReplay";
+import { MinimapReplay, REFEREE_COLOR } from "@/components/match/MinimapReplay";
 import { PitchHeatmap } from "@/components/match/PitchHeatmap";
+import { clipName, failureText, formatDateTime, percent, possessionReason } from "@/components/match/format";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-const pct = (value: number) => `${Math.round(value * 100)}%`;
+const fmt = (value: number, digits = 1) => value.toFixed(digits).replace(/\.0+$/, "");
+
+function TeamDot({ team, className = "h-3 w-3" }: { team: TeamKey; className?: string }) {
+  return <span className={`${className} inline-block shrink-0 rounded-full`} style={{ backgroundColor: TEAM_COLORS[team] }} />;
+}
+
+function Stat({ label, value, note }: { label: string; value: string; note?: string | null }) {
+  return (
+    <div>
+      <p className="text-muted-foreground">{label}</p>
+      <p className="text-lg font-semibold tabular-nums">{value}</p>
+      {note && <p className="text-xs text-muted-foreground">{note}</p>}
+    </div>
+  );
+}
 
 function TeamCard({ results, team }: { results: MatchAnalysisResults; team: TeamKey }) {
-  const metrics = results.teams[team];
+  const { t } = useTranslation("match");
+  const m = results.teams[team];
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
-          <span className="h-3 w-3 rounded-full" style={{ backgroundColor: TEAM_COLORS[team] }} />
-          Team {team}
+          <TeamDot team={team} /> {t("detail.team", { team })}
         </CardTitle>
       </CardHeader>
       <CardContent className="grid grid-cols-2 gap-4 text-sm">
-        <div>
-          <p className="text-muted-foreground">Distance</p>
-          <p className="text-lg font-semibold">{Math.round(metrics.distance_m)} m</p>
-        </div>
-        <div>
-          <p className="text-muted-foreground">Top speed</p>
-          <p className="text-lg font-semibold">{metrics.top_speed_kmh} km/h</p>
-        </div>
-        <div>
-          <p className="text-muted-foreground">Avg speed</p>
-          <p className="text-lg font-semibold">{metrics.avg_speed_kmh} km/h</p>
-        </div>
-        <div>
-          <p className="text-muted-foreground">Pitch dominance</p>
-          <p className="text-lg font-semibold">
-            {metrics.dominance_pct === null ? "unavailable" : `${metrics.dominance_pct}%`}
-          </p>
-        </div>
+        <Stat label={t("detail.distance")} value={`${Math.round(m.distance_m)} ${t("detail.units.m")}`} />
+        <Stat label={t("detail.topSpeed")} value={`${fmt(m.top_speed_kmh)} ${t("detail.units.kmh")}`} />
+        <Stat label={t("detail.avgSpeed")} value={`${fmt(m.avg_speed_kmh)} ${t("detail.units.kmh")}`} />
+        <Stat label={t("detail.dominance")} value={m.dominance_pct === null ? t("detail.unavailable") : `${fmt(m.dominance_pct)}%`} />
         <div className="col-span-2">
-          <p className="text-muted-foreground">Possession</p>
-          {metrics.possession_pct === null ? (
-            <p className="text-sm italic text-muted-foreground">
-              unavailable: {metrics.possession_unavailable_reason}
-            </p>
-          ) : (
-            <p className="text-lg font-semibold">{metrics.possession_pct}%</p>
-          )}
+          <Stat
+            label={t("detail.possession")}
+            value={m.possession_pct === null ? t("detail.unavailable") : `${fmt(m.possession_pct)}%`}
+            note={m.possession_pct === null ? possessionReason(m.possession_unavailable_reason, t) : null}
+          />
         </div>
       </CardContent>
     </Card>
   );
 }
 
+function BackLink() {
+  const { t } = useTranslation("match");
+  return (
+    <Link to="/match-analysis" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+      <ArrowLeft className="h-4 w-4" /> {t("detail.back")}
+    </Link>
+  );
+}
+
+function PendingView({ row }: { row: MatchAnalysisRow }) {
+  const { t, i18n } = useTranslation("match");
+  const queued = row.status === "queued";
+  return (
+    <div className="container mx-auto max-w-3xl space-y-4 px-4 py-10">
+      <BackLink />
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            {queued ? <Clock className="h-5 w-5 text-amber-600" /> : <Loader2 className="h-5 w-5 animate-spin text-primary" />}
+            {t(queued ? "pending.queuedTitle" : "pending.processingTitle")}
+          </CardTitle>
+          <CardDescription className="break-all">{clipName(row.video_path)}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm text-muted-foreground">
+          <p>
+            {queued
+              ? t("pending.queuedText", { time: formatDateTime(row.created_at, i18n.language) })
+              : t("pending.processingText", { time: formatDateTime(row.started_at, i18n.language) })}
+          </p>
+          <p>{t("pending.autoRefresh")}</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function FailedView({ row }: { row: MatchAnalysisRow }) {
+  const { t } = useTranslation("match");
+  return (
+    <div className="container mx-auto max-w-3xl space-y-4 px-4 py-10">
+      <BackLink />
+      <Card className="border-destructive/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <AlertTriangle className="h-5 w-5 text-destructive" /> {t("errors.title")}
+          </CardTitle>
+          <CardDescription className="break-all">{clipName(row.video_path)}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4 text-sm">
+          <p>{failureText(row.error, t)}</p>
+          {row.error && (
+            <details className="text-muted-foreground">
+              <summary className="cursor-pointer">{t("errors.details")}</summary>
+              <p className="mt-2 break-words font-mono text-xs">{row.error}</p>
+            </details>
+          )}
+          <Button asChild>
+            <Link to="/match-analysis">{t("errors.tryAgain")}</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function CenteredLoader() {
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center">
+      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+    </div>
+  );
+}
+
 export default function MatchAnalysisDetail() {
+  const { t, i18n } = useTranslation("match");
   const { id } = useParams<{ id: string }>();
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const { data: row, isLoading } = useMatchAnalysis(id);
-  const { data: results } = useMatchResults(row?.results_path);
-  const { data: videoUrl } = useSignedVideoUrl(row?.annotated_video_path);
+  const { data: results, error: resultsError } = useMatchResults(row?.status === "done" ? row.results_path : null);
+  const { data: videoUrl } = useSignedVideoUrl(row?.status === "done" ? row.annotated_video_path : null);
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      </div>
-    );
-  }
-  if (!row) return <p className="container mx-auto px-4 py-10">Analysis not found.</p>;
-
-  if (row.status === "failed") {
+  if (isLoading) return <CenteredLoader />;
+  if (!row) {
     return (
       <div className="container mx-auto max-w-3xl space-y-4 px-4 py-10">
-        <Link to="/match-analysis" className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-          <ArrowLeft className="h-4 w-4" /> Back
-        </Link>
-        <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle className="text-base">Analysis failed</CardTitle>
-            <CardDescription className="text-destructive">{row.error}</CardDescription>
-          </CardHeader>
-        </Card>
+        <BackLink />
+        <p className="text-muted-foreground">{t("detail.notFound")}</p>
       </div>
     );
   }
-
-  if (row.status !== "done" || !results) {
-    return (
-      <div className="container mx-auto max-w-3xl space-y-4 px-4 py-10">
-        <Link to="/match-analysis" className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-          <ArrowLeft className="h-4 w-4" /> Back
-        </Link>
-        <p className="flex items-center gap-2 text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> {row.status}…
-        </p>
-      </div>
-    );
-  }
+  if (row.status === "failed") return <FailedView row={row} />;
+  if (row.status !== "done") return <PendingView row={row} />;
+  if (resultsError) return <FailedView row={{ ...row, error: String(resultsError) }} />;
+  if (!results) return <CenteredLoader />;
 
   const [lengthM, widthM] = results.meta.pitch_dims_m;
-  const tracks = results.tracks;
+  const coverage = percent(results.meta.homography_coverage);
+  const seconds = Math.round(results.meta.analyzed_seconds);
 
   return (
     <div className="container mx-auto max-w-5xl space-y-8 px-4 py-10">
       <div className="space-y-3">
-        <Link to="/match-analysis" className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-          <ArrowLeft className="h-4 w-4" /> Back
-        </Link>
-        <h1 className="text-3xl font-bold">Match Analysis</h1>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline">pitch calibration {pct(results.meta.homography_coverage)}</Badge>
-          <Badge variant="outline">ball detected {pct(results.meta.ball_coverage)}</Badge>
-          <Badge variant="outline">{results.meta.analyzed_seconds}s analysed</Badge>
-          <Badge variant="outline">{results.meta.analysis_fps} fps</Badge>
+        <BackLink />
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold">{t("title")}</h1>
+          <p className="break-all text-sm text-muted-foreground">
+            {clipName(row.video_path)} · {formatDateTime(row.created_at, i18n.language)}
+          </p>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Every number below comes only from the frames where the pitch could be mapped
-          ({pct(results.meta.homography_coverage)} of {results.meta.analyzed_seconds} analysed seconds).
-          Tracker IDs break when players are occluded, so per-track rows are labelled “Track #”.
-        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline">{t("detail.calibration", { percent: coverage })}</Badge>
+          <Badge variant="outline">{t("detail.ball", { percent: percent(results.meta.ball_coverage) })}</Badge>
+          <Badge variant="outline">{t("detail.analysed", { seconds })}</Badge>
+          <Badge variant="outline">{t("detail.fps", { fps: results.meta.analysis_fps })}</Badge>
+        </div>
+        <p className="max-w-3xl text-sm text-muted-foreground">{t("detail.honesty", { percent: coverage, seconds })}</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {TEAM_KEYS.map((team) => (
-          <TeamCard key={team} results={results} team={team} />
-        ))}
+        {TEAM_KEYS.map((team) => <TeamCard key={team} results={results} team={team} />)}
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Replay</CardTitle>
-          <CardDescription>The minimap follows the video's clock.</CardDescription>
+          <CardTitle className="text-base">{t("detail.replay")}</CardTitle>
+          <CardDescription>{t("detail.replayHint")}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
-          {videoUrl ? (
-            <video ref={videoRef} src={videoUrl} controls className="w-full rounded-md" />
-          ) : (
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          )}
-          <MinimapReplay
-            frames={results.frames}
-            lengthM={lengthM}
-            widthM={widthM}
-            analysisFps={results.meta.analysis_fps}
-            videoRef={videoRef}
-          />
+          <div className="flex aspect-video items-center justify-center overflow-hidden rounded-md bg-black">
+            {videoUrl ? (
+              <video ref={videoRef} src={videoUrl} controls playsInline preload="metadata" className="h-full w-full" />
+            ) : (
+              <Loader2 className="h-5 w-5 animate-spin text-white/70" />
+            )}
+          </div>
+          <div className="space-y-2">
+            <MinimapReplay
+              frames={results.frames}
+              lengthM={lengthM}
+              widthM={widthM}
+              analysisFps={results.meta.analysis_fps}
+              videoRef={videoRef}
+              notMappedLabel={t("detail.notMapped")}
+            />
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              {TEAM_KEYS.map((team) => (
+                <span key={team} className="inline-flex items-center gap-1.5">
+                  <TeamDot team={team} className="h-2.5 w-2.5" /> {t("detail.legendTeam", { team })}
+                </span>
+              ))}
+              <span className="inline-flex items-center gap-1.5">
+                <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: REFEREE_COLOR }} /> {t("detail.legendReferee")}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="inline-block h-2.5 w-2.5 rounded-full border border-black/60 bg-white" /> {t("detail.legendBall")}
+              </span>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Pitch dominance over time</CardTitle>
-          <CardDescription>
-            Team A's share of pitch area. {results.dominance.length} of the analysed frames had
-            enough mapped players on both teams to count.
-          </CardDescription>
+          <CardTitle className="text-base">{t("detail.dominanceTitle")}</CardTitle>
+          <CardDescription>{t("detail.dominanceHint", { count: results.dominance.length })}</CardDescription>
         </CardHeader>
         <CardContent>
           {results.dominance.length ? (
             <DominanceChart points={results.dominance} />
           ) : (
-            <p className="text-sm italic text-muted-foreground">
-              unavailable: no frame had at least 5 mapped players on each team
-            </p>
+            <p className="text-sm italic text-muted-foreground">{t("detail.dominanceUnavailable")}</p>
           )}
         </CardContent>
       </Card>
@@ -176,15 +237,12 @@ export default function MatchAnalysisDetail() {
         {TEAM_KEYS.map((team) => (
           <Card key={team}>
             <CardHeader>
-              <CardTitle className="text-base">Team {team} heatmap</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <TeamDot team={team} /> {t("detail.heatmap", { team })}
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <PitchHeatmap
-                grid={results.teams[team].heatmap}
-                lengthM={lengthM}
-                widthM={widthM}
-                color={TEAM_COLORS[team]}
-              />
+              <PitchHeatmap grid={results.teams[team].heatmap} lengthM={lengthM} widthM={widthM} color={TEAM_COLORS[team]} />
             </CardContent>
           </Card>
         ))}
@@ -192,47 +250,44 @@ export default function MatchAnalysisDetail() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Tracks</CardTitle>
-          <CardDescription>
-            One row per tracked identity, not per player: occlusions split a player into several
-            tracks.
-          </CardDescription>
+          <CardTitle className="text-base">{t("detail.tracks")}</CardTitle>
+          <CardDescription>{t("detail.tracksHint")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Track</TableHead>
-                <TableHead>Team</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead className="text-right">Mapped</TableHead>
-                <TableHead className="text-right">Distance</TableHead>
-                <TableHead className="text-right">Avg</TableHead>
-                <TableHead className="text-right">Top</TableHead>
+                <TableHead>{t("detail.col.track")}</TableHead>
+                <TableHead>{t("detail.col.team")}</TableHead>
+                <TableHead className="hidden sm:table-cell">{t("detail.col.role")}</TableHead>
+                <TableHead className="hidden text-right sm:table-cell">{t("detail.col.mapped")}</TableHead>
+                <TableHead className="text-right">{t("detail.col.distance")}</TableHead>
+                <TableHead className="hidden text-right sm:table-cell">{t("detail.col.avg")}</TableHead>
+                <TableHead className="text-right">{t("detail.col.top")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tracks.map((track) => (
+              {results.tracks.map((track) => (
                 <TableRow key={track.track_id}>
-                  <TableCell>Track #{track.track_id}</TableCell>
+                  <TableCell className="whitespace-nowrap">#{track.track_id}</TableCell>
                   <TableCell>
                     {track.team ? (
                       <span className="inline-flex items-center gap-2">
-                        <span
-                          className="h-2.5 w-2.5 rounded-full"
-                          style={{ backgroundColor: TEAM_COLORS[track.team] }}
-                        />
-                        {track.team}
+                        <TeamDot team={track.team} className="h-2.5 w-2.5" /> {track.team}
                       </span>
                     ) : (
-                      "—"
+                      <span className="text-muted-foreground">{t("detail.roles.referee")}</span>
                     )}
                   </TableCell>
-                  <TableCell>{track.role}</TableCell>
-                  <TableCell className="text-right">{track.mapped_seconds}s</TableCell>
-                  <TableCell className="text-right">{Math.round(track.distance_m)} m</TableCell>
-                  <TableCell className="text-right">{track.avg_speed_kmh}</TableCell>
-                  <TableCell className="text-right">{track.top_speed_kmh}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{t(`detail.roles.${track.role}`)}</TableCell>
+                  <TableCell className="hidden text-right tabular-nums sm:table-cell">
+                    {fmt(track.mapped_seconds)} {t("detail.units.s")}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-right tabular-nums">
+                    {Math.round(track.distance_m)} {t("detail.units.m")}
+                  </TableCell>
+                  <TableCell className="hidden text-right tabular-nums sm:table-cell">{fmt(track.avg_speed_kmh)}</TableCell>
+                  <TableCell className="text-right tabular-nums">{fmt(track.top_speed_kmh)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

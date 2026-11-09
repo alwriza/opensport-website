@@ -7,7 +7,8 @@
         "training": "Жаттығу",
         "leaderboard": "Рейтинг",
         "demo": "Демо",
-        "duels": "Дуэльдер"
+        "duels": "Дуэльдер",
+        "matchAnalysis": "Матч талдауы"
     },
     "buttons": {
         "getStarted": "Бастау"

@@ -45,6 +45,8 @@ export default function Navbar() {
     { to: route("/training"), label: t("nav.training"), icon: Dumbbell },
     { to: route("/ranking"), label: t("nav.ranking"), icon: ChartNoAxesColumn },
     { to: route("/duels"), label: t("nav.duels") },
+    // Match analysis has no demo version, so it is listed for signed-in users only.
+    ...(demo ? [] : [{ to: "/match-analysis", label: t("nav.matchAnalysis") }]),
   ];
   const marketingItems = [
     { to: `${homePath}#how`, label: copy("How it works") },

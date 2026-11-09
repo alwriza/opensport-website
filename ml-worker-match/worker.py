@@ -9,6 +9,7 @@ import json
 import os
 import tempfile
 import time
+import traceback
 from datetime import datetime, timezone
 
 import results
@@ -99,10 +100,13 @@ def main() -> None:
         try:
             _process(client, job, weights_dir, device)
         except Exception as error:
+            # One bad clip must not take the server down: record the failure on the
+            # job (the user sees it), log the traceback, and take the next job.
             client.table(TABLE).update(
                 {"status": "failed", "error": str(error), "finished_at": _now()}
             ).eq("id", job["id"]).execute()
-            raise
+            traceback.print_exc()
+            print(f"[{job['id']}] failed: {error}", flush=True)
 
 
 if __name__ == "__main__":
