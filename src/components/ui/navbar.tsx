@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ChartNoAxesColumn, ChevronDown, Dumbbell, Globe, Home, LogOut, Menu, Play, Upload, UserRound, Users } from "lucide-react";
+import { ChartNoAxesColumn, ChevronDown, Dumbbell, Globe, Home, LogOut, Menu, MonitorPlay, Play, Swords, Upload, UserRound, Users } from "lucide-react";
 import { Brand } from "@/components/redesign/primitives";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useMatchExampleSeen } from "@/lib/matchExample";
@@ -56,8 +56,8 @@ export default function Navbar() {
     { to: route("/coach-dashboard"), label: t("controls.coachWorkspace"), icon: Users },
     { to: route("/training"), label: t("nav.training"), icon: Dumbbell },
     { to: route("/ranking"), label: t("nav.ranking"), icon: ChartNoAxesColumn },
-    { to: route("/duels"), label: t("nav.duels") },
-    { to: route("/match-analysis"), label: t("nav.matchAnalysis"), highlight: !demo && !matchExampleSeen },
+    { to: route("/duels"), label: t("nav.duels"), icon: Swords },
+    { to: route("/match-analysis"), label: t("nav.matchAnalysis"), icon: MonitorPlay, highlight: !demo && !matchExampleSeen },
   ];
   const marketingItems = [
     { to: `${homePath}#how`, label: copy("How it works") },
