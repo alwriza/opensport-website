@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ExternalLink } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { registrationFunctions } from "@/integrations/supabase/client";
 import { trackSignUp } from "@/lib/analytics";
@@ -20,10 +20,9 @@ export default function Register() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [privacyAccepted, setPrivacyAccepted] = useState(false);
-
-  const canSubmit = termsAccepted && privacyAccepted;
+  // One checkbox covers both documents; the register function still records each.
+  const [accepted, setAccepted] = useState(false);
+  const canSubmit = accepted;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,8 +32,8 @@ export default function Register() {
       const { data, error } = await registrationFunctions.invoke<{ error?: string }>("register", {
         body: {
           ...form,
-          terms_accepted: termsAccepted,
-          privacy_accepted: privacyAccepted,
+          terms_accepted: accepted,
+          privacy_accepted: accepted,
           referral_visit_id: getStoredReferral()?.visitId,
         },
       });
@@ -108,35 +107,23 @@ export default function Register() {
                 placeholder={t("passwordPlaceholder")}
               />
             </div>
-            <div className="space-y-3">
-              <div className="flex items-start space-x-3">
-                <Checkbox
-                  id="terms"
-                  checked={termsAccepted}
-                  onCheckedChange={(checked) => setTermsAccepted(checked === true)}
-                  className="mt-1"
+            <div className="flex items-start space-x-3">
+              <Checkbox
+                id="consent"
+                checked={accepted}
+                onCheckedChange={(checked) => setAccepted(checked === true)}
+                className="mt-1"
+              />
+              <label htmlFor="consent" className="text-sm leading-relaxed cursor-pointer">
+                <Trans
+                  t={t}
+                  i18nKey="consentLabel"
+                  components={{
+                    terms: <Link to="/terms" target="_blank" className="text-primary underline" />,
+                    privacy: <Link to="/privacy" target="_blank" className="text-primary underline" />,
+                  }}
                 />
-                <label htmlFor="terms" className="text-sm leading-relaxed cursor-pointer">
-                  {t("termsLabel")}{" "}
-                  <Link to="/terms" target="_blank" className="text-primary underline inline-flex items-center gap-0.5">
-                    <ExternalLink className="h-3 w-3" />
-                  </Link>
-                </label>
-              </div>
-              <div className="flex items-start space-x-3">
-                <Checkbox
-                  id="privacy"
-                  checked={privacyAccepted}
-                  onCheckedChange={(checked) => setPrivacyAccepted(checked === true)}
-                  className="mt-1"
-                />
-                <label htmlFor="privacy" className="text-sm leading-relaxed cursor-pointer">
-                  {t("privacyLabel")}{" "}
-                  <Link to="/privacy" target="_blank" className="text-primary underline inline-flex items-center gap-0.5">
-                    <ExternalLink className="h-3 w-3" />
-                  </Link>
-                </label>
-              </div>
+              </label>
             </div>
             <Button type="submit" className="w-full" disabled={loading || !canSubmit}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
