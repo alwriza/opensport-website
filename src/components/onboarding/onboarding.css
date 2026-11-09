@@ -85,6 +85,22 @@
   .onboarding-actions .design-button { flex:1; }
   .onboarding-role-option { gap:12px; padding:14px; }
 }
+/* Phones: the step card is a compact bottom sheet (at most half the screen), so the
+   highlighted block keeps real room above it instead of a thin strip. */
+@media (max-width:767px) {
+  .onboarding-card-step { width:calc(100% - 16px); max-height:min(52dvh,440px); }
+  .onboarding-card-step .onboarding-step-content { padding:18px 20px 10px; gap:10px; }
+  .onboarding-card-step .onboarding-progress { gap:8px; padding-right:36px; }
+  .onboarding-card-step .onboarding-title { font-size:20px; line-height:1.2; }
+  .onboarding-card-step .onboarding-description { font-size:14px; line-height:1.5; }
+  .onboarding-card-step .onboarding-tip { padding:6px 0 6px 12px; font-size:12px; line-height:1.5; }
+  .onboarding-card-step .onboarding-recording { display:none; }
+  .onboarding-card-step .onboarding-close { top:10px; right:10px; }
+  .onboarding-card-step .onboarding-footer { display:flex; align-items:center; gap:12px; padding:10px 20px 12px; }
+  .onboarding-card-step .onboarding-actions { flex:1; order:2; gap:12px; margin:0; }
+  .onboarding-card-step .onboarding-actions .design-button { min-height:44px; padding-block:10px; font-size:14px; }
+  .onboarding-card-step .onboarding-skip { order:1; margin:0; font-size:13px; }
+}
 @media (prefers-reduced-motion:reduce) {
   .onboarding-overlay,.onboarding-card,.onboarding-art-node,.onboarding-step-content,.onboarding-recording .design-pose { animation:none !important; }
   .onboarding-role-option,.onboarding-highlight,.onboarding-card-step { transition:none; }

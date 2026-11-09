@@ -161,7 +161,8 @@ export function OnboardingTour() {
       const viewportHeight = window.innerHeight;
       const compact = viewportWidth < 1024 || viewportHeight < 600;
       const navigationBottom = document.querySelector(".design-navigation")?.getBoundingClientRect().bottom ?? 0;
-      const targetTop = Math.max(24, navigationBottom + 24);
+      // On phones the block sits right under the header, leaving the most room above the card.
+      const targetTop = Math.max(compact ? 12 : 24, navigationBottom + (compact ? 12 : 24));
       let rect = target.getBoundingClientRect();
       if (!scrolled) {
         scrolled = true;
@@ -198,7 +199,7 @@ export function OnboardingTour() {
       const x = Math.max(8, rect.left - 8);
       const y = Math.max(navigationBottom + 8, rect.top - 8);
       const right = Math.min(viewportWidth - 8, rect.right + 8);
-      const bottom = Math.min(viewportHeight - 8, compact ? top - 16 : viewportHeight, rect.bottom + 8);
+      const bottom = Math.min(viewportHeight - 8, compact ? top - 12 : viewportHeight, rect.bottom + 8);
       const next: Geometry = {
         highlight: { x, y, width: Math.max(0, right - x), height: Math.max(0, bottom - y) },
         card: { left, top },
