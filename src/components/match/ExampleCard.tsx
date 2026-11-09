@@ -7,11 +7,11 @@ import { MATCH_EXAMPLE_ID } from "@/lib/matchExample";
 import { cn } from "@/lib/utils";
 
 /** "See a sample report" call-out on the match analysis page. */
-export function ExampleCard({ prominent }: { prominent: boolean }) {
+export function ExampleCard({ prominent, to = `/match-analysis/${MATCH_EXAMPLE_ID}` }: { prominent: boolean; to?: string }) {
   const { t } = useTranslation("match");
   return (
     <Link
-      to={`/match-analysis/${MATCH_EXAMPLE_ID}`}
+      to={to}
       className={cn(
         "group flex flex-col overflow-hidden rounded-lg border transition-colors sm:flex-row",
         prominent ? "border-primary/40 bg-primary/5 hover:border-primary" : "bg-card hover:border-primary/50",

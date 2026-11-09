@@ -42,7 +42,7 @@ In demo mode, the coach's final action opens the squad; it does not present a li
 ## Account lifecycle
 
 1. Successful signup OTP verification writes a version 1 `pending` state. Verification errors do not start the guide.
-2. Automatic entry requires a confirmed, signed-in account with a pending state. Ordinary existing accounts and demo sessions do not receive an automatic first-use overlay.
+2. Automatic entry requires a confirmed, signed-in account with a pending state. Ordinary existing accounts do not receive an automatic first-use overlay. The demo opens it once per browser on the first visit to `/demo` (local key `opensport:onboarding:demo-shown`), since most demo visitors are new to the product.
 3. The selected path can carry the guide to the player or coach dashboard. This preference is separate from access permissions.
 4. Finishing saves `completed`; skipping or closing saves `skipped`. Completion is saved before the final action opens its destination.
 5. The account menu provides manual replay on signed-in and demo pages. Replay opens the guide on the relevant dashboard and does not reset a completed account to pending.

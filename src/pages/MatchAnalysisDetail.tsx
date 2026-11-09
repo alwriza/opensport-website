@@ -149,8 +149,8 @@ export default function MatchAnalysisDetail() {
   const demoClock = useRef<ReplayClock>({ currentTime: 0 });
 
   useEffect(() => {
-    if (example) markMatchExampleSeen();
-  }, [example]);
+    if (example || (demo && id === DEMO_MATCH_ID)) markMatchExampleSeen();
+  }, [example, demo, id]);
 
   const live = useMatchAnalysis(sample ? undefined : id);
   const row = sample ? demoMatchRows().find((r) => r.id === (example ? DEMO_MATCH_ID : id)) ?? null : live.data;

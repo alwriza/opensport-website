@@ -5,7 +5,7 @@ import { ChevronRight, Film, Loader2, Upload } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useDemoContext, useDemoMutationGuard } from "@/demo";
-import { demoMatchRows } from "@/demo/matchDemo";
+import { DEMO_MATCH_ID, demoMatchRows } from "@/demo/matchDemo";
 import { useToast } from "@/hooks/use-toast";
 import { queueMatchAnalysis, useAppUserId, useMatchAnalyses } from "@/hooks/useMatchAnalyses";
 import {
@@ -24,14 +24,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
-function AnalysisCard({ row, base }: { row: MatchAnalysisRow; base: string }) {
+function AnalysisCard({ row, base, highlight = false }: { row: MatchAnalysisRow; base: string; highlight?: boolean }) {
   const { t, i18n } = useTranslation("match");
   const done = row.status === "done";
   const running = row.status === "queued" || row.status === "processing";
 
   return (
     <Link to={`${base}/match-analysis/${row.id}`} className="block">
-      <Card className="transition-colors hover:border-primary/50">
+      <Card className={cn("transition-colors hover:border-primary/50", highlight && "border-primary/60 bg-primary/5 ring-2 ring-primary/20")}>
         <CardContent className="flex items-start gap-4 p-4 sm:p-5">
           <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted sm:flex">
             <Film className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
@@ -78,7 +78,8 @@ export default function MatchAnalysis() {
   const queryClient = useQueryClient();
   const { data: appUserId } = useAppUserId(demo ? undefined : user?.id);
   const liveAnalyses = useMatchAnalyses(appUserId);
-  const analyses = demo ? demoMatchRows() : liveAnalyses.data;
+  // In the demo the finished report comes first: it is what the visitor should open.
+  const analyses = demo ? [...demoMatchRows()].sort((a, b) => Number(b.status === "done") - Number(a.status === "done")) : liveAnalyses.data;
   const isLoading = !demo && liveAnalyses.isLoading;
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -150,8 +151,10 @@ export default function MatchAnalysis() {
         <p className="max-w-2xl text-muted-foreground">{t("subtitle")}</p>
       </header>
 
-      {!demo && !isLoading && (
-        <ExampleCard prominent={!analyses?.some((row) => row.status === "done")} />
+      {demo ? (
+        <ExampleCard prominent to={`/demo/match-analysis/${DEMO_MATCH_ID}`} />
+      ) : (
+        !isLoading && <ExampleCard prominent={!analyses?.some((row) => row.status === "done")} />
       )}
 
       <Card>
@@ -214,7 +217,9 @@ export default function MatchAnalysis() {
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         ) : analyses?.length ? (
           <div className="space-y-3">
-            {analyses.map((row) => <AnalysisCard key={row.id} row={row} base={base} />)}
+            {analyses.map((row) => (
+              <AnalysisCard key={row.id} row={row} base={base} highlight={!!demo && row.id === DEMO_MATCH_ID} />
+            ))}
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">{t("list.empty")}</p>

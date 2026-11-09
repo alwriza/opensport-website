@@ -57,7 +57,7 @@ export default function Navbar() {
     { to: route("/training"), label: t("nav.training"), icon: Dumbbell },
     { to: route("/ranking"), label: t("nav.ranking"), icon: ChartNoAxesColumn },
     { to: route("/duels"), label: t("nav.duels"), icon: Swords },
-    { to: route("/match-analysis"), label: t("nav.matchAnalysis"), icon: MonitorPlay, highlight: !demo && !matchExampleSeen },
+    { to: route("/match-analysis"), label: t("nav.matchAnalysis"), icon: MonitorPlay, highlight: !matchExampleSeen },
   ];
   const marketingItems = [
     { to: `${homePath}#how`, label: copy("How it works") },

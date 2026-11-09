@@ -63,6 +63,15 @@ function RecordingArtwork() {
   </div>;
 }
 
+/** The demo opens the tour by itself once per browser, on the first visit to /demo. */
+const DEMO_TOUR_KEY = "opensport:onboarding:demo-shown";
+function demoTourShown(): boolean {
+  try { return localStorage.getItem(DEMO_TOUR_KEY) === "1"; } catch { return true; }
+}
+function markDemoTourShown() {
+  try { localStorage.setItem(DEMO_TOUR_KEY, "1"); } catch { /* storage blocked: the tour simply does not repeat this session */ }
+}
+
 export function OnboardingTour() {
   const { t } = useTranslation("onboarding");
   const { user, isLoaded } = useCurrentUser();
@@ -89,10 +98,12 @@ export function OnboardingTour() {
   useEffect(() => {
     const request = routeState(location.state);
     const replay = request.onboarding === "replay";
+    const demoFirstVisit = !replay && isDemo && location.pathname === "/demo" && !demoTourShown();
     if (!isLoaded && !isDemo || replay && !isDemo && !user) return;
-    if (!replay && (open || !shouldStartOnboarding(user, { isDemo }) || shownFor.current.has(user!.id))) return;
+    if (!replay && open) return;
+    if (!replay && !demoFirstVisit && (!shouldStartOnboarding(user, { isDemo }) || shownFor.current.has(user!.id))) return;
     if (!replay && (request.upload || request.profile)) return;
-    if (!replay && !["/player-dashboard", "/coach-dashboard"].includes(location.pathname)) return;
+    if (!replay && !demoFirstVisit && !["/player-dashboard", "/coach-dashboard"].includes(location.pathname)) return;
 
     const launch = () => {
       if (!replay && (!document.querySelector("[data-onboarding-dashboard]") || document.querySelector("[role=dialog]"))) return;
@@ -102,6 +113,7 @@ export function OnboardingTour() {
       openedFor.current = isDemo ? "demo" : user?.id ?? null;
       takingAction.current = false;
       if (!isDemo && user) shownFor.current.add(user.id);
+      if (demoFirstVisit) markDemoTourShown();
       setRole(selectedRole);
       setStepIndex(-1);
       setGeometry(null);
