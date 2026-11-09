@@ -1,10 +1,11 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
+import { MATCH_EXAMPLE_ID, markMatchExampleSeen } from "@/lib/matchExample";
 import { useDemoContext } from "@/demo";
-import { DEMO_MATCH_RESULTS_URL, demoMatchRows } from "@/demo/matchDemo";
+import { DEMO_MATCH_ID, DEMO_MATCH_RESULTS_URL, demoMatchRows } from "@/demo/matchDemo";
 import { DemoReplay, type Clock as ReplayClock } from "@/components/match/DemoReplay";
 import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, ArrowLeft, Clock, Loader2 } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Clock, Loader2, Upload } from "lucide-react";
 import { useDemoMatchResults, useMatchAnalysis, useMatchResults, useSignedVideoUrl } from "@/hooks/useMatchAnalyses";
 import { TEAM_COLORS, TEAM_KEYS } from "@/types/matchAnalysis";
 import type { MatchAnalysisResults, MatchAnalysisRow, TeamKey } from "@/types/matchAnalysis";
@@ -141,17 +142,24 @@ export default function MatchAnalysisDetail() {
   const { t, i18n } = useTranslation("match");
   const { id } = useParams<{ id: string }>();
   const demo = useDemoContext();
+  // /match-analysis/example shows the demo report inside the signed-in app.
+  const example = !demo && id === MATCH_EXAMPLE_ID;
+  const sample = !!demo || example;
   const videoRef = useRef<HTMLVideoElement>(null);
   const demoClock = useRef<ReplayClock>({ currentTime: 0 });
 
-  const live = useMatchAnalysis(demo ? undefined : id);
-  const row = demo ? demoMatchRows().find((r) => r.id === id) ?? null : live.data;
-  const isLoading = !demo && live.isLoading;
+  useEffect(() => {
+    if (example) markMatchExampleSeen();
+  }, [example]);
+
+  const live = useMatchAnalysis(sample ? undefined : id);
+  const row = sample ? demoMatchRows().find((r) => r.id === (example ? DEMO_MATCH_ID : id)) ?? null : live.data;
+  const isLoading = !sample && live.isLoading;
   const done = row?.status === "done";
-  const liveResults = useMatchResults(!demo && done ? row.results_path : null);
-  const demoResults = useDemoMatchResults(demo && done ? DEMO_MATCH_RESULTS_URL : null);
-  const { data: results, error: resultsError } = demo ? demoResults : liveResults;
-  const { data: videoUrl } = useSignedVideoUrl(!demo && done ? row.annotated_video_path : null);
+  const liveResults = useMatchResults(!sample && done ? row.results_path : null);
+  const demoResults = useDemoMatchResults(sample && done ? DEMO_MATCH_RESULTS_URL : null);
+  const { data: results, error: resultsError } = sample ? demoResults : liveResults;
+  const { data: videoUrl } = useSignedVideoUrl(!sample && done ? row.annotated_video_path : null);
 
   if (isLoading) return <CenteredLoader />;
   if (!row) {
@@ -189,6 +197,14 @@ export default function MatchAnalysisDetail() {
         </div>
         <p className="max-w-3xl text-sm text-muted-foreground">{t("detail.honesty", { percent: coverage, seconds })}</p>
         {demo && <p className="max-w-3xl text-sm font-medium">{t("demo.banner")}</p>}
+        {example && (
+          <div className="flex flex-col gap-3 rounded-lg border border-primary/40 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm font-medium">{t("example.banner")}</p>
+            <Button asChild size="sm" className="shrink-0">
+              <Link to="/match-analysis"><Upload className="mr-2 h-4 w-4" />{t("example.upload")}</Link>
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -201,7 +217,7 @@ export default function MatchAnalysisDetail() {
           <CardDescription>{t("detail.replayHint")}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
-          {demo ? (
+          {sample ? (
             <DemoReplay
               clockRef={demoClock}
               duration={results.meta.analyzed_seconds}
@@ -224,7 +240,7 @@ export default function MatchAnalysisDetail() {
               lengthM={lengthM}
               widthM={widthM}
               analysisFps={results.meta.analysis_fps}
-              videoRef={demo ? demoClock : videoRef}
+              videoRef={sample ? demoClock : videoRef}
               notMappedLabel={t("detail.notMapped")}
             />
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">

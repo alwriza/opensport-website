@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ChartNoAxesColumn, ChevronDown, Dumbbell, Globe, Home, LogOut, Menu, Play, Upload, UserRound, Users } from "lucide-react";
 import { Brand } from "@/components/redesign/primitives";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useMatchExampleSeen } from "@/lib/matchExample";
 import { useDesignCopy } from "@/hooks/useDesignCopy";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +16,16 @@ import {
 
 const languages = ["en", "ru", "kk"] as const;
 type AccountRouteState = { profile?: number; onboarding?: "replay"; onboardingRole?: "player" | "coach" };
+
+/** Pulsing dot that draws the eye to a new section until it has been opened. */
+function NewDot() {
+  return (
+    <span className="relative ml-1.5 inline-flex h-2 w-2 align-middle" aria-hidden="true">
+      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
+      <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+    </span>
+  );
+}
 
 export default function Navbar() {
   const copy = useDesignCopy();
@@ -37,6 +48,7 @@ export default function Navbar() {
   const route = (path: string) => `${demo ? "/demo" : ""}${path}`;
   const language = (i18n.resolvedLanguage || i18n.language).split("-")[0];
   const languageCode = language === "kk" ? "KZ" : language.toUpperCase();
+  const matchExampleSeen = useMatchExampleSeen();
   const accountName = user?.user_metadata?.nickname || user?.user_metadata?.name || t("controls.account");
   const items = [
     { to: homePath, label: t("nav.home"), icon: Home },
@@ -45,7 +57,7 @@ export default function Navbar() {
     { to: route("/training"), label: t("nav.training"), icon: Dumbbell },
     { to: route("/ranking"), label: t("nav.ranking"), icon: ChartNoAxesColumn },
     { to: route("/duels"), label: t("nav.duels") },
-    { to: route("/match-analysis"), label: t("nav.matchAnalysis") },
+    { to: route("/match-analysis"), label: t("nav.matchAnalysis"), highlight: !demo && !matchExampleSeen },
   ];
   const marketingItems = [
     { to: `${homePath}#how`, label: copy("How it works") },
@@ -92,7 +104,7 @@ export default function Navbar() {
         <Brand to={homePath} />
         <nav className="design-header-nav" aria-label={t("controls.mainNavigation")}>
           {demo || !landing && isSignedIn
-            ? items.map(item => <NavLink key={item.to} to={item.to} end className={({ isActive }) => isActive ? "active" : ""}>{item.label}</NavLink>)
+            ? items.map(item => <NavLink key={item.to} to={item.to} end className={({ isActive }) => isActive ? "active" : ""}>{item.label}{item.highlight && <NewDot />}</NavLink>)
             : marketingItems.map(item => <Link key={item.to} to={item.to}>{item.label}</Link>)}
         </nav>
         <div className="design-header-controls">
@@ -126,7 +138,7 @@ export default function Navbar() {
               openingDialog.current = false;
             }}>
               <DropdownMenuLabel>{demo ? t("controls.demoNavigation") : workspace ? accountName : t("controls.mainNavigation")}</DropdownMenuLabel>
-              {workspace ? items.map(({ to, label, icon: Icon }) => <DropdownMenuItem key={to} asChild><NavLink to={to} end>{Icon && <Icon aria-hidden="true" />}{label}</NavLink></DropdownMenuItem>)
+              {workspace ? items.map(({ to, label, icon: Icon, highlight }) => <DropdownMenuItem key={to} asChild><NavLink to={to} end>{Icon && <Icon aria-hidden="true" />}{label}{highlight && <NewDot />}</NavLink></DropdownMenuItem>)
                 : marketingItems.map(item => <DropdownMenuItem key={item.to} asChild><Link to={item.to}>{item.label}</Link></DropdownMenuItem>)}
               <DropdownMenuSeparator />
               {workspace && <>

@@ -16,6 +16,7 @@ import {
   type UploadHandle,
 } from "@/lib/matchAnalysisUpload";
 import type { MatchAnalysisRow } from "@/types/matchAnalysis";
+import { ExampleCard } from "@/components/match/ExampleCard";
 import { STATUS_TONE, clipName, failureText, formatDateTime, percent } from "@/components/match/format";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -148,6 +149,10 @@ export default function MatchAnalysis() {
         <h1 className="text-3xl font-bold">{t("title")}</h1>
         <p className="max-w-2xl text-muted-foreground">{t("subtitle")}</p>
       </header>
+
+      {!demo && !isLoading && (
+        <ExampleCard prominent={!analyses?.some((row) => row.status === "done")} />
+      )}
 
       <Card>
         <CardContent className="grid gap-6 p-5 sm:p-6 md:grid-cols-[1fr_minmax(0,16rem)]">

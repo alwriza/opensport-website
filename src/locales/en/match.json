@@ -111,5 +111,13 @@
         "pause": "Pause",
         "seek": "Replay position",
         "banner": "This is a sample report built from a demo clip."
+    },
+    "example": {
+        "eyebrow": "Sample report",
+        "title": "See what you will get",
+        "text": "A finished report on a 2-minute passage of a match: team distance and speed, pitch control, possession, heatmaps and a minimap replay.",
+        "button": "Open the sample",
+        "banner": "This is a sample report. Upload your own clip to get the same for your match.",
+        "upload": "Upload your video"
     }
 }
