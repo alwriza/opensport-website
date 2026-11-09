@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next";
 import { ChevronRight, Film, Loader2, Upload } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useDemoContext, useDemoMutationGuard } from "@/demo";
+import { demoMatchRows } from "@/demo/matchDemo";
 import { useToast } from "@/hooks/use-toast";
 import { queueMatchAnalysis, useAppUserId, useMatchAnalyses } from "@/hooks/useMatchAnalyses";
 import {
@@ -21,13 +23,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
-function AnalysisCard({ row }: { row: MatchAnalysisRow }) {
+function AnalysisCard({ row, base }: { row: MatchAnalysisRow; base: string }) {
   const { t, i18n } = useTranslation("match");
   const done = row.status === "done";
   const running = row.status === "queued" || row.status === "processing";
 
   return (
-    <Link to={`/match-analysis/${row.id}`} className="block">
+    <Link to={`${base}/match-analysis/${row.id}`} className="block">
       <Card className="transition-colors hover:border-primary/50">
         <CardContent className="flex items-start gap-4 p-4 sm:p-5">
           <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted sm:flex">
@@ -68,10 +70,15 @@ function AnalysisCard({ row }: { row: MatchAnalysisRow }) {
 export default function MatchAnalysis() {
   const { t } = useTranslation("match");
   const { user } = useCurrentUser();
+  const demo = useDemoContext();
+  const { guard: guardDemo } = useDemoMutationGuard();
+  const base = demo ? "/demo" : "";
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data: appUserId } = useAppUserId(user?.id);
-  const { data: analyses, isLoading } = useMatchAnalyses(appUserId);
+  const { data: appUserId } = useAppUserId(demo ? undefined : user?.id);
+  const liveAnalyses = useMatchAnalyses(appUserId);
+  const analyses = demo ? demoMatchRows() : liveAnalyses.data;
+  const isLoading = !demo && liveAnalyses.isLoading;
 
   const inputRef = useRef<HTMLInputElement>(null);
   const handleRef = useRef<UploadHandle | null>(null);
@@ -89,7 +96,7 @@ export default function MatchAnalysis() {
   }, [uploading]);
 
   async function onFile(file: File) {
-    if (!appUserId || uploading) return;
+    if (guardDemo() || !appUserId || uploading) return;
     const problem = checkMatchFile(file);
     if (problem) {
       toast({
@@ -177,7 +184,7 @@ export default function MatchAnalysis() {
               )}
             >
               <Upload className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
-              <Button onClick={() => inputRef.current?.click()} disabled={!appUserId}>
+              <Button onClick={() => (guardDemo() ? undefined : inputRef.current?.click())} disabled={!demo && !appUserId}>
                 {t("upload.button")}
               </Button>
               <p className="hidden text-sm text-muted-foreground sm:block">{dragging ? t("upload.dropActive") : t("upload.drop")}</p>
@@ -202,7 +209,7 @@ export default function MatchAnalysis() {
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         ) : analyses?.length ? (
           <div className="space-y-3">
-            {analyses.map((row) => <AnalysisCard key={row.id} row={row} />)}
+            {analyses.map((row) => <AnalysisCard key={row.id} row={row} base={base} />)}
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">{t("list.empty")}</p>

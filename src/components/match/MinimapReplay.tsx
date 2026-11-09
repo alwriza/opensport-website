@@ -11,7 +11,8 @@ interface Props {
   lengthM: number;
   widthM: number;
   analysisFps: number;
-  videoRef: React.RefObject<HTMLVideoElement>;
+  /** The annotated <video>, or the demo's clock: anything with a currentTime in seconds. */
+  videoRef: React.RefObject<{ currentTime: number }>;
   /** Shown when the current moment has no mapped frame. */
   notMappedLabel: string;
 }

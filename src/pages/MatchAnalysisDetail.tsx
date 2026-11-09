@@ -1,8 +1,11 @@
 import { useRef } from "react";
+import { useDemoContext } from "@/demo";
+import { DEMO_MATCH_RESULTS_URL, demoMatchRows } from "@/demo/matchDemo";
+import { DemoReplay, type Clock as ReplayClock } from "@/components/match/DemoReplay";
 import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AlertTriangle, ArrowLeft, Clock, Loader2 } from "lucide-react";
-import { useMatchAnalysis, useMatchResults, useSignedVideoUrl } from "@/hooks/useMatchAnalyses";
+import { useDemoMatchResults, useMatchAnalysis, useMatchResults, useSignedVideoUrl } from "@/hooks/useMatchAnalyses";
 import { TEAM_COLORS, TEAM_KEYS } from "@/types/matchAnalysis";
 import type { MatchAnalysisResults, MatchAnalysisRow, TeamKey } from "@/types/matchAnalysis";
 import { DominanceChart } from "@/components/match/DominanceChart";
@@ -57,10 +60,14 @@ function TeamCard({ results, team }: { results: MatchAnalysisResults; team: Team
   );
 }
 
+function useBase() {
+  return useDemoContext() ? "/demo" : "";
+}
+
 function BackLink() {
   const { t } = useTranslation("match");
   return (
-    <Link to="/match-analysis" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+    <Link to={`${useBase()}/match-analysis`} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
       <ArrowLeft className="h-4 w-4" /> {t("detail.back")}
     </Link>
   );
@@ -114,7 +121,7 @@ function FailedView({ row }: { row: MatchAnalysisRow }) {
             </details>
           )}
           <Button asChild>
-            <Link to="/match-analysis">{t("errors.tryAgain")}</Link>
+            <Link to={`${useBase()}/match-analysis`}>{t("errors.tryAgain")}</Link>
           </Button>
         </CardContent>
       </Card>
@@ -133,11 +140,18 @@ function CenteredLoader() {
 export default function MatchAnalysisDetail() {
   const { t, i18n } = useTranslation("match");
   const { id } = useParams<{ id: string }>();
+  const demo = useDemoContext();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const demoClock = useRef<ReplayClock>({ currentTime: 0 });
 
-  const { data: row, isLoading } = useMatchAnalysis(id);
-  const { data: results, error: resultsError } = useMatchResults(row?.status === "done" ? row.results_path : null);
-  const { data: videoUrl } = useSignedVideoUrl(row?.status === "done" ? row.annotated_video_path : null);
+  const live = useMatchAnalysis(demo ? undefined : id);
+  const row = demo ? demoMatchRows().find((r) => r.id === id) ?? null : live.data;
+  const isLoading = !demo && live.isLoading;
+  const done = row?.status === "done";
+  const liveResults = useMatchResults(!demo && done ? row.results_path : null);
+  const demoResults = useDemoMatchResults(demo && done ? DEMO_MATCH_RESULTS_URL : null);
+  const { data: results, error: resultsError } = demo ? demoResults : liveResults;
+  const { data: videoUrl } = useSignedVideoUrl(!demo && done ? row.annotated_video_path : null);
 
   if (isLoading) return <CenteredLoader />;
   if (!row) {
@@ -174,6 +188,7 @@ export default function MatchAnalysisDetail() {
           <Badge variant="outline">{t("detail.fps", { fps: results.meta.analysis_fps })}</Badge>
         </div>
         <p className="max-w-3xl text-sm text-muted-foreground">{t("detail.honesty", { percent: coverage, seconds })}</p>
+        {demo && <p className="max-w-3xl text-sm font-medium">{t("demo.banner")}</p>}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -186,20 +201,30 @@ export default function MatchAnalysisDetail() {
           <CardDescription>{t("detail.replayHint")}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
-          <div className="flex aspect-video items-center justify-center overflow-hidden rounded-md bg-black">
-            {videoUrl ? (
-              <video ref={videoRef} src={videoUrl} controls playsInline preload="metadata" className="h-full w-full" />
-            ) : (
-              <Loader2 className="h-5 w-5 animate-spin text-white/70" />
-            )}
-          </div>
+          {demo ? (
+            <DemoReplay
+              clockRef={demoClock}
+              duration={results.meta.analyzed_seconds}
+              firstFrame={results.frames[0]}
+              lengthM={lengthM}
+              widthM={widthM}
+            />
+          ) : (
+            <div className="flex aspect-video items-center justify-center overflow-hidden rounded-md bg-black">
+              {videoUrl ? (
+                <video ref={videoRef} src={videoUrl} controls playsInline preload="metadata" className="h-full w-full" />
+              ) : (
+                <Loader2 className="h-5 w-5 animate-spin text-white/70" />
+              )}
+            </div>
+          )}
           <div className="space-y-2">
             <MinimapReplay
               frames={results.frames}
               lengthM={lengthM}
               widthM={widthM}
               analysisFps={results.meta.analysis_fps}
-              videoRef={videoRef}
+              videoRef={demo ? demoClock : videoRef}
               notMappedLabel={t("detail.notMapped")}
             />
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
@@ -208,9 +233,11 @@ export default function MatchAnalysisDetail() {
                   <TeamDot team={team} className="h-2.5 w-2.5" /> {t("detail.legendTeam", { team })}
                 </span>
               ))}
-              <span className="inline-flex items-center gap-1.5">
-                <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: REFEREE_COLOR }} /> {t("detail.legendReferee")}
-              </span>
+              {results.tracks.some((track) => track.role === "referee") && (
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: REFEREE_COLOR }} /> {t("detail.legendReferee")}
+                </span>
+              )}
               <span className="inline-flex items-center gap-1.5">
                 <span className="inline-block h-2.5 w-2.5 rounded-full border border-black/60 bg-white" /> {t("detail.legendBall")}
               </span>

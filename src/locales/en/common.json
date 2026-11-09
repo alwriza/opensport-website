@@ -23,5 +23,11 @@
         "error": "Error",
         "pending": "Pending",
         "completed": "Completed"
+    },
+    "demo": {
+        "blocked": {
+            "title": "Demo mode",
+            "description": "This action is not available in the demo. Create an account to use it."
+        }
     }
 }

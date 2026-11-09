@@ -82,6 +82,20 @@ export function useMatchResults(resultsPath: string | null | undefined) {
   });
 }
 
+/** The demo's results.json, a static file under public/demo. */
+export function useDemoMatchResults(url: string | null) {
+  return useQuery({
+    queryKey: ["demo-match-results", url],
+    queryFn: async () => {
+      const response = await fetch(url!);
+      if (!response.ok) throw new Error(`demo results: HTTP ${response.status}`);
+      return (await response.json()) as MatchAnalysisResults;
+    },
+    enabled: !!url,
+    staleTime: Infinity,
+  });
+}
+
 /** Short-lived signed URL for the annotated video. The bucket is private: no public URLs. */
 export function useSignedVideoUrl(videoPath: string | null | undefined) {
   return useQuery({

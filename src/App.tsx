@@ -96,6 +96,8 @@ const App = () => (
               <Route path="ranking" element={<Ranking />} />
               <Route path="duels" element={<Duels />} />
               <Route path="join-team" element={<DemoJoinTeam />} />
+              <Route path="match-analysis" element={<Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>}><MatchAnalysis /></Suspense>} />
+              <Route path="match-analysis/:id" element={<Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>}><MatchAnalysisDetail /></Suspense>} />
             </Route>
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

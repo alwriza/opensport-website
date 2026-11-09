@@ -103,5 +103,13 @@
             "ball": "the ball was seen in only {{percent}}% of frames",
             "radius": "no player was ever close enough to the ball"
         }
+    },
+    "demo": {
+        "photoAlt": "Aerial view of a football match",
+        "photoCaption": "Demo: a real report shows the annotated match video here; the minimap follows it. The ellipses mark the players the tracker found in the first frame. Photo:",
+        "play": "Play",
+        "pause": "Pause",
+        "seek": "Replay position",
+        "banner": "This is a sample report built from a demo clip."
     }
 }
