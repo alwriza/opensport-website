@@ -2,7 +2,7 @@
 .onboarding-overlay>svg { display:block; }
 .onboarding-overlay[data-state='open'] { animation:onboarding-fade-in .18s ease-out; }
 .onboarding-overlay[data-state='closed'] { animation:onboarding-fade-out .14s ease-in; }
-.onboarding-highlight { position:fixed; border:2px solid #6FD39C; border-radius:3px; box-shadow:0 0 0 3px #0E5C3A33; pointer-events:none; }
+.onboarding-highlight { position:fixed; border:2px solid #6FD39C; border-radius:3px; box-shadow:0 0 0 3px #0E5C3A33,0 0 0 200vmax #14150FC2; pointer-events:none; transition:left .45s cubic-bezier(.22,.61,.36,1),top .45s cubic-bezier(.22,.61,.36,1),width .45s cubic-bezier(.22,.61,.36,1),height .45s cubic-bezier(.22,.61,.36,1); }
 .onboarding-card { position:fixed; z-index:101; left:50%; top:50%; transform:translate(-50%,-50%); width:min(900px,calc(100% - 32px)); max-height:calc(100dvh - 32px); overflow:hidden; background:var(--paper); color:var(--ink); border:1px solid var(--hairline); box-shadow:0 24px 100px #0005; font-family:Archivo,Arial,sans-serif; }
 .onboarding-card[data-state='open'] { animation:onboarding-fade-in .2s ease-out; }
 .onboarding-card[data-state='closed'] { animation:onboarding-fade-out .14s ease-in; }
@@ -46,7 +46,7 @@
 .onboarding-art-pitch>span:first-child { position:absolute; left:50%; top:0; bottom:0; border-left:1px solid #FFFFFF12; }
 .onboarding-art-pitch>span:nth-child(2) { position:absolute; top:50%; left:50%; width:180px; height:180px; transform:translate(-50%,-50%); border:1px solid #FFFFFF12; border-radius:50%; }
 .onboarding-art-pitch>span:last-child { position:absolute; top:25%; bottom:25%; left:0; right:50%; border:1px solid #FFFFFF12; border-left:0; }
-.onboarding-card-step { display:grid; grid-template-rows:minmax(0,1fr) auto; width:min(420px,calc(100% - 32px)); }
+.onboarding-card-step { transition:left .45s cubic-bezier(.22,.61,.36,1),top .45s cubic-bezier(.22,.61,.36,1); display:grid; grid-template-rows:minmax(0,1fr) auto; width:min(420px,calc(100% - 32px)); }
 .onboarding-step-content { min-height:0; overflow-y:auto; padding:32px 32px 20px; display:flex; flex-direction:column; gap:20px; animation:onboarding-step-in .2s ease-out; }
 .onboarding-card-step .onboarding-title { font-size:26px; padding-right:16px; }
 .onboarding-progress { display:flex; flex-direction:column; gap:14px; padding-right:28px; }
@@ -87,5 +87,5 @@
 }
 @media (prefers-reduced-motion:reduce) {
   .onboarding-overlay,.onboarding-card,.onboarding-art-node,.onboarding-step-content,.onboarding-recording .design-pose { animation:none !important; }
-  .onboarding-role-option { transition:none; }
+  .onboarding-role-option,.onboarding-highlight,.onboarding-card-step { transition:none; }
 }

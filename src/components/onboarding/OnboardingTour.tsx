@@ -1,6 +1,6 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowRight, Dumbbell, ScanLine, Shield, UserRound, Users, Video, X } from "lucide-react";
-import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import { PoseFigure } from "@/components/redesign/primitives";
@@ -98,7 +98,6 @@ export function OnboardingTour() {
   const returnFocus = useRef<HTMLElement | null>(null);
   const takingAction = useRef(false);
   const actionTimer = useRef<number>();
-  const maskId = useId();
   const step = steps[role][stepIndex];
   const hasTeam = geometry?.hasTeam ?? false;
 
@@ -168,7 +167,10 @@ export function OnboardingTour() {
         scrolled = true;
         if (compact || rect.top < targetTop || rect.bottom > viewportHeight - 24) {
           const targetOffset = compact ? targetTop : Math.max(targetTop, (viewportHeight - Math.min(rect.height, viewportHeight - targetTop - 24)) / 2);
-          window.scrollTo({ top: Math.max(0, window.scrollY + rect.top - targetOffset), behavior: "instant" });
+          // Scroll smoothly so the user sees where the next step is on the page; the
+          // spotlight and card follow through the scroll listener below.
+          const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          window.scrollTo({ top: Math.max(0, window.scrollY + rect.top - targetOffset), behavior: reduceMotion ? "instant" : "smooth" });
           rect = target.getBoundingClientRect();
         }
       }
@@ -264,10 +266,11 @@ export function OnboardingTour() {
   return <Dialog.Root open={open} onOpenChange={value => { if (!value) finish("skipped"); }}>
     <Dialog.Portal>
       <Dialog.Overlay className="onboarding-overlay">
-        <svg width="100%" height="100%" aria-hidden="true">
-          <defs><mask id={maskId}><rect width="100%" height="100%" fill="white" />{step && highlight && <rect {...highlight} fill="black" rx="3" />}</mask></defs>
-          <rect width="100%" height="100%" fill="#14150F" opacity=".76" mask={`url(#${maskId})`} />
-        </svg>
+        {/* With a target, the spotlight's own shadow dims the page, so the dimming and the
+            hole move together in one CSS transition between steps. */}
+        {!(step && highlight && highlight.height > 0) && <svg width="100%" height="100%" aria-hidden="true">
+          <rect width="100%" height="100%" fill="#14150F" opacity=".76" />
+        </svg>}
         {step && highlight && highlight.height > 0 && <div className="onboarding-highlight" style={{ left: highlight.x, top: highlight.y, width: highlight.width, height: highlight.height }} />}
       </Dialog.Overlay>
       <Dialog.Content ref={cardRef} className={`onboarding-card ${step ? "onboarding-card-step" : "onboarding-card-welcome"}`} style={position}
