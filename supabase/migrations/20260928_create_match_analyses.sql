@@ -67,16 +67,18 @@ WITH CHECK (
 
 -- ==================== STORAGE BUCKETS ====================
 -- Private. file_size_limit cannot exceed the project's global upload limit
--- (Dashboard -> Storage -> Settings); raise that first if 200 MB is rejected.
+-- (Dashboard -> Storage -> Settings), 50 MB today. To allow bigger clips, raise the
+-- global limit first, then these two values and MATCH_MAX_UPLOAD_MB in
+-- src/lib/matchAnalysisUpload.ts together.
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES ('match-videos', 'match-videos', false, 209715200, ARRAY['video/mp4','video/quicktime'])
+VALUES ('match-videos', 'match-videos', false, 52428800, ARRAY['video/mp4','video/quicktime'])
 ON CONFLICT (id) DO UPDATE
   SET public = false,
       file_size_limit = EXCLUDED.file_size_limit,
       allowed_mime_types = EXCLUDED.allowed_mime_types;
 
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES ('match-results', 'match-results', false, 209715200, ARRAY['video/mp4','application/json'])
+VALUES ('match-results', 'match-results', false, 52428800, ARRAY['video/mp4','application/json'])
 ON CONFLICT (id) DO UPDATE
   SET public = false,
       file_size_limit = EXCLUDED.file_size_limit,

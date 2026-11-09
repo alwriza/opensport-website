@@ -137,10 +137,15 @@ def _resolve_goalkeeper_teams(
 
 
 def _encode_for_web(raw_path: str, out_path: str) -> str:
-    """Re-encode to H.264/yuv420p so browsers can play it. VideoSink writes mp4v."""
+    """Re-encode to H.264/yuv420p so browsers can play it. VideoSink writes mp4v.
+
+    Capped at 720p so a 5-minute clip stays well under the storage upload limit
+    (50 MB on the project today); pitch metrics do not depend on this resolution.
+    """
     subprocess.run(
         [
             "ffmpeg", "-y", "-loglevel", "error", "-i", raw_path,
+            "-vf", "scale=-2:'min(720,ih)'",
             "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
             "-pix_fmt", "yuv420p", "-movflags", "+faststart", out_path,
         ],

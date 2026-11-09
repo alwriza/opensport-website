@@ -13,8 +13,13 @@ import { supabase } from "@/integrations/supabase/client";
 const CHUNK_SIZE = 6 * 1024 * 1024;
 const BUCKET = "match-videos";
 
-/** Must match the match-videos bucket's file_size_limit (and the project's global limit). */
-export const MATCH_MAX_UPLOAD_MB = 200;
+/**
+ * Must match the match-videos bucket's file_size_limit, which cannot exceed the
+ * project's global upload limit (Supabase → Storage → Settings, 50 MB today).
+ * To allow bigger clips: raise the global limit, the bucket limit in
+ * 20260928_create_match_analyses.sql, and this number together.
+ */
+export const MATCH_MAX_UPLOAD_MB = 50;
 const ACCEPTED_TYPES = ["video/mp4", "video/quicktime"];
 const ACCEPTED_EXTENSIONS = /\.(mp4|mov)$/i;
 

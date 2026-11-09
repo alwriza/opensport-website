@@ -7,7 +7,7 @@
         "camera": "A broadcast-style view from a fixed, elevated camera",
         "pitch": "Most of the pitch and its lines in frame. Close-ups and touchline phone clips won't map",
         "length": "Only the first 5 minutes are analysed",
-        "format": "MP4 or MOV, up to {{limit}} MB"
+        "format": "MP4 or MOV, up to {{limit}} MB: 5 minutes at 720p fits"
     },
     "upload": {
         "button": "Choose a video",
@@ -21,7 +21,7 @@
         "failedTitle": "Upload failed",
         "failedText": "Check your connection and try again.",
         "wrongType": "Only MP4 and MOV videos are supported.",
-        "tooLarge": "This file is {{size}} MB, the limit is {{limit}} MB. Trim it to the first 5 minutes or export at 720p.",
+        "tooLarge": "This file is {{size}} MB, the limit is {{limit}} MB. Trim it to the first 5 minutes and export at 720p.",
         "signInAgain": "Your session has expired. Sign in again and retry."
     },
     "list": {
