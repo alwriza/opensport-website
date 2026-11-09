@@ -21,6 +21,9 @@
 --  * Reward tiers are lifetime per creator; payout_cap is a lifetime limit on the
 --    total paid. Paid activations are final and can never enter another payout.
 --
+-- public.match_analyses is optional: without it only public.videos uploads count;
+-- re-run this file after that table is created to add its trigger.
+--
 -- Admins: add a row to public.admin_users by hand, e.g.
 --   INSERT INTO public.admin_users (auth_user_id, note)
 --   SELECT id, 'referral admin' FROM auth.users WHERE email = 'someone@opensport.app';
@@ -300,6 +303,42 @@ BEGIN
 END;
 $$;
 
+-- public.match_analyses may not exist yet (its migration is applied separately),
+-- so everything that touches it goes through these two helpers.
+CREATE OR REPLACE FUNCTION public._referral_has_uploads(p_user_id uuid)
+RETURNS boolean
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public
+AS $$
+DECLARE
+  v_found boolean := false;
+BEGIN
+  IF EXISTS (SELECT 1 FROM public.videos WHERE user_id = p_user_id) THEN
+    RETURN true;
+  END IF;
+  IF to_regclass('public.match_analyses') IS NOT NULL THEN
+    EXECUTE 'SELECT EXISTS (SELECT 1 FROM public.match_analyses WHERE user_id = $1)' INTO v_found USING p_user_id;
+  END IF;
+  RETURN v_found;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public._referral_video_path(p_source text, p_video_id uuid)
+RETURNS text
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public
+AS $$
+DECLARE
+  v_path text;
+BEGIN
+  IF p_video_id IS NULL THEN RETURN NULL; END IF;
+  IF p_source = 'videos' THEN
+    SELECT storage_path INTO v_path FROM public.videos WHERE id = p_video_id;
+  ELSIF p_source = 'match_analyses' AND to_regclass('public.match_analyses') IS NOT NULL THEN
+    EXECUTE 'SELECT video_path FROM public.match_analyses WHERE id = $1' INTO v_path USING p_video_id;
+  END IF;
+  RETURN v_path;
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION public._referral_touch_updated_at()
 RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
@@ -394,8 +433,7 @@ BEGIN
   END IF;
 
   -- Only a brand new account can be a referral user.
-  IF EXISTS (SELECT 1 FROM public.videos WHERE user_id = v_user_id)
-     OR EXISTS (SELECT 1 FROM public.match_analyses WHERE user_id = v_user_id) THEN
+  IF public._referral_has_uploads(v_user_id) THEN
     RETURN jsonb_build_object('ok', false, 'reason', 'existing_user');
   END IF;
 
@@ -495,10 +533,17 @@ CREATE TRIGGER referral_first_upload
   AFTER INSERT ON public.videos
   FOR EACH ROW EXECUTE FUNCTION public._referral_on_upload();
 
-DROP TRIGGER IF EXISTS referral_first_upload ON public.match_analyses;
-CREATE TRIGGER referral_first_upload
-  AFTER INSERT ON public.match_analyses
-  FOR EACH ROW EXECUTE FUNCTION public._referral_on_upload();
+-- Match uploads count too. If match_analyses does not exist yet, re-run this
+-- migration after 20260928_create_match_analyses.sql to attach the trigger.
+DO $$
+BEGIN
+  IF to_regclass('public.match_analyses') IS NOT NULL THEN
+    DROP TRIGGER IF EXISTS referral_first_upload ON public.match_analyses;
+    CREATE TRIGGER referral_first_upload
+      AFTER INSERT ON public.match_analyses
+      FOR EACH ROW EXECUTE FUNCTION public._referral_on_upload();
+  END IF;
+END $$;
 
 
 -- ==================== 4. ADMIN: CREATORS ====================
@@ -729,10 +774,7 @@ BEGIN
     a.user_id, u.nickname, u.email, u.phone,
     a.status, a.video_source, a.video_id,
     CASE a.video_source WHEN 'videos' THEN 'videos' WHEN 'match_analyses' THEN 'match-videos' END,
-    CASE a.video_source
-      WHEN 'videos'         THEN (SELECT v.storage_path FROM public.videos v WHERE v.id = a.video_id)
-      WHEN 'match_analyses' THEN (SELECT m.video_path FROM public.match_analyses m WHERE m.id = a.video_id)
-    END,
+    public._referral_video_path(a.video_source, a.video_id),
     r.referral_first_visit_at, r.registered_at, r.first_video_uploaded_at,
     a.activated_at, a.approved_at, a.rejected_at, a.paid_at,
     a.rejection_reason, a.rejection_comment, a.reward_amount, a.payout_id,
@@ -982,6 +1024,8 @@ REVOKE EXECUTE ON FUNCTION
   public._referral_ip_hash(text),
   public._referral_request_ip(),
   public._referral_payable(uuid),
+  public._referral_has_uploads(uuid),
+  public._referral_video_path(text, uuid),
   public._referral_touch_updated_at(),
   public.track_referral_visit(text, text, text, text),
   public.attach_referral(uuid, uuid, text),

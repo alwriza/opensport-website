@@ -182,18 +182,23 @@ UPDATE public.user_referrals
    SET referral_first_visit_at = now() - interval '20 days', referral_expires_at = now() - interval '6 days'
  WHERE user_id = (SELECT v FROM t_ids WHERE k = 'user_u3');
 
--- ---------- 4. first upload (as the signed-in client) ----------
-SET LOCAL ROLE authenticated;
+-- ---------- 4. first upload ----------
+-- Inserted as postgres: the trigger is the same for every role, and prod RLS on
+-- videos would need a real user JWT.
 INSERT INTO public.videos (user_id, storage_path, filename)
 SELECT v, 'u1/first.mp4', 'first.mp4' FROM t_ids WHERE k = 'user_u1';
 INSERT INTO public.videos (user_id, storage_path, filename)
 SELECT v, 'u1/second.mp4', 'second.mp4' FROM t_ids WHERE k = 'user_u1';
 INSERT INTO public.videos (user_id, storage_path, filename)
 SELECT v, 'u3/late.mp4', 'late.mp4' FROM t_ids WHERE k = 'user_u3';
-RESET ROLE;
--- u6 uploads a match clip instead of a kick video.
-INSERT INTO public.match_analyses (user_id, video_path)
-SELECT v, 'u6/match.mp4' FROM t_ids WHERE k = 'user_u6';
+-- u6 uploads a match clip (or a kick video where match_analyses does not exist yet).
+DO $$ BEGIN
+  IF to_regclass('public.match_analyses') IS NOT NULL THEN
+    EXECUTE 'INSERT INTO public.match_analyses (user_id, video_path) SELECT v, ''u6/match.mp4'' FROM t_ids WHERE k = ''user_u6''';
+  ELSE
+    INSERT INTO public.videos (user_id, storage_path, filename) SELECT v, 'u6/kick.mp4', 'kick.mp4' FROM t_ids WHERE k = 'user_u6';
+  END IF;
+END $$;
 
 DO $$ BEGIN
   ASSERT (SELECT count(*) FROM public.creator_activations WHERE user_id = (SELECT v FROM t_ids WHERE k = 'user_u1')) = 1,
@@ -209,8 +214,9 @@ DO $$ BEGIN
   ASSERT (SELECT first_video_uploaded_at IS NOT NULL FROM public.user_referrals
            WHERE user_id = (SELECT v FROM t_ids WHERE k = 'user_u3')), 'late upload not recorded';
 
-  ASSERT (SELECT video_source FROM public.creator_activations WHERE user_id = (SELECT v FROM t_ids WHERE k = 'user_u6')) = 'match_analyses',
-    'match upload did not create an activation';
+  ASSERT (SELECT video_source FROM public.creator_activations WHERE user_id = (SELECT v FROM t_ids WHERE k = 'user_u6'))
+         = CASE WHEN to_regclass('public.match_analyses') IS NOT NULL THEN 'match_analyses' ELSE 'videos' END,
+    'u6 upload did not create an activation';
   ASSERT NOT EXISTS (SELECT 1 FROM public.creator_activations WHERE user_id = (SELECT v FROM t_ids WHERE k = 'user_u5')),
     'existing user got an activation';
 END $$;

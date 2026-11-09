@@ -5,7 +5,9 @@ Link: `https://opensport.app/?ref=<code>` → registration → first video withi
 ## Launch checklist
 
 1. Run `supabase/migrations/20261108_creator_referrals.sql` in the SQL editor (safe to re-run).
-   It needs `public.users`, `public.videos` and `public.match_analyses` to exist.
+   It needs `public.users` and `public.videos`. `public.match_analyses` is optional: if it is created
+   later, re-run this file so match uploads also count. (Applied to production on 2026-11-09,
+   before match_analyses existed there.)
 2. Optional: run `supabase/tests/creator_referrals_smoke.sql`. It plays the whole flow and rolls back;
    the last line should say `all checks passed`.
 3. Make yourself an admin:
