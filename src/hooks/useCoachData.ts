@@ -157,7 +157,18 @@ export function useExercises() {
         .select("*")
         .order("category")
       if (error) throw error
-      return data ?? []
+      // Columns are nullable in the database; the UI expects filled-in values.
+      return (data ?? []).map((row): Exercise => ({
+        id: row.id,
+        name: row.name,
+        category: row.category,
+        skill: row.skill ?? "",
+        difficulty: (["beginner", "intermediate", "advanced"].includes(row.difficulty ?? "") ? row.difficulty : "beginner") as Exercise["difficulty"],
+        duration_minutes: row.duration_minutes ?? 0,
+        min_players: row.min_players ?? 1,
+        equipment: row.equipment ?? [],
+        description: row.description ?? "",
+      }))
     },
     staleTime: 1000 * 60 * 30,
   })
@@ -175,7 +186,15 @@ export function usePlayerFlags(playerId: string | undefined) {
         .select("*")
         .eq("player_id", playerId)
       if (error) throw error
-      return data ?? []
+      // player_name is not stored on the flag; callers fall back to the roster name.
+      return (data ?? []).map((row): PlayerFlag => ({
+        id: row.id,
+        player_id: row.player_id,
+        player_name: "",
+        type: row.type as PlayerFlag["type"],
+        note: row.note ?? "",
+        created_at: row.created_at ?? "",
+      }))
     },
     enabled: !!playerId || !!demo,
   })
@@ -350,7 +369,8 @@ export function useCreateMatch() {
   return useMutation({
     mutationFn: async (match: {
       team_id: string, date: string, time: string, opponent: string,
-      home_away: "home" | "away", competition?: string, location?: string
+      home_away: "home" | "away", competition?: string, location?: string,
+      starting_xi?: string[]
     }) => {
       if (demo) return { id: "demo-match-id", ...match, created_by: coach?.id }
       const { data, error } = await supabase

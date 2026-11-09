@@ -26,7 +26,7 @@ interface Skill {
 interface SkillLevel {
   id: string;
   skill_id: string;
-  level_name: 'beginner' | 'intermediate' | 'advanced';
+  level_name: string;
   level_order: number;
   youtube_url: string;
   video_title: string;
@@ -174,16 +174,17 @@ const Training = () => {
           .order('level_order');
 
         // Fetch player progress
-        let { data: progressData } = await supabase
-          .from('player_progress' as any)
+        const { data: existingProgress } = await supabase
+          .from('player_progress')
           .select('*')
           .eq('player_id', dbUserId)
           .single();
 
         // Auto-create progress if missing
+        let progressData = existingProgress;
         if (!progressData) {
           const { data: newProgress } = await supabase
-            .from('player_progress' as any)
+            .from('player_progress')
             .insert({
               player_id: dbUserId,
               total_xp: 0,
@@ -202,7 +203,13 @@ const Training = () => {
 
         setSkills(skillsData || []);
         setSkillLevels(levelsData || []);
-        setPlayerProgress(progressData);
+        setPlayerProgress(progressData && {
+          total_xp: progressData.total_xp ?? 0,
+          level: progressData.level ?? 1,
+          current_streak: progressData.current_streak ?? 0,
+          longest_streak: progressData.longest_streak ?? 0,
+          last_activity_date: progressData.last_activity_date ?? undefined,
+        });
         setSkillProgress((skillProgData || []) as any[]);
       } catch (error) {
         console.error("Error fetching training data:", error);

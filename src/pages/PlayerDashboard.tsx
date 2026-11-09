@@ -276,7 +276,7 @@ export default function PlayerDashboard() {
     try {
       const { error } = await supabase
         .from('users')
-        .update({ [field]: value })
+        .update({ [field]: value } as Partial<Pick<Database["public"]["Tables"]["users"]["Update"], EditableField>>)
         .eq('id', dbUser.id);
 
       if (error) throw error;

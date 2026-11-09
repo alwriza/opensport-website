@@ -38,6 +38,8 @@ export interface Match {
     starting_xi: string[];
     substitutes: string[];
     status: "scheduled" | "completed" | "cancelled";
+    /** Present when the match was loaded together with its player stats. */
+    player_stats?: PlayerMatchStat[];
 }
 
 export interface PlayerMatchStat {

@@ -21,7 +21,7 @@ export function MatchesTab({ teamId }: { teamId?: string }) {
     const createMatch = useCreateMatch();
     const upsertStats = useUpsertMatchStats();
     const [startingXI, setStartingXI] = useState<string[]>([]);
-    const [newMatch, setNewMatch] = useState({ date: "", time: "", opponent: "", home_away: "home", competition: "league", location: "" });
+    const [newMatch, setNewMatch] = useState<{ date: string; time: string; opponent: string; home_away: "home" | "away"; competition: string; location: string }>({ date: "", time: "", opponent: "", home_away: "home", competition: "league", location: "" });
 
     const handleCreate = async () => {
         if (!teamId || !newMatch.date || !newMatch.opponent) return;
@@ -233,7 +233,7 @@ export function MatchesTab({ teamId }: { teamId?: string }) {
                         </div>
                         <div className="space-y-2">
                             <label className="text-xs font-medium text-muted-foreground">H/A</label>
-                            <Select value={newMatch.home_away} onValueChange={v => setNewMatch(p => ({ ...p, home_away: v }))}>
+                            <Select value={newMatch.home_away} onValueChange={v => setNewMatch(p => ({ ...p, home_away: v as "home" | "away" }))}>
                                 <SelectTrigger className="bg-background/50 border-border"><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="home">Home</SelectItem>

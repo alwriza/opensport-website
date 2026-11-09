@@ -1,6 +1,12 @@
 import { Database } from "@/integrations/supabase/types";
 
 export type DemoSkill = NonNullable<Database["public"]["Tables"]["skills"]["Row"]>;
+
+/** Demo rows leave out created_at; every demo record gets the same fixed timestamp. */
+const DEMO_CREATED_AT = "2026-01-01T00:00:00.000Z";
+function withCreatedAt<T extends { created_at: string }>(rows: Omit<T, "created_at">[]): T[] {
+  return rows.map((row) => ({ ...row, created_at: DEMO_CREATED_AT }) as T);
+}
 export type DemoSkillLevel = NonNullable<Database["public"]["Tables"]["skill_levels"]["Row"]> & { skills?: DemoSkill };
 export type DemoPlayerProgress = { total_xp: number; level: number; current_streak: number; longest_streak: number; last_activity_date: string };
 export type DemoSkillProgress = { skill_id: string; completed_levels: string[]; is_completed: boolean };
@@ -12,7 +18,7 @@ export type DemoPlayerStat = { id: string; user_id: string; highest_rating: numb
 
 export interface DemoData {
   user: { id: string; email: string; firstName: string; lastName: string; username: string; imageUrl: string };
-  coachProfile: { id: string; auth_user_id: string; name: string; email: string; role: string; weight: number; terms_accepted_at: string; privacy_accepted_at: string };
+  coachProfile: { id: string; auth_user_id: string; name: string; email: string; role: string; age: number; position: string; club: string; height: number; weight: number; terms_accepted_at: string; privacy_accepted_at: string };
   videos: DemoVideo[];
   analyses: DemoAnalysis[];
   latestAnalysis: DemoAnalysis;
@@ -26,7 +32,7 @@ export interface DemoData {
   latestRecommendations: DemoSkillLevel[];
 }
 
-const SKILLS_DATA: DemoSkill[] = [
+const SKILLS_DATA: DemoSkill[] = withCreatedAt<DemoSkill>([
   { id: "skill-1", name: "Passing Accuracy", category: "passing", description: "Master short and long passing techniques", icon: "🎯", order_index: 1 },
   { id: "skill-2", name: "First Touch", category: "technical", description: "Improve ball control and first touch", icon: "⚡", order_index: 2 },
   { id: "skill-3", name: "Ball Control Basics", category: "technical", description: "Develop fundamental ball control skills", icon: "🦶", order_index: 3 },
@@ -37,9 +43,9 @@ const SKILLS_DATA: DemoSkill[] = [
   { id: "skill-8", name: "Balance & Core", category: "physical", description: "Strengthen balance and core stability", icon: "⚖️", order_index: 8 },
   { id: "skill-9", name: "1v1 Attacking", category: "attacking", description: "Master one-on-one attacking moves", icon: "⚔️", order_index: 9 },
   { id: "skill-10", name: "Game Awareness", category: "mental", description: "Develop tactical awareness and decision making", icon: "🧠", order_index: 10 },
-];
+]);
 
-const SKILL_LEVELS_DATA: DemoSkillLevel[] = [
+const SKILL_LEVELS_DATA: DemoSkillLevel[] = withCreatedAt<DemoSkillLevel>([
   { id: "sl-1", skill_id: "skill-1", level_name: "beginner", level_order: 1, youtube_url: "https://www.youtube.com/watch?v=F8LCioV8z_s", video_title: "5 Soccer Passing Drills | adidas", duration_minutes: 12, target_metrics: ["technique"], xp_reward: 50 },
   { id: "sl-2", skill_id: "skill-1", level_name: "intermediate", level_order: 2, youtube_url: "https://www.youtube.com/watch?v=-V88Iy1X-is", video_title: "New Passing Drills to Improve Speed & Accuracy", duration_minutes: 15, target_metrics: ["technique"], xp_reward: 100 },
   { id: "sl-3", skill_id: "skill-1", level_name: "advanced", level_order: 3, youtube_url: "https://www.youtube.com/watch?v=0kGgL_aglEE", video_title: "Passing & 1st Touch Drill (ADVANCED)", duration_minutes: 10, target_metrics: ["technique"], xp_reward: 150 },
@@ -70,7 +76,7 @@ const SKILL_LEVELS_DATA: DemoSkillLevel[] = [
   { id: "sl-28", skill_id: "skill-10", level_name: "beginner", level_order: 1, youtube_url: "https://www.youtube.com/watch?v=FS1LrWzSSmQ", video_title: "LOADS OF SOCCER DRILLS FOR BEGINNERS", duration_minutes: 15, target_metrics: ["technique"], xp_reward: 50 },
   { id: "sl-29", skill_id: "skill-10", level_name: "intermediate", level_order: 2, youtube_url: "https://www.youtube.com/watch?v=-F6OecCUHLA", video_title: "Passing & 1st Touch Combinations", duration_minutes: 12, target_metrics: ["technique"], xp_reward: 100 },
   { id: "sl-30", skill_id: "skill-10", level_name: "advanced", level_order: 3, youtube_url: "https://www.youtube.com/watch?v=moLy3vQ1q_E", video_title: "4v2 Rondo | Possession Exercise", duration_minutes: 14, target_metrics: ["technique", "balance"], xp_reward: 150 },
-];
+]);
 
 export const DEMO_DATA: DemoData = {
   user: {
@@ -102,6 +108,8 @@ export const DEMO_DATA: DemoData = {
       storage_path: "bd5aa96f-6963-4067-99c4-80e474064a3f.mp4",
       filename: "training-session-1.mp4",
       file_size_mb: 15.2,
+      duration: null,
+      duel_id: null,
       status: "completed",
       uploaded_at: new Date(Date.now() - 86400000 * 2).toISOString(),
     },
@@ -111,6 +119,8 @@ export const DEMO_DATA: DemoData = {
       storage_path: "bd5aa96f-6963-4067-99c4-80e474064a3f.mp4",
       filename: "match-highlight.mp4",
       file_size_mb: 22.8,
+      duration: null,
+      duel_id: null,
       status: "completed",
       uploaded_at: new Date(Date.now() - 86400000 * 5).toISOString(),
     },
@@ -120,6 +130,8 @@ export const DEMO_DATA: DemoData = {
       storage_path: "bd5aa96f-6963-4067-99c4-80e474064a3f.mp4",
       filename: "drill-session.mp4",
       file_size_mb: 8.5,
+      duration: null,
+      duel_id: null,
       status: "processing",
       uploaded_at: new Date(Date.now() - 3600000).toISOString(),
     },

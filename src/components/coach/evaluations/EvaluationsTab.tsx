@@ -133,7 +133,7 @@ export function EvaluationsTab({ teamId }: { teamId?: string }) {
                                         {Object.entries((selectedEval as any).ai_scores ?? {}).map(([key, val]) => (
                                             <div key={key} className="p-3 rounded-sm bg-secondary/35 border border-border text-center">
                                                 <p className="text-[10px] uppercase text-muted-foreground font-bold">{key}</p>
-                                                <p className="text-lg font-black text-primary">{val}</p>
+                                                <p className="text-lg font-black text-primary">{String(val)}</p>
                                                 <p className="text-[9px] text-muted-foreground">AI Score</p>
                                             </div>
                                         ))}
