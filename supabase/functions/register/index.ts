@@ -9,6 +9,15 @@ function clientIp(req: Request): string | null {
   return req.headers.get("cf-connecting-ip") || forwarded || req.headers.get("x-real-ip") || null;
 }
 
+/** `player` + 6 random digits, retried until free (1M combinations, so a clash is rare). */
+async function generateNickname(taken: (value: string) => Promise<boolean>): Promise<string> {
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const candidate = `player${crypto.getRandomValues(new Uint32Array(1))[0] % 900000 + 100000}`;
+    if (!(await taken(candidate))) return candidate;
+  }
+  throw new Error("could not generate a free nickname");
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -22,9 +31,12 @@ serve(async (req) => {
   try {
     const { email, password, phone, nickname, terms_accepted, privacy_accepted, referral_visit_id } = await req.json();
 
-    if (!email || !password || !phone || !nickname) {
+    // Sign-up asks for email and password only. Phone and nickname are still
+    // accepted from older clients; without a nickname one is generated, because
+    // duels find opponents by nickname.
+    if (!email || !password) {
       return new Response(
-        JSON.stringify({ error: "email, password, phone and nickname are required" }),
+        JSON.stringify({ error: "email and password are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -41,38 +53,45 @@ serve(async (req) => {
       Deno.env.get("SERVICE_ROLE_SECRET_KEY") ?? ""
     );
 
-    const { data: existingNickname } = await supabase
-      .from("users")
-      .select("id")
-      .eq("nickname", nickname)
-      .maybeSingle();
+    const nicknameTaken = async (value: string) => {
+      const { data } = await supabase.from("users").select("id").eq("nickname", value).maybeSingle();
+      return !!data;
+    };
 
-    if (existingNickname) {
-      return new Response(
-        JSON.stringify({ error: "Nickname already taken" }),
-        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    let finalNickname: string;
+    if (nickname) {
+      if (await nicknameTaken(nickname)) {
+        return new Response(
+          JSON.stringify({ error: "Nickname already taken" }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      finalNickname = nickname;
+    } else {
+      finalNickname = await generateNickname(nicknameTaken);
     }
 
-    const { data: existingPhone } = await supabase
-      .from("users")
-      .select("id")
-      .eq("phone", phone)
-      .maybeSingle();
+    if (phone) {
+      const { data: existingPhone } = await supabase
+        .from("users")
+        .select("id")
+        .eq("phone", phone)
+        .maybeSingle();
 
-    if (existingPhone) {
-      return new Response(
-        JSON.stringify({ error: "Phone already registered" }),
-        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      if (existingPhone) {
+        return new Response(
+          JSON.stringify({ error: "Phone already registered" }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
-      phone,
+      ...(phone ? { phone } : {}),
       email_confirm: false,
-      user_metadata: { phone, nickname },
+      user_metadata: phone ? { phone, nickname: finalNickname } : { nickname: finalNickname },
     });
 
     if (authError) {

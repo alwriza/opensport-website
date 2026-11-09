@@ -19,7 +19,7 @@ export default function Register() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ email: "", password: "", phone: "", nickname: "" });
+  const [form, setForm] = useState({ email: "", password: "" });
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
 
@@ -66,8 +66,7 @@ export default function Register() {
       const msg = err instanceof Error ? err.message : "";
       const normalizedMessage = msg.toLowerCase();
       let description = t("somethingWentWrong");
-      if (normalizedMessage.includes("nickname")) description = t("nicknameTaken");
-      else if (normalizedMessage.includes("phone")) description = t("phoneTaken");
+      if (normalizedMessage.includes("already been registered") || normalizedMessage.includes("already registered")) description = t("emailTaken");
       else if (msg) description = msg;
 
       toast({ title: t("registrationFailed"), description, variant: "destructive" });
@@ -107,29 +106,6 @@ export default function Register() {
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 placeholder={t("passwordPlaceholder")}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">{t("phoneLabel")}</Label>
-              <Input
-                id="phone"
-                type="tel"
-                required
-                autoComplete="tel"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                placeholder={t("phonePlaceholder")}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="nickname">{t("nicknameLabel")}</Label>
-              <Input
-                id="nickname"
-                required
-                autoComplete="nickname"
-                value={form.nickname}
-                onChange={(e) => setForm({ ...form, nickname: e.target.value })}
-                placeholder={t("nicknamePlaceholder")}
               />
             </div>
             <div className="space-y-3">
