@@ -8,6 +8,7 @@ import { useDemoContext, useDemoMutationGuard } from "@/demo";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { USER_PROFILE_COLUMNS } from "@/lib/userColumns";
+import { TEAM_PUBLIC_COLUMNS, withMyInviteCodes } from "@/lib/teamColumns";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Loader2 } from "lucide-react";
@@ -62,10 +63,10 @@ export default function CoachDashboard() {
       if (demo) return demo.teams;
       const { data, error } = await supabase
         .from("team_coaches")
-        .select(`team_id, role, teams (id, name, age_group, season, invite_code, clubs (name))`)
+        .select(`team_id, role, teams (${TEAM_PUBLIC_COLUMNS}, clubs (name))`)
         .eq("coach_id", coachDbId!);
       if (error) throw error;
-      return (data || []).flatMap(ct => ct.teams ? [ct.teams] : []);
+      return withMyInviteCodes((data || []).flatMap(ct => ct.teams ? [ct.teams] : []));
     },
     enabled: !!coachDbId || !!demo,
   });

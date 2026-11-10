@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Users, CheckCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -62,17 +63,11 @@ export default function JoinTeam() {
 
         setLoading(true);
         try {
-            // Find team by invite code
-            const { data: team, error: teamError } = await supabase
-                .from('teams')
-                .select(`
-          id,
-          name,
-          age_group,
-          clubs (name)
-        `)
-                .eq('invite_code', inviteCode.toUpperCase())
-                .single();
+            // Codes are not readable from the browser; the server resolves them.
+            const { data: found, error: teamError } = await (supabase as unknown as SupabaseClient)
+                .rpc('find_team_by_invite_code', { p_code: inviteCode });
+            const row = (found as { id: string; name: string; age_group: string; club_name: string | null }[] | null)?.[0];
+            const team = row && { id: row.id, name: row.name, age_group: row.age_group, clubs: { name: row.club_name } };
 
             if (teamError || !team) {
                 toast({
@@ -102,60 +97,32 @@ export default function JoinTeam() {
 
         setLoading(true);
         try {
-            // Check if user is a coach for this team
-            const { data: isCoach } = await supabase
-                .from('team_coaches')
-                .select('id')
-                .eq('team_id', teamInfo.id)
-                .eq('coach_id', dbUserId)
-                .maybeSingle();
-
-            if (isCoach) {
-                toast({
-                    title: t("join.toasts.restricted.title"),
-                    description: t("join.toasts.restricted.description"),
-                    variant: "destructive"
-                });
-                setLoading(false);
-                return;
-            }
-
-            // Check if already in team
-            const { data: existing } = await supabase
-                .from('team_rosters')
-                .select('id, status')
-                .eq('team_id', teamInfo.id)
-                .eq('player_id', dbUserId)
-                .single();
-
-            if (existing) {
-                // @ts-ignore
-                if (existing.status === 'active') {
+            // The server checks the code again, refuses coaches of the team and
+            // existing members, and adds the player as active.
+            const { data: result, error: joinError } = await (supabase as unknown as SupabaseClient)
+                .rpc('join_team_by_invite_code', { p_code: inviteCode });
+            if (joinError) throw joinError;
+            const outcome = result as { ok: boolean; reason?: string };
+            if (!outcome.ok) {
+                const key =
+                    outcome.reason === 'coach_of_team' ? 'restricted'
+                    : outcome.reason === 'already_active' ? 'alreadyIn'
+                    : outcome.reason === 'already_declined' ? 'declined'
+                    : outcome.reason === 'invalid_code' ? 'invalidCode'
+                    : null;
+                if (key) {
                     toast({
-                        title: t("join.toasts.alreadyIn.title"),
-                        description: t("join.toasts.alreadyIn.description"),
+                        title: t(`join.toasts.${key}.title`),
+                        description: t(`join.toasts.${key}.description`),
+                        variant: key === 'restricted' || key === 'invalidCode' ? 'destructive' : undefined,
                     });
-                    // @ts-ignore
-                } else if (existing.status === 'declined') {
-                    toast({
-                        title: t("join.toasts.declined.title"),
-                        description: t("join.toasts.declined.description"),
-                    });
+                } else if (outcome.reason?.startsWith('already_')) {
+                    toast({ title: t("join.toasts.alreadyIn.title"), description: t("join.toasts.alreadyIn.description") });
+                } else {
+                    throw new Error(outcome.reason || 'join_failed');
                 }
                 return;
             }
-
-            // ✅ СРАЗУ ДОБАВЛЯЕМ КАК ACTIVE (код = автоматический approve)
-            // @ts-ignore
-            const { error: rosterError } = await (supabase
-                .from('team_rosters') as any)
-                .insert({
-                    team_id: teamInfo.id,
-                    player_id: dbUserId,
-                    status: 'active'  // ✅ Правильно!
-                });
-
-            if (rosterError) throw rosterError;
 
             toast({
                 title: t("join.toasts.success.title"),

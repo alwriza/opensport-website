@@ -6,17 +6,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
 interface CreateTeamModalProps {
   open: boolean;
   onClose: () => void;
-  coachId: string;
+  /** Unused: the server takes the coach from the session. */
+  coachId?: string;
   onSuccess: () => void;
 }
 
-export function CreateTeamModal({ open, onClose, coachId, onSuccess }: CreateTeamModalProps) {
+export function CreateTeamModal({ open, onClose, onSuccess }: CreateTeamModalProps) {
   const { t } = useTranslation("team");
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -34,58 +36,20 @@ export function CreateTeamModal({ open, onClose, coachId, onSuccess }: CreateTea
     setLoading(true);
 
     try {
-      // 1. Create or find club
-      let clubId: string;
-
-      const { data: existingClub } = await (supabase
-        .from('clubs') as any)
-        .select('id')
-        .eq('name', formData.clubName)
-        .single();
-
-      if (existingClub) {
-        clubId = (existingClub as any).id;
-      } else {
-        const { data: newClub, error: clubError } = await (supabase
-          .from('clubs') as any)
-          .insert({ name: formData.clubName })
-          .select('id')
-          .single();
-
-        if (clubError) throw clubError;
-        if (!newClub) throw new Error("Could not create club");
-        clubId = (newClub as any).id;
-      }
-
-      // 2. Create team
-      const { data: newTeam, error: teamError } = await (supabase
-        .from('teams') as any)
-        .insert({
-          club_id: clubId,
-          name: formData.teamName,
-          age_group: formData.ageGroup,
-          season: formData.season
-        })
-        .select()
-        .single();
-
-      if (teamError) throw teamError;
-      if (!newTeam) throw new Error("Could not create team"); // Ensure newTeam is not null
-
-      // 3. Add coach to team
-      const { error: coachError } = await (supabase
-        .from('team_coaches') as any)
-        .insert({
-          team_id: (newTeam as any).id,
-          coach_id: coachId,
-          role: 'head_coach'
-        });
-
-      if (coachError) throw coachError;
+      // Club, team and head-coach link are created server-side in one call.
+      const { data: created, error: createError } = await (supabase as unknown as SupabaseClient).rpc("create_team", {
+        p_team_name: formData.teamName,
+        p_age_group: formData.ageGroup,
+        p_season: formData.season,
+        p_club_name: formData.clubName,
+      });
+      if (createError) throw createError;
+      const newTeam = (created as { id: string; invite_code: string }[] | null)?.[0];
+      if (!newTeam) throw new Error("Could not create team");
 
       toast({
         title: t("createTeamModal.success.title"),
-        description: t("createTeamModal.success.description", { teamName: formData.teamName, code: (newTeam as any).invite_code }),
+        description: t("createTeamModal.success.description", { teamName: formData.teamName, code: newTeam.invite_code }),
       });
 
       onSuccess();

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { TEAM_PUBLIC_COLUMNS, withMyInviteCodes } from "@/lib/teamColumns";
 import { useDemoContext } from "@/demo";
 
 export function useMyTeams(playerId: string | undefined) {
@@ -45,11 +46,11 @@ export function useCoachTeams(coachId: string | undefined) {
       const { data, error } = await supabase
         .from('team_coaches')
         .select(`
-          teams (*, clubs (name))
+          teams (${TEAM_PUBLIC_COLUMNS}, clubs (name))
         `)
         .eq('coach_id', coachId);
       if (error) throw error;
-      return (data || []).map((item: any) => item.teams).filter(Boolean);
+      return withMyInviteCodes((data || []).map((item: any) => item.teams).filter(Boolean));
     },
     enabled: !!coachId || !!demo,
   });

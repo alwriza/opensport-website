@@ -1,6 +1,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { TEAM_PUBLIC_COLUMNS } from "@/lib/teamColumns";
 import { useDemoContext } from "@/demo";
 import {
     Dialog,
@@ -78,7 +79,7 @@ export const TeamProfileOverlay: React.FC<TeamProfileOverlayProps> = ({
             const { data, error } = await supabase
                 .from('teams')
                 .select(`
-          *,
+          ${TEAM_PUBLIC_COLUMNS},
           clubs (name)
         `)
                 .eq('id', teamId)
