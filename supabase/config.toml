@@ -32,3 +32,5 @@ verify_jwt = false
 
 [functions.complete-training-session]
 verify_jwt = false
+[functions.login]
+verify_jwt = false

@@ -1,4 +1,5 @@
 import type { Database } from "@/integrations/supabase/types";
+import { USER_PROFILE_COLUMNS } from "@/lib/userColumns";
 import { getErrorMessage } from "@/lib/errors";
 import { PLAYER_POSITIONS, positionCode } from "@/lib/player";
 import { SkillIcon } from "@/components/training/SkillIcon";
@@ -115,7 +116,7 @@ export default function PlayerDashboard() {
 
       const { data: existingUser, error: fetchError } = await supabase
         .from('users')
-        .select('*')
+        .select(USER_PROFILE_COLUMNS)
         .eq('auth_user_id', user.id)
         .maybeSingle();
 

@@ -7,6 +7,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useDemoContext, useDemoMutationGuard } from "@/demo";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { USER_PROFILE_COLUMNS } from "@/lib/userColumns";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Loader2 } from "lucide-react";
@@ -46,7 +47,7 @@ export default function CoachDashboard() {
     queryFn: async () => {
       if (demo) return demo.coachProfile;
       if (!user) return null;
-      const { data, error } = await supabase.from("users").select("*").eq("auth_user_id", user.id).maybeSingle();
+      const { data, error } = await supabase.from("users").select(USER_PROFILE_COLUMNS).eq("auth_user_id", user.id).maybeSingle();
       if (error) throw error;
       return data;
     },

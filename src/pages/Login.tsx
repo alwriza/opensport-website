@@ -8,7 +8,8 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { registrationFunctions, supabase } from "@/integrations/supabase/client";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 
 function classifyIdentifier(value: string): "email" | "phone" | "nickname" {
   if (value.includes("@")) return "email";
@@ -29,29 +30,36 @@ export default function Login() {
     setLoading(true);
     try {
       const kind = classifyIdentifier(identifier.trim());
-      let email = identifier.trim();
-      const phone = identifier.trim();
+      const value = identifier.trim();
 
       if (kind === "nickname") {
-        const { data: profile, error: lookupError } = await supabase
-          .from("users")
-          .select("email")
-          .eq("nickname", identifier.trim())
-          .maybeSingle();
-
-        if (lookupError) throw lookupError;
-        if (!profile?.email) {
-          throw new Error(t("noAccountFound"));
+        // Emails are not readable from the browser; the login function resolves
+        // the nickname server-side and returns a session.
+        const { data, error } = await registrationFunctions.invoke<{ access_token?: string; refresh_token?: string; error?: string }>("login", {
+          body: { nickname: value, password },
+        });
+        let code = data?.error;
+        if (error instanceof FunctionsHttpError) {
+          const response = await error.context.json().catch(() => null);
+          code = typeof response?.error === "string" ? response.error : "invalid_credentials";
+        } else if (error) {
+          throw error;
         }
-        email = profile.email;
+        if (code || !data?.access_token || !data.refresh_token) {
+          throw new Error(code === "email_not_confirmed" ? "Email not confirmed" : t("checkCredentials"));
+        }
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+        });
+        if (sessionError) throw sessionError;
+      } else {
+        const { error } =
+          kind === "phone"
+            ? await supabase.auth.signInWithPassword({ phone: value, password })
+            : await supabase.auth.signInWithPassword({ email: value, password });
+        if (error) throw error;
       }
-
-      const { error } =
-        kind === "phone"
-          ? await supabase.auth.signInWithPassword({ phone, password })
-          : await supabase.auth.signInWithPassword({ email, password });
-
-      if (error) throw error;
 
       navigate("/player-dashboard");
     } catch (err) {
