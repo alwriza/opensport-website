@@ -1,21 +1,18 @@
-"""Diagnostic (temporary): does T-DEED's backbone use more than one CPU thread?
+"""Diagnostic (temporary): which import in T-DEED's inference.py changes torch's thread count?
 
-    python3 bench_cpu.py
+    cd $TDEED_DIR && python3 <this file>
 
-Times regnety_002 on 100 frames of 796x448 (one T-DEED clip) at 1, 2 and 4 torch threads.
+Imports in the same order as inference.py and prints torch.get_num_threads() after each.
 """
 
-import time
+import importlib
+import os
+import sys
 
-import timm
-import torch
+sys.path.insert(0, os.getcwd())
+import torch  # noqa: E402
 
-model = timm.create_model("regnety_002", pretrained=False).eval()
-x = torch.rand(100, 3, 448, 796)
-for threads in (1, 2, 4):
-    torch.set_num_threads(threads)
-    with torch.no_grad():
-        model.forward_features(x[:10])  # warm-up
-        start = time.time()
-        model.forward_features(x)
-    print(f"threads={threads}: {time.time() - start:.1f} s per clip", flush=True)
+print("torch", torch.get_num_threads(), flush=True)
+for name in ["argparse", "numpy", "random", "torch.utils.data", "wandb", "util.io", "model.model", "util.eval", "dataset.frame", "util.dataset"]:
+    importlib.import_module(name)
+    print(f"after {name}: {torch.get_num_threads()}", flush=True)
