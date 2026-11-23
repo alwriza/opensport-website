@@ -21,6 +21,8 @@ const CoachDashboard = lazy(() => import("./pages/CoachDashboard"));
 const MatchAnalysis = lazy(() => import("./pages/MatchAnalysis"));
 const MatchAnalysisDetail = lazy(() => import("./pages/MatchAnalysisDetail"));
 const AdminReferrals = lazy(() => import("./pages/admin/AdminReferrals"));
+const AdminResearch = lazy(() => import("./pages/admin/AdminResearch"));
+const ResearchGold = lazy(() => import("./pages/admin/ResearchGold"));
 
 import NotFound from "./pages/NotFound";
 import JoinTeam from "./pages/JoinTeam";
@@ -81,6 +83,8 @@ const App = () => (
 
             {/* Internal: creator referral program. The page itself checks is_admin(). */}
             <Route path="/admin/referrals" element={<ProtectedRoute><Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>}><AdminReferrals /></Suspense></ProtectedRoute>} />
+            <Route path="/admin/research" element={<ProtectedRoute><Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>}><AdminResearch /></Suspense></ProtectedRoute>} />
+            <Route path="/admin/research/gold/:segmentId" element={<ProtectedRoute><Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>}><ResearchGold /></Suspense></ProtectedRoute>} />
 
             <Route path="/about" element={<About />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
