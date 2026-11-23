@@ -80,3 +80,19 @@ export function fmtTime(seconds: number): string {
   const sec = (s % 60).toFixed(1).padStart(4, "0");
   return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${sec}` : `${String(m).padStart(2, "0")}:${sec}`;
 }
+
+/** Review mode: verdict keys, in the order they are drawn. */
+export const REVIEW_HINTS: { key: string; label: string }[] = [
+  { key: "Enter", label: "верно" },
+  { key: "N", label: "события не было" },
+  { key: "P D C S H T B I", label: "другое событие (с Shift — команда B)" },
+  { key: "R", label: "повторить момент" },
+  { key: "← →", label: "предыдущее / следующее" },
+  { key: "U", label: "«не уверен» на последнем ответе" },
+  { key: "Пробел", label: "пауза / пуск" },
+  { key: "[ ]", label: "скорость" },
+];
+
+/** Seconds shown before and after a predicted event when it comes up for review. */
+export const REVIEW_BEFORE_S = 2;
+export const REVIEW_AFTER_S = 1;

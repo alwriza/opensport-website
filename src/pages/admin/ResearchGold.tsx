@@ -8,6 +8,8 @@ import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AdminOnly } from "@/components/admin/research/AdminOnly";
 import { YouTubePlayer } from "@/components/admin/research/YouTubePlayer";
+import { useSaveQueue } from "@/hooks/useSaveQueue";
+import { useSegmentPlayer } from "@/hooks/useSegmentPlayer";
 import {
   deleteLabel,
   researchErrorText,
@@ -43,7 +45,6 @@ type SaveOp =
   | { kind: "segment"; patch: Parameters<typeof updateSegment>[1] };
 
 const POSITION_SAVE_MS = 10_000;
-const CLOCK_MS = 100;
 
 /** Gold labeling of one segment: keys only, every event saved right away. Admins only. */
 export default function ResearchGold() {
@@ -75,86 +76,21 @@ function GoldLabeler({ segment, match, initialLabels }: { segment: ResearchSegme
   const navigate = useNavigate();
   const [player, setPlayer] = useState<YTPlayer | null>(null);
   const [videoError, setVideoError] = useState<string | null>(null);
-  const [time, setTime] = useState(segment.position_s ?? segment.start_s);
   const [rateIndex, setRateIndex] = useState(PLAYBACK_RATES.length - 1);
   // Creation order: the last element is "the last event" for Backspace / M / U.
   const [labels, setLabels] = useState<Label[]>(() => initialLabels.map(({ created_at: _c, ...l }) => l));
   const [pendingShot, setPendingShot] = useState<{ t: number; team: "A" | "B" } | null>(null);
-  // Right after seekTo, YouTube keeps returning the old time for a while. While paused,
-  // the page's own last seek target is the true position (frame steps, labels, M).
-  const seekTarget = useRef<number | null>(null);
-
-  // ---------- saving: one queue, in order; a failed write stops input until it is retried ----------
-  const queue = useRef<SaveOp[]>([]);
-  const pumping = useRef<Promise<void> | null>(null);
-  const [unsaved, setUnsaved] = useState(0);
-  const [saveError, setSaveError] = useState<string | null>(null);
   const status = useRef(segment.status);
+  const initialS = segment.position_s ?? segment.start_s;
 
-  const pump = useCallback(() => {
-    if (pumping.current) return pumping.current;
-    pumping.current = (async () => {
-      while (queue.current.length > 0) {
-        const op = queue.current[0];
-        try {
-          if (op.kind === "upsert") await upsertLabel(op.label);
-          else if (op.kind === "delete") await deleteLabel(op.id);
-          else await updateSegment(segment.id, op.patch);
-        } catch (e) {
-          setSaveError(researchErrorText(e));
-          break;
-        }
-        queue.current.shift();
-        setUnsaved(queue.current.length);
-      }
-      pumping.current = null;
-    })();
-    return pumping.current;
-  }, [segment.id]);
-
-  const save = useCallback(
-    (op: SaveOp) => {
-      queue.current.push(op);
-      setUnsaved(queue.current.length);
-      if (!saveError) void pump();
-    },
-    [pump, saveError],
+  const { time, seek, currentTime } = useSegmentPlayer(player, segment.start_s, segment.end_s, initialS);
+  const { save, retry, flush, unsaved, error: saveError } = useSaveQueue<SaveOp>((op) =>
+    op.kind === "upsert" ? upsertLabel(op.label) : op.kind === "delete" ? deleteLabel(op.id) : updateSegment(segment.id, op.patch),
   );
-
-  const retry = () => {
-    setSaveError(null);
-    void pump();
-  };
-
-  useEffect(() => {
-    const warn = (e: BeforeUnloadEvent) => {
-      if (queue.current.length > 0) e.preventDefault();
-    };
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, []);
 
   const blocked = saveError !== null || videoError !== null || !player;
 
-  // ---------- playback: clock, segment bounds, periodic position save ----------
-  useEffect(() => {
-    if (!player) return;
-    const id = window.setInterval(() => {
-      if (player.getPlayerState() === YT_STATE.PLAYING) seekTarget.current = null;
-      const t = seekTarget.current ?? player.getCurrentTime();
-      if (t > segment.end_s) {
-        player.pauseVideo();
-        seekTarget.current = segment.end_s;
-        player.seekTo(segment.end_s, true);
-      } else if (t < segment.start_s - 0.5) {
-        seekTarget.current = segment.start_s;
-        player.seekTo(segment.start_s, true);
-      }
-      setTime(Math.min(Math.max(t, segment.start_s), segment.end_s));
-    }, CLOCK_MS);
-    return () => window.clearInterval(id);
-  }, [player, segment.start_s, segment.end_s]);
-
+  // ---------- periodic position save ----------
   const timeRef = useRef(time);
   timeRef.current = time;
   useEffect(() => {
@@ -175,8 +111,7 @@ function GoldLabeler({ segment, match, initialLabels }: { segment: ResearchSegme
   }, [player, save]);
 
   const onReady = (p: YTPlayer) => {
-    seekTarget.current = segment.position_s ?? segment.start_s;
-    p.seekTo(seekTarget.current, true);
+    p.seekTo(initialS, true);
     p.pauseVideo();
     setPlayer(p);
   };
@@ -208,22 +143,6 @@ function GoldLabeler({ segment, match, initialLabels }: { segment: ResearchSegme
     },
     [save],
   );
-
-  const seek = useCallback(
-    (t: number) => {
-      if (!player) return;
-      const target = Math.min(Math.max(t, segment.start_s), segment.end_s);
-      seekTarget.current = target;
-      player.seekTo(target, true);
-    },
-    [player, segment.start_s, segment.end_s],
-  );
-
-  const currentTime = useCallback(() => {
-    if (!player) throw new Error("player is not ready");
-    const paused = player.getPlayerState() !== YT_STATE.PLAYING;
-    return paused && seekTarget.current !== null ? seekTarget.current : player.getCurrentTime();
-  }, [player]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -323,8 +242,7 @@ function GoldLabeler({ segment, match, initialLabels }: { segment: ResearchSegme
     player?.pauseVideo();
     status.current = "done";
     save({ kind: "segment", patch: { status: "done", position_s: timeRef.current } });
-    await pump();
-    if (queue.current.length === 0) navigate("/admin/research");
+    if (await flush()) navigate("/admin/research");
   };
 
   const lastId = labels[labels.length - 1]?.id;

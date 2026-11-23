@@ -69,6 +69,9 @@ function Home({ matches, onAddMatches }: { matches: MatchWithSegment[]; onAddMat
   const reviewDone = review.filter((s) => s.status === "done").length;
   const reviewWaiting = review.filter((s) => s.status === "waiting").length;
   const nextGold = gold.find((m) => m.research_segments?.status !== "done");
+  const nextReview = matches.find(
+    (m) => m.research_segments?.mode === "review" && (m.research_segments.status === "ready" || m.research_segments.status === "in_progress"),
+  );
 
   return (
     <div className="space-y-6">
@@ -92,8 +95,14 @@ function Home({ matches, onAddMatches }: { matches: MatchWithSegment[]; onAddMat
             <Button size="sm" asChild><Link to={`/admin/research/gold/${nextGold.research_segments.id}`}>Разметить</Link></Button>
           </div>
         )}
-        {matches.length >= TARGET_MATCHES && !nextGold && (
-          <p>Матчи собраны, эталон готов. Дальше — прогон модели; проверка появится здесь, когда придут её результаты.</p>
+        {nextReview?.research_segments && (
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <p>Проверьте, что нашла модель в {nextReview.id}.</p>
+            <Button size="sm" asChild><Link to={`/admin/research/review/${nextReview.research_segments.id}`}>Проверить</Link></Button>
+          </div>
+        )}
+        {matches.length >= TARGET_MATCHES && !nextGold && !nextReview && (
+          <p>Всё, что можно, сделано. Остальные отрезки ждут прогона модели — они появятся здесь, когда придут её результаты.</p>
         )}
       </div>
     </div>
@@ -158,10 +167,10 @@ function MatchesTable({ matches }: { matches: MatchWithSegment[] }) {
                 {m.status === "error" && <p className="text-xs text-destructive">Ошибка обработки: {m.error}</p>}
               </TableCell>
               <TableCell className="text-right">
-                {s?.mode === "gold" && (
+                {s && s.status !== "waiting" && (
                   <Button size="sm" variant={s.status === "done" ? "outline" : "default"} asChild>
-                    <Link to={`/admin/research/gold/${s.id}`}>
-                      {s.status === "ready" ? "Разметить" : s.status === "in_progress" ? "Продолжить" : "Открыть"}
+                    <Link to={`/admin/research/${s.mode}/${s.id}`}>
+                      {s.status === "ready" ? (s.mode === "gold" ? "Разметить" : "Проверить") : s.status === "in_progress" ? "Продолжить" : "Открыть"}
                     </Link>
                   </Button>
                 )}
