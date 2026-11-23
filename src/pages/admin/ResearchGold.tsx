@@ -80,6 +80,9 @@ function GoldLabeler({ segment, match, initialLabels }: { segment: ResearchSegme
   // Creation order: the last element is "the last event" for Backspace / M / U.
   const [labels, setLabels] = useState<Label[]>(() => initialLabels.map(({ created_at: _c, ...l }) => l));
   const [pendingShot, setPendingShot] = useState<{ t: number; team: "A" | "B" } | null>(null);
+  // Right after seekTo, YouTube keeps returning the old time for a while. While paused,
+  // the page's own last seek target is the true position (frame steps, labels, M).
+  const seekTarget = useRef<number | null>(null);
 
   // ---------- saving: one queue, in order; a failed write stops input until it is retried ----------
   const queue = useRef<SaveOp[]>([]);
@@ -137,11 +140,14 @@ function GoldLabeler({ segment, match, initialLabels }: { segment: ResearchSegme
   useEffect(() => {
     if (!player) return;
     const id = window.setInterval(() => {
-      const t = player.getCurrentTime();
+      if (player.getPlayerState() === YT_STATE.PLAYING) seekTarget.current = null;
+      const t = seekTarget.current ?? player.getCurrentTime();
       if (t > segment.end_s) {
         player.pauseVideo();
+        seekTarget.current = segment.end_s;
         player.seekTo(segment.end_s, true);
       } else if (t < segment.start_s - 0.5) {
+        seekTarget.current = segment.start_s;
         player.seekTo(segment.start_s, true);
       }
       setTime(Math.min(Math.max(t, segment.start_s), segment.end_s));
@@ -169,7 +175,8 @@ function GoldLabeler({ segment, match, initialLabels }: { segment: ResearchSegme
   }, [player, save]);
 
   const onReady = (p: YTPlayer) => {
-    p.seekTo(segment.position_s ?? segment.start_s, true);
+    seekTarget.current = segment.position_s ?? segment.start_s;
+    p.seekTo(seekTarget.current, true);
     p.pauseVideo();
     setPlayer(p);
   };
@@ -205,10 +212,18 @@ function GoldLabeler({ segment, match, initialLabels }: { segment: ResearchSegme
   const seek = useCallback(
     (t: number) => {
       if (!player) return;
-      player.seekTo(Math.min(Math.max(t, segment.start_s), segment.end_s), true);
+      const target = Math.min(Math.max(t, segment.start_s), segment.end_s);
+      seekTarget.current = target;
+      player.seekTo(target, true);
     },
     [player, segment.start_s, segment.end_s],
   );
+
+  const currentTime = useCallback(() => {
+    if (!player) throw new Error("player is not ready");
+    const paused = player.getPlayerState() !== YT_STATE.PLAYING;
+    return paused && seekTarget.current !== null ? seekTarget.current : player.getCurrentTime();
+  }, [player]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -236,7 +251,7 @@ function GoldLabeler({ segment, match, initialLabels }: { segment: ResearchSegme
       if (cls) {
         e.preventDefault();
         if (e.repeat) return;
-        const t = player.getCurrentTime();
+        const t = currentTime();
         const team = e.shiftKey ? "B" : "A";
         if (cls === "shot") {
           player.pauseVideo();
@@ -257,17 +272,17 @@ function GoldLabeler({ segment, match, initialLabels }: { segment: ResearchSegme
           return;
         case "ArrowLeft":
           e.preventDefault();
-          seek(player.getCurrentTime() - JUMP_S);
+          seek(currentTime() - JUMP_S);
           return;
         case "ArrowRight":
           e.preventDefault();
-          seek(player.getCurrentTime() + JUMP_S);
+          seek(currentTime() + JUMP_S);
           return;
         case "Comma":
         case "Period":
           e.preventDefault();
           if (!paused) return;
-          seek(player.getCurrentTime() + (e.code === "Comma" ? -FRAME_S : FRAME_S));
+          seek(currentTime() + (e.code === "Comma" ? -FRAME_S : FRAME_S));
           return;
         case "BracketLeft":
         case "BracketRight": {
@@ -288,7 +303,7 @@ function GoldLabeler({ segment, match, initialLabels }: { segment: ResearchSegme
         case "KeyM":
           e.preventDefault();
           if (e.repeat) return;
-          changeLast({ t: player.getCurrentTime() });
+          changeLast({ t: currentTime() });
           return;
         case "KeyU": {
           e.preventDefault();
@@ -301,7 +316,7 @@ function GoldLabeler({ segment, match, initialLabels }: { segment: ResearchSegme
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [blocked, player, pendingShot, labels, rateIndex, segment.id, addLabel, changeLast, removeLabel, seek]);
+  }, [blocked, player, pendingShot, labels, rateIndex, segment.id, addLabel, changeLast, removeLabel, seek, currentTime]);
 
   const finish = async () => {
     if (!window.confirm("Отметить отрезок как готовый? Вернуться и поправить можно будет и потом.")) return;
