@@ -60,3 +60,12 @@ run `download.py` on a laptop instead (same env file, `gcloud auth login` once).
 - T-DEED: GPL-3.0 (code and checkpoint by its authors). Trained on SoccerNet Ball
   Action Spotting, whose data are research-only under the SoccerNet NDA.
 - roboflow/sports weights: see ml-worker-match/README.md.
+
+## Quality
+
+```bash
+source ~/research.env && ~/research-venv/bin/python research-pipeline/evaluate.py
+```
+
+F1 per class against the finished gold segments (±0.48 s and ±1 s, thresholds 0.2–0.7),
+team accuracy, and the share of reviewed predictions marked correct. Tests: `pytest research-pipeline/tests`.
