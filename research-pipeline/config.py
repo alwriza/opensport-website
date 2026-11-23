@@ -52,8 +52,9 @@ PLAYER_IMGSZ = 1280
 BALL_SLICE_WH = (640, 640)
 BALL_IMGSZ = 640
 BALL_NMS_THRESHOLD = 0.1
-# Team fit: one frame per second of the clip.
-TEAM_FIT_STRIDE_FRAMES = 25
+# Team fit: one frame every 2 s of the clip (~300 frames), like ml-worker-match's
+# TEAM_FIT_STRIDE. Every second doubled the CPU time (~10 min detection + ~12 min SigLIP).
+TEAM_FIT_STRIDE_FRAMES = 50
 # Ball search around an event: the event frame first, then up to this many frames each side.
 BALL_SEARCH_FRAMES = 3
 
