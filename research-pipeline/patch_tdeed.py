@@ -1,8 +1,9 @@
-"""Make T-DEED's inference run on the device in $DEVICE (cuda or cpu).
+"""Make T-DEED's inference run on the device in $DEVICE (cuda or cpu), each clip once.
 
     python3 patch_tdeed.py <T-DEED dir>
 
-Upstream hard-codes CUDA in three places. Each edit is an exact replacement at the
+Upstream hard-codes CUDA in three places and runs every clip once per data
+loader worker. Each edit is an exact replacement at the
 pinned commit (config.TDEED_SHA); if the text is not there, this stops instead of
 guessing. Running it twice is fine: an already patched file is left as is.
 """
@@ -24,6 +25,14 @@ EDITS = {
             "    model.load(torch.load(os.path.join(\n"
             "        os.getcwd(), 'checkpoints', args.model.split('_')[0], args.model, 'checkpoint_best.pt'),\n"
             "        map_location=os.environ['DEVICE']))\n",
+        ),
+        # ActionSpotInferenceDataset is an IterableDataset that ignores get_worker_info(),
+        # so with N workers every clip is decoded, predicted and summed N times (the
+        # average comes out the same, the compute is N times). One worker decodes, the
+        # main process predicts each clip once.
+        (
+            "        shuffle = False, num_workers = args.num_workers,\n",
+            "        shuffle = False, num_workers = 1,\n",
         ),
     ],
     "model/model.py": [
