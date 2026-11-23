@@ -21,3 +21,4 @@ opencv-python-headless
 supabase
 gdown
 yt-dlp
+py-spy
