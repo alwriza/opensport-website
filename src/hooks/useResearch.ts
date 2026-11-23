@@ -167,3 +167,60 @@ export async function updateSegment(
     .eq("id", id);
   if (error) throw error;
 }
+
+// ---------- review ----------
+
+export type Prediction = {
+  id: string;
+  segment_id: string;
+  t: number;
+  raw_class: string;
+  class: EventClass;
+  confidence: number;
+  cluster: 0 | 1 | null;
+};
+
+export type ReviewVerdict = "correct" | "not_event" | "relabel";
+
+export type Review = {
+  prediction_id: string;
+  verdict: ReviewVerdict;
+  class: EventClass | null;
+  team: "A" | "B" | null;
+  t: number | null;
+  shot_outcome: ShotOutcome | null;
+  unsure: boolean;
+};
+
+/** One review segment with its match, the model's reviewable predictions and the reviews so far. */
+export function useReviewSession(segmentId: string) {
+  return useQuery({
+    queryKey: [KEY, "review", segmentId],
+    queryFn: async () => {
+      const seg = await db().from("research_segments").select("*, research_matches(*)").eq("id", segmentId).single();
+      if (seg.error) throw seg.error;
+      const { research_matches: match, ...segment } = seg.data as ResearchSegment & { research_matches: ResearchMatch };
+      if (segment.mode !== "review") throw new Error("Этот отрезок не для проверки");
+      // Reviews come embedded (one per prediction), so no long id list goes into the URL.
+      const preds = await db()
+        .from("research_predictions")
+        .select("id, segment_id, t, raw_class, class, confidence, cluster, research_reviews(prediction_id, verdict, class, team, t, shot_outcome, unsure)")
+        .eq("segment_id", segmentId)
+        .not("class", "is", null)
+        .order("t", { ascending: true });
+      if (preds.error) throw preds.error;
+      // prediction_id is the primary key of research_reviews, so PostgREST embeds an object, not a list.
+      const rows = preds.data as unknown as (Prediction & { research_reviews: Review | null })[];
+      const predictions: Prediction[] = rows.map(({ research_reviews: _r, ...p }) => p);
+      const reviews = rows.flatMap((r) => (r.research_reviews ? [r.research_reviews] : []));
+      return { segment: segment as ResearchSegment, match, predictions, reviews };
+    },
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export async function upsertReview(review: Review): Promise<void> {
+  const { error } = await db().from("research_reviews").upsert({ ...review, reviewed_at: new Date().toISOString() });
+  if (error) throw error;
+}

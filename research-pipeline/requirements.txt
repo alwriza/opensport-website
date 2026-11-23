@@ -1,0 +1,24 @@
+# T-DEED (versions from its requirements.txt)
+torch==2.3.1
+torchvision==0.18.1
+timm==1.0.3
+numpy==1.26.4
+tabulate
+matplotlib
+wandb
+SoccerNet
+# Roboflow sports, pinned like ml-worker-match
+git+https://github.com/roboflow/sports.git@42c80c06b6b65a7f89455b89fe31cdf4c38ba227
+ultralytics
+supervision==0.30.5
+transformers==4.57.6   # 5.x treats torch < 2.6 as missing; T-DEED needs torch 2.3.1
+umap-learn
+scikit-learn
+sentencepiece
+protobuf
+opencv-python-headless
+# pipeline
+supabase
+gdown
+yt-dlp
+py-spy
