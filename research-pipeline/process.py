@@ -105,7 +105,7 @@ def main() -> None:
     print(f"{len(jobs)} match(es) to process")
     if not jobs:
         return
-    assigner = TeamAssigner(env("WEIGHTS_DIR"), os.environ.get("DEVICE", "cuda"))
+    assigner = TeamAssigner(env("WEIGHTS_DIR"), env("DEVICE"))
     for job in jobs:
         print(f"--- {job.match_id} ({job.segment_mode}) {job.start_s:.0f}-{job.end_s:.0f} s")
         with tempfile.TemporaryDirectory() as workdir:

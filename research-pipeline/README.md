@@ -20,12 +20,14 @@ labeling page uses.
 
 ## Machine
 
-A Google Cloud VM with an NVIDIA GPU and the driver installed (Deep Learning VM image).
+A Google Cloud VM, created from Cloud Shell with `gcp/create_vm.sh cpu` (n2-standard-8)
+or `gcp/create_vm.sh gpu` (n1-standard-4 + T4; needs GPU quota, see
+`gcp/request_gpu_quota.sh`). T-DEED is patched to run on either (`patch_tdeed.py`).
 
 ```bash
-git clone https://github.com/alwriza/opensport-website.git
+git clone -b research-pipeline https://github.com/alwriza/opensport-website.git
 cd opensport-website/research-pipeline
-./setup_vm.sh
+DEVICE=cpu ./setup_vm.sh
 ```
 
 `~/research.env` (never commit it):
@@ -36,7 +38,7 @@ export SUPABASE_SERVICE_ROLE_KEY=...        # Supabase → Project settings → 
 export RESEARCH_BUCKET=gs://opensport-research
 export TDEED_DIR=$HOME/T-DEED
 export WEIGHTS_DIR=$HOME/weights
-export DEVICE=cuda
+export DEVICE=cpu                           # or cuda on the GPU machine
 ```
 
 ## Run
