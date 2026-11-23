@@ -24,7 +24,7 @@ def main() -> None:
     if os.path.isfile(target):
         print(f"checkpoint already at {target}")
         return
-    files = gdown.download_folder(url=TDEED_CHECKPOINT_FOLDER, skip_download=True, quiet=True, remaining_ok=True)
+    files = gdown.download_folder(url=TDEED_CHECKPOINT_FOLDER, skip_download=True, quiet=True)
     matches = [f for f in files if f.path.replace("\\", "/").endswith(WANTED)]
     if len(matches) != 1:
         listing = "\n".join(f.path for f in files)
