@@ -44,10 +44,10 @@ export DEVICE=cpu                           # or cuda on the GPU machine
 ## Run
 
 ```bash
-source ~/research.env && source ~/research-venv/bin/activate
-python3 download.py
-python3 process.py
+nohup ~/opensport-website/research-pipeline/run.sh > ~/run.log 2>&1 &
 ```
+
+`run.sh` runs `download.py`, then `process.py`, with timestamps.
 
 Both are safe to rerun: they only pick up matches in their input status, and
 `process.py` replaces a segment's predictions as a whole.
