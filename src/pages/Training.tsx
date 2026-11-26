@@ -547,7 +547,7 @@ const Training = () => {
           {/* Detailed Skill View Modal/Section could go here */}
           {selectedSkill && (
             <div ref={skillDetailsRef} className="pb-36">
-              <Card className="mt-8 mb-12 border border-primary/20 bg-background p-8 rounded-none animate-in fade-in slide-in-from-bottom-4">
+              <Card className="mt-8 mb-12 border border-primary/20 bg-background p-5 sm:p-8 rounded-none animate-in fade-in slide-in-from-bottom-4">
                 <div className="flex flex-col md:flex-row gap-8">
                   <div className="md:w-1/3 space-y-4">
                     <div className="mb-4"><SkillIcon icon={selectedSkill.icon} size="xl" /></div>
@@ -567,13 +567,13 @@ const Training = () => {
                         return (
                           <div
                             key={level.id}
-                            className={`p-5 rounded-sm border flex items-center justify-between transition-all ${unlocked
+                            className={`p-4 sm:p-5 rounded-sm border flex flex-wrap items-center justify-between gap-3 transition-all ${unlocked
                               ? 'border-border bg-background hover:border-primary/30'
                               : 'border-transparent bg-secondary/40 opacity-40'
                               }`}
                           >
-                            <div className="flex items-center gap-4">
-                              <div className={`h-10 w-10 rounded-sm flex items-center justify-center font-bold ${isCompleted ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'
+                            <div className="flex min-w-0 items-center gap-4">
+                              <div className={`h-10 w-10 shrink-0 rounded-sm flex items-center justify-center font-bold ${isCompleted ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'
                                 }`}>
                                 {isCompleted ? <CheckCircle className="h-6 w-6" /> : level.level_order}
                               </div>
@@ -693,10 +693,10 @@ const Training = () => {
                   title={selectedLevel.video_title}
                 />
               </div>
-              <div className="p-8 bg-background space-y-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="text-2xl font-bold text-foreground">{selectedLevel.video_title}</h2>
+              <div className="p-5 sm:p-8 bg-background space-y-5 sm:space-y-6">
+                <div className="flex flex-wrap justify-between items-start gap-4">
+                  <div className="min-w-0">
+                    <h2 className="text-xl sm:text-2xl font-bold text-foreground">{selectedLevel.video_title}</h2>
                     <div className="flex items-center gap-2 mt-2">
                       <Badge className="bg-primary/10 text-primary border-none text-[10px] font-bold uppercase tracking-widest">
                         {t("skillTree.tier", { name: selectedLevel.level_name })}
@@ -705,7 +705,7 @@ const Training = () => {
                       <span className="text-muted-foreground text-xs font-bold uppercase tracking-widest">{selectedLevel.duration_minutes} {t("library.min")}</span>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="sm:text-right">
                     <p className="text-sm font-bold text-primary">{t("modal.reward")}</p>
                     <p className="text-2xl font-bold">+{selectedLevel.xp_reward} XP</p>
                   </div>
@@ -713,7 +713,7 @@ const Training = () => {
 
                 <div className="h-px bg-secondary" />
 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <ExternalLink className="h-4 w-4" />
                     <a href={selectedLevel.youtube_url} target="_blank" rel="noopener noreferrer" className="text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors">
@@ -721,11 +721,11 @@ const Training = () => {
                     </a>
                   </div>
                   <div className="flex gap-3">
-                    <Button variant="outline" onClick={() => setShowVideoModal(false)} className="rounded-sm px-8">
+                    <Button variant="outline" onClick={() => setShowVideoModal(false)} className="flex-1 sm:flex-none rounded-sm sm:px-8">
                       {t("modal.close")}
                     </Button>
                     <Button
-                      className="rounded-sm px-12 "
+                      className="flex-1 sm:flex-none rounded-sm sm:px-12"
                       onClick={() => {
                         completeLevel(selectedLevel.id, selectedLevel.skill_id, selectedLevel.level_name);
                         setShowVideoModal(false);

@@ -283,7 +283,7 @@ html { scroll-padding-top:calc(var(--navigation-height) + 20px); }
   .design-rank-header { flex-direction:column; align-items:stretch; }
   .design-rank-heading h1 { font-size:36px; }
   .design-rank-header .design-table-tools { flex-wrap:nowrap; }
-  .design-rank-header .design-search { min-width:0; flex:1; }
+  .design-rank-header .design-search { width:auto; min-width:0; flex:1; }
   .design-rank-tabs { gap:24px; }
   .design-rank-tabs button:nth-last-child(2) { margin-left:0; }
   .design-rank-table { min-width:980px; }
@@ -1080,3 +1080,48 @@ html { scroll-padding-top:calc(var(--navigation-height) + 20px); }
 .journey-first .camera-setup { background:var(--paper); border:1px solid var(--hairline); border-top:2px solid #A13B18; }
 .journey-first .camera-setup[data-ready] { border-top-color:var(--pitch); }
 .journey-first .camera-setup-plan svg { background:transparent; }
+
+/* Mobile calm layer (≤767px): one type scale and one spacing rhythm for phones.
+   Desktop is untouched. `[lang]` matches the existing `.landing[lang='ru']` overrides so this layer wins.
+   Display (32px, caps) only for the first and last screen; section titles 26px in sentence case; body 16px. */
+@media (max-width:767px) {
+  .landing[lang] { --section-y:48px; }
+  .landing[lang] .landing-hero { padding:32px 20px 40px; gap:32px; }
+  .landing[lang] .landing-intro { gap:22px; }
+  .landing[lang] .landing-title,
+  .landing[lang] .landing-title-statement,
+  .landing[lang] .landing-cta-title { font-size:32px; line-height:1.02; letter-spacing:-.025em; font-variation-settings:'wdth' 108; overflow-wrap:normal; }
+  .landing[lang] .landing-roadmap-title,
+  .landing[lang] .landing-science-title,
+  .landing[lang] .journey-mission-title,
+  .landing[lang] .landing-audience-heading { font-size:26px; line-height:1.15; letter-spacing:-.01em; font-variation-settings:'wdth' 100; text-transform:none; max-width:none; }
+  .landing[lang] .landing-description,
+  .landing[lang] .landing-science-description { font-size:16px; line-height:1.55; }
+  .landing[lang] .landing-eyebrow,
+  .landing[lang] .landing-science-eyebrow,
+  .landing[lang] .design-eyebrow,
+  .landing[lang] .eco-card-label { font-size:11px; letter-spacing:.08em; }
+  .landing[lang] .landing-actions { flex-direction:column; gap:10px; padding-top:0; }
+  .landing[lang] .landing-primary-action,
+  .landing[lang] .landing-secondary-action { height:48px; justify-content:center; }
+  .landing[lang] .landing-facts { padding-top:20px; gap:12px; }
+  .landing[lang] .journey-loop,
+  .landing[lang] .journey-first,
+  .landing[lang] .journey-example,
+  .landing[lang] .journey-progress,
+  .landing[lang] .eco-pipeline,
+  .landing[lang] .eco-roles,
+  .landing[lang] .eco-trust,
+  .landing[lang] .eco-roadmap,
+  .landing[lang] .journey-mission,
+  .landing[lang] .landing-cta { padding:48px 20px; margin-top:0; gap:24px; }
+  .landing[lang] .journey-flow li { padding-bottom:14px; }
+  .landing[lang] .journey-flow h3 { font-size:17px; }
+  .landing[lang] .eco-stages { gap:28px; }
+  .landing[lang] .eco-role-grid { gap:28px; }
+
+  .design-rank-heading h1,
+  .design-team-title h1,
+  .design-training-header h1 { font-size:30px; line-height:1.02; letter-spacing:-.025em; font-variation-settings:'wdth' 108; }
+  .design-rank-heading { gap:8px; }
+}
