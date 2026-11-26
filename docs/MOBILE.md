@@ -1,6 +1,6 @@
 # Mobile app (Android / iOS)
 
-The app is a Capacitor shell that loads the live site `https://opensport.app`
+The app is a Capacitor shell that loads the live site `https://www.opensport.app` (opensport.app redirects there)
 (`capacitor.config.ts` → `server.url`). Every web deploy reaches app users without a store update.
 
 - Android APK: GitHub Actions → "Android APK" workflow → artifact `opensport-debug-apk`.
